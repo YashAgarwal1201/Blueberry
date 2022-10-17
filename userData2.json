@@ -1,0 +1,14 @@
+{
+	"users": ["primaryUser", "user2"],
+
+	"allUsersDetails" : {
+		"primaryUser" : {
+			"name" : "Yash Agarwal", 
+			"isPrimary" : true,
+			"userDetails" : {
+				"age" : 22,
+				"gender" : "male"
+			} 
+		}
+	}
+}

@@ -1,6 +1,6 @@
 <?php 
 
-$jsonFileName = 'userData.json';
+$jsonFileName = 'userData2.json';
 $jsonFileData = file_get_contents($jsonFileName); // get the json file content
 //echo $jsonFileData;
 
