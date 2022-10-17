@@ -1,0 +1,75 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito&display=swap');
+:root {
+	--color1: #c3c7e0;
+	--color2: #d1b9c7;
+	--color3: #7786af;
+	--color4: #7d5e7d;
+	--color5: #1c2134;
+}
+
+
+* {
+	box-sizing: border-box;
+}
+html {
+	height: 100%;
+}
+body {
+	background-color: var(--color5);
+	color: var(--color1);
+	font-family: 'Nunito', sans-serif;
+	padding-bottom: 20px;
+}
+::-webkit-scrollbar {
+	width: 7px;
+	height: 0px;
+}
+::-webkit-scrollbar-thumb {
+	background-color: var(--color3);
+	border: 2px solid var(--color5);
+}
+::-webkit-scrollbar-track {
+	background-color: var(--color5);
+}
+h1 {
+	font-size: 50px;
+	text-align: center;
+}
+.speech-class {
+	padding: 15px 50px 50px 50px;
+	width: 100%;
+	display: flex;
+	flex-flow: column wrap;
+	justify-content: space-around;
+	align-items: center;
+	position: relative;
+}
+	.speech-class .command-btns {
+		position: absolute;
+		bottom: 0;
+	}
+	.speech-class .message {
+		padding: 50px 40px;
+		width: 100%;
+		min-height: 400px;
+		border-radius: 10px;
+		background-color: var(--color1);
+		color: var(--color4);
+		font-size: 17px;
+	}
+button {
+	outline: none;
+	border: none;
+	background-color: var(--color4);
+	padding: 25px;
+	border-radius: 50px;
+	color: var(--color5);
+	cursor: pointer;
+}
+button:hover {
+	background-color: var(--color3);
+}
+.material-icons {
+	font-size: 24px;
+}
