@@ -6,15 +6,16 @@ const recognition = new window.SpeechRecognition();
 const synthesis = window.speechSynthesis;
 
 var result;
+var greetMsg = 'Hello there, I am Blueberry. Use Help button to find "how-to-use" methods';
 
 // Speech Recognition Function 
 function speechRecog (arg) {
-	if($('#start-btn i').text() == 'mic') {
+	/*if($('#start-btn i').text() == 'mic') {
 		$('#start-btn i').text('mic_off')
 	}
 	else {
 		$('#start-btn i').text('mic_off')	
-	}
+	}*/
 	if ('SpeechRecognition' in window) {
 		$('#output-id').text('supported speech');
 		
@@ -48,9 +49,11 @@ function speechSpeak (arg) {
 		
 		let utterance = new SpeechSynthesisUtterance(arg);
 		utterance.lang = 'en-IN';
+		//console.log(synthesis)
 
 		if (arg) {
-			speechSynthesis.speak(utterance);
+			//speechSynthesis.speak(utterance);
+			synthesis.speak(utterance);
 			let voices = synthesis.getVoices();
 			$('#message-id').text('Bot: ' + arg);
 			/*for (let i = 0; i <voices.length; i++) 
@@ -63,7 +66,19 @@ function speechSpeak (arg) {
 
 // function to process user's input query
 function queryProcess(arg) {
-	if (arg.includes('say hello')) {
+	let queryProcessVariable = arg
+	if (queryProcessVariable.includes('say hello')) {
+		speechSpeak('hello there, I am Blueberry.')
+	}
+	queryResult(queryProcessVariable)
+}
+
+function queryResult(argument) {
+	// body...
+	let queryResultVariable = argument
+	if (queryResultVariable.includes('say hello')) {
 		speechSpeak('hello there, I am Blueberry.')
 	}
 }
+
+speechSpeak(greetMsg);

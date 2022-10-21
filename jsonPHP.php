@@ -17,4 +17,10 @@ if (strtolower(gettype($jsonData)) == "array" ) {
 	fwrite($fp, $jsonData2);
 	fclose($fp);
 }
+
+class UserData {
+	//properties
+	private $userType;
+	//methods
+}
 ?>
