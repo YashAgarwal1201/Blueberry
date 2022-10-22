@@ -2,7 +2,7 @@
 
 $var1 = $_GET['var1'];
 
-if (!empty($var1) and isset($var1) and $var1 == 'help' /*and preg_match("/^[0-9a-zA-Z-' ]*$/",$var1)*/) {
+if (!empty($var1) and isset($var1) and $var1 == 'help' and preg_match("/^[0-9a-zA-Z-' ]*$/",$var1)) {
 	// code...
 	$info_var = '<h2>How-to-Use</h2>
 		<li>Press <i class="material-icons-outlined">campaign</i> button to start this Blueberry bot

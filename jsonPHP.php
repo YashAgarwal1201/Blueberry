@@ -1,5 +1,10 @@
 <?php 
 
+
+
+
+
+/*
 require 'passwordVerify.php';
 
 //echo $jsonFileData;
@@ -14,7 +19,7 @@ $jsonData = json_decode($jsonFileData, true); // decode the string format json f
 
 if (strtolower(gettype($jsonData)) == "array" ) {
 	passwordVerify($user_name, $input_password, $has_forgot);
-}
+}*/
 /*$jsonData = json_decode($jsonFileData, true); // decode the string format json file data in associative array format
 
 // if datatype of $jsonData is array then only do anything ahead

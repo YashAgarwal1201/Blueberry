@@ -64,28 +64,33 @@ function queryProcess(arg) {
 	queryResult(queryProcessVariable)
 }
 
-function supportedVoice() {
-	let voices = synthesis.getVoices();
-	//console.log(speechSpeak(greetMsg))
-	for (let i = 0; i < voices.length; i++) {
-		console.log(voices[i])
-	}
-}
-
 // function to act according to user's query
 function queryResult(argument) {
 	let queryResultVariable = argument
 	if (queryResultVariable.includes('say hello')) {
 		speechSpeak('hello there, I am Blueberry.')
 	}
+	else if (queryResultVariable.includes('search')) {
+		window.open('http://google.com/search?q=' + queryResultVariable);
+	}
+	else {
+
+	}
 }
 
 function displayInfo(arg) {
 	$('#results-id').slideDown()	
 	$('#user-form-id').html(arg)	
-	//return infoString;
 }
 
+function supportedVoice() {
+	let voices = synthesis.getVoices();
+	for (let i = 0; i < voices.length; i++) {
+		console.log(voices[i])
+	}
+}
+
+// main function
 function mainFunction() {
 	$('#command-btns-id button').click(function (event) {
 		$('#results-id').hide();
@@ -93,16 +98,12 @@ function mainFunction() {
 			//speechSpeak(greetMsg)
 			displayInfo(userPrompt)
 		}
-		/*else if (event.target.matches('#start-btn, #start-btn i')) {
-			if (userName == null || userName == '') {
-				speechRecog(true)
-				userName = result
-			}
-			if (userPassword == null || userPassword == undefined) {
-				speechRecog(true)
-				userPassword == result
-			}
-		}*/
+		else if (event.target.matches('#start-btn, #start-btn i')) {
+			speechRecog(true);
+		}
+		else if (event.target.matches('#stop-btn, #stop-btn i')) {
+			speechRecog(false);
+		}
 		else if (event.target.matches('#info-btn, #info-btn i')) {
 			displayInfo(infoVar)
 		}
@@ -110,7 +111,6 @@ function mainFunction() {
 
 		}
 	})
-	//speechRecog(true);
 }
 
 $(document).ready(function () {
