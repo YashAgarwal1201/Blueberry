@@ -1,10 +1,21 @@
 <?php 
 
-$jsonFileName = 'userData2.json';
-$jsonFileData = file_get_contents($jsonFileName); // get the json file content
+require 'passwordVerify.php';
+
 //echo $jsonFileData;
 
+$user_name = $_POST['userName'];
+$input_password = $_POST['inpPassword'];
+$has_forgot = $_POST['hasForgot'];
+
+$jsonFileName = 'userData2.json';
+$jsonFileData = file_get_contents($jsonFileName); // get the json file content
 $jsonData = json_decode($jsonFileData, true); // decode the string format json file data in associative array format
+
+if (strtolower(gettype($jsonData)) == "array" ) {
+	passwordVerify($user_name, $input_password, $has_forgot);
+}
+/*$jsonData = json_decode($jsonFileData, true); // decode the string format json file data in associative array format
 
 // if datatype of $jsonData is array then only do anything ahead
 if (strtolower(gettype($jsonData)) == "array" ) {
@@ -22,5 +33,5 @@ class UserData {
 	//properties
 	private $userType;
 	//methods
-}
+}*/
 ?>
