@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Login Form</title>
+	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<style>
+		@import url('https://fonts.googleapis.com/css2?family=Nunito&display=swap');
+		:root {
+			--color1: #c3c7e0;
+			--color2: #d1b9c7;
+			--color3: #7786af;
+			--color4: #7d5e7d;
+			--color5: #1c2134;
+		}
+		* { 
+			box-sizing: border-box;
+		}
+		html {
+			height: 100%;
+		}	
+		body { 
+			max-height: 100%;
+			font-family: 'Nunito', sans-serif;
+			background-color: var(--color2); 
+			color: var(--color5);
+		}
+		.form { 
+			width: 100%;
+			text-align: center;
+			margin: auto;
+			padding: 10px; }	
+		form { 
+			width: 100%;
+			text-align: left;
+			border-radius: 10px;
+			display: flex;
+			flex-flow: column wrap;
+			justify-content: flex-start;
+			align-items: flex-start; }
+		.fields { 
+			width: 100%; }
+		.fields .c1, .c2 {
+			border: 3px solid var(--color4); 
+			padding: 7px;
+			margin: 5px; 
+			border-radius: 15px;
+		}
+		.c3 { 
+			margin: 5px;
+			padding: 7px;
+			border: none; }		
+		.action { 
+			width: 100%;
+			display: flex;
+			flex-flow: row wrap;
+			justify-content: space-evenly;
+			align-items: center; }	
+					
+		input, button, textarea {
+			display: inline-block; 
+			border: none; 
+			outline: none; 
+			background: none;  }
+		input *, button * { 
+			vertical-align: middle; 
+		}
+		input { 
+			width: 100%; }			
+		button { 
+			cursor: pointer;
+			padding: 25px;
+			border-radius: 50px;
+			background-color: var(--color4); 
+			color: var(--color2);
+		}
+		button:hover {
+			background-color: var(--color5);
+			color: var(--color3);
+		}
+		a, a:active { 
+			color: var(--color4); 
+			font-weight: bold; 
+		}											
+	</style>
+</head>
+<body>
+	<div class="form">
+		<form action="">
+			<div class="fields">
+				<div class="c1">
+					<label>User Name</label><br>
+					<input type="text" name="Name" required title="Click to Enter your User Name" autocomplete="off">
+				</div>
+				<div class="c2">
+					<label>Password</label><br>
+					<input type="password" name="Password" required title="Click to Enter your Password" autocomplete="off">
+				</div>
+				<div class="c3">
+					<p>Not a Registered User? <a href="#">Register here</a>.</p>
+					<p>Forgot Password? <a href="#">Reset here</a>.</p>
+				</div>
+			</div>
+			<div class="action">
+				<button type="submit" title="Click to send your feedback"><i class="material-icons">send</i></button>
+				<button type="reset" title="Click to reset this form"><i class="material-icons">delete</i></button>
+			</div>
+		</form>
+	</div>
+	<!--script>
+		$(document).click( function (ar) {
+			$('form div').css({'animation': 'none'});
+			if (ar.target.matches('.c1, .c1 input')) 
+				$('.c1').css({'animation': 'an1 5s linear infinite'});
+			else if(ar.target.matches('.c2, .c2 input'))
+				$('.c2').css({'animation': 'an1 5s linear infinite'});	
+			else
+				$('form div').css({'animation': 'none'});
+		});
+	</script-->
+</body>
+</html>

@@ -7,6 +7,8 @@ const synthesis = window.speechSynthesis;
 
 var result;
 const greetMsg = 'Hello there, I am Blueberry. What is your name ?';
+var userName = '', userPassword = null, hasForgot = null; //varibales to store user details
+var infoVar, userPrompt;
 
 // Speech Recognition Function 
 function speechRecog (arg) {
@@ -20,7 +22,7 @@ function speechRecog (arg) {
 			if (result.startsWith('undefined') || result.startsWith('undefined')) {
 				result = result.replace('undefined',"");
 			}
-			$('#message-id').text('User: ' + result);
+			$('#message-id').append('User: ' + result + '<br>');
 		}
 		
 		if (arg) {
@@ -46,7 +48,7 @@ function speechSpeak (arg) {
 		if (arg) {
 			//speechSynthesis.speak(utterance);
 			synthesis.speak(utterance);
-			$('#message-id').text('Bot: ' + arg);
+			$('#message-id').append('Bot: ' + arg + '<br>');
 		}
 	}
 	else
@@ -78,23 +80,31 @@ function queryResult(argument) {
 	}
 }
 
-function displayInfo() {
-	let infoString = '<h2>How-to-Use</h2>\
-		<li>Press <i class="material-icons-outlined">campaign</i> button to start this Blueberry bot\
-		<li>Press <i class="material-icons-outlined">mic</i> button to start speech recording\
-		<li>Press <i class="material-icons-outlined">stop</i> button to stop recording speech'
-	return infoString;
+function displayInfo(arg) {
+	$('#results-id').slideDown()	
+	$('#user-form-id').html(arg)	
+	//return infoString;
 }
 
 function mainFunction() {
 	$('#command-btns-id button').click(function (event) {
 		$('#results-id').hide();
 		if (event.target.matches('#speak-btn, #speak-btn i')) {
-			speechSpeak(greetMsg)
+			//speechSpeak(greetMsg)
+			displayInfo(userPrompt)
 		}
+		/*else if (event.target.matches('#start-btn, #start-btn i')) {
+			if (userName == null || userName == '') {
+				speechRecog(true)
+				userName = result
+			}
+			if (userPassword == null || userPassword == undefined) {
+				speechRecog(true)
+				userPassword == result
+			}
+		}*/
 		else if (event.target.matches('#info-btn, #info-btn i')) {
-			$('#results-id').slideDown()
-			$('#results-id section').html(displayInfo())
+			displayInfo(infoVar)
 		}
 		else {
 
@@ -102,8 +112,18 @@ function mainFunction() {
 	})
 	//speechRecog(true);
 }
-mainFunction()
 
-/*$(document).ready(function () {
-	main()
-})*/
+$(document).ready(function () {
+	$.ajax({
+		type: 'GET',
+		url: 'ajaxHandler.php',
+		dataType: 'json',
+		data: {var1: 'help'},
+		success: function(argument) {
+			//
+			infoVar = argument.a
+			userPrompt = argument.b
+		}
+	})
+	mainFunction()
+})
