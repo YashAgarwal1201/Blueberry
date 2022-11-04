@@ -8,7 +8,32 @@ const synthesis = window.speechSynthesis;
 var result;
 const greetMsg = 'Hello there, I am Blueberry. What is your name ?';
 var userName = '', userPassword = null, hasForgot = null; //varibales to store user details
-var infoVar, userPrompt;
+var infoVar = '<h2>How-to-Use</h2>\
+		<li>Press <i class="material-icons-outlined">campaign</i> button to start this Blueberry bot\
+		<li>Press <i class="material-icons-outlined">mic</i> button to start speech recording\
+		<li>Press <i class="material-icons-outlined">stop</i> button to stop recording speech\
+		<li>For now only English language is supported',
+	userPrompt = '<h2>User Prompt</h2>\
+		<form type="POST" id="login-form-id" onsubmit="loginForm(event)">\
+			<div class="fields">\
+				<div class="c1">\
+					<label>User Name</label><br>\
+					<input type="text" name="Name" title="Click to Enter your User Name" autocomplete="off">\
+				</div>\
+				<div class="c2">\
+					<label>Password</label><br>\
+					<input type="password" name="Password" title="Click to Enter your Password" autocomplete="off">\
+				</div>\
+				<!--div class="c3">\
+					<p>Not a Registered User? <a href="#">Register here</a>.</p>\
+					<p>Forgot Password? <a href="#">Reset here</a>.</p>\
+				</div-->\
+			</div>\
+			<div class="action-btn">\
+				<button type="submit" title="Click to send your feedback"><i class="material-icons">send</i></button>\
+				<button type="reset" title="Click to reset this form"><i class="material-icons">delete</i></button>\
+			</div>\
+		</form>'
 
 // Speech Recognition Function 
 function speechRecog (arg) {
@@ -90,8 +115,24 @@ function supportedVoice() {
 	}
 }
 
+function loginForm (arg) {
+	arg.preventDefault()
+	console.log($(arg.target).serialize())
+	$.ajax({
+		url: 'ajaxHandler.php',
+		type: 'POST',
+		data: { fData: $(arg.target).serialize() },
+		success: (argument) => {
+			//alert(88)
+			console.log(argument)
+			$(arg.target)[0].reset()
+		}
+	})
+}
+
 // main function
 function mainFunction() {
+
 	$('#command-btns-id button').click(function (event) {
 		$('#results-id').hide();
 		if (event.target.matches('#speak-btn, #speak-btn i')) {
@@ -114,16 +155,16 @@ function mainFunction() {
 }
 
 $(document).ready(function () {
-	$.ajax({
+	/*$.ajax({
 		type: 'GET',
 		url: 'ajaxHandler.php',
 		dataType: 'json',
 		data: {var1: 'help'},
 		success: function(argument) {
 			//
-			infoVar = argument.a
-			userPrompt = argument.b
+			//infoVar = argument.a
+			//userPrompt = argument.b
 		}
-	})
+	})*/
 	mainFunction()
 })

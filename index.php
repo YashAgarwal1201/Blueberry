@@ -1,3 +1,13 @@
+<?php 
+
+//session_start();
+
+/*if ($_SESSION['userName'] == 'alpha') {
+	// code...
+	echo "current User";
+}*/
+
+?>
 
 <!DOCTYPE html>
 <html lang="en-US">
@@ -32,6 +42,9 @@
 		<button onclick="$('#results-id').hide()"><i class="material-icons-outlined">close</i></button>
 		<section class="user-form" id="user-form-id"></section>
 	</div>
+	<?php
+//print_r($_SESSION);
+?>
 	<!--div>
 		<button onclick="let arg = prompt('Enter a value'); console.log(isPalindrome(arg));">isPalindrome</button>
 		<button onclick="let arg2 = prompt('Enter a value'); console.log(isEven(parseInt(arg2)));">isEven</button>
@@ -44,7 +57,8 @@
 		<button onclick="console.log(typeof(typeof(10)))">lick</button>
 	</div-->
 </body>
-<script src="https://cdn.jsdelivr.net/npm/daq-proc/dist/daq-proc.umd.min.js"></script>
+<!--script src="https://cdn.jsdelivr.net/npm/daq-proc/dist/daq-proc.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.i18n/1.0.7/jquery.i18n.min.js" integrity="sha512-a0tGMh5o0nCoRDiMVaSmiWgB9s/JqfC+PQZHWANTzIhasvm5eH9NkWTmJ4WloaQWLT8fEzRBjvADgFNDf0WusQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script-->
 <script src="index.js"></script>
-<!--script src="userDefinedFunctions.js"></script-->
+<script src="userDefinedFunctions.js"></script>
 </html>
