@@ -12,7 +12,10 @@ function check_user_identity($u_name, $u_password) {
 			foreach ($jsonData['allUsersDetails'] as $key => $value) {
 				foreach ($value as $key2 => $value2) {
 					if ($u_password == $value2) {
-						return array('i_result' => true, 'mainProfile' => $jsonData['allUsersDetails'][$key]);
+						$i_result = true; // index 0
+						$mainProfile = $jsonData['allUsersDetails'][$key]; // index 1
+						return array($i_result, $mainProfile);
+						//return array('i_result' => true, 'mainProfile' => $jsonData['allUsersDetails'][$key]);
 					}
 					else
 						return false;

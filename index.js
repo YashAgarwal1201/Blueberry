@@ -134,6 +134,9 @@ function loginForm (arg) {
 			else {
 				$(arg.target).append('<p>Not Verified</p>')
 			}
+		},
+		error: (argument) => {
+			console.log(argument.responseText)
 		}
 	})
 }
