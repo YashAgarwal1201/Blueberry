@@ -12,7 +12,7 @@ function check_user_identity($u_name, $u_password) {
 			foreach ($jsonData['allUsersDetails'] as $key => $value) {
 				foreach ($value as $key2 => $value2) {
 					if ($u_password == $value2) {
-						return true;
+						return array('i_result' => true, 'mainProfile' => $jsonData['allUsersDetails'][$key]);
 					}
 					else
 						return false;
@@ -28,7 +28,7 @@ function check_user_identity($u_name, $u_password) {
 	}
 }
 
-check_user_identity('@main_user12','@main_user12');
+//check_user_identity('@main_user12','@main_user12');
 /*
 //echo $jsonFileData;
 

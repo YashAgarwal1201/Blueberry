@@ -117,15 +117,23 @@ function supportedVoice() {
 
 function loginForm (arg) {
 	arg.preventDefault()
-	console.log($(arg.target).serialize())
+	//console.log($(arg.target).serialize())
 	$.ajax({
 		url: 'ajaxHandler.php',
 		type: 'POST',
+		dataType: 'json',
 		data: { fData: $(arg.target).serialize() },
-		success: (argument) => {
-			//alert(88)
-			console.log(argument)
-			$(arg.target)[0].reset()
+		success: function (argument) {
+			//console.log(argument)
+			if (argument) {
+				userPrompt = '<h2>User Prompt</h2>\
+					<p>You are a logged in User</p>'
+				$(arg.target)[0].reset()
+				displayInfo(userPrompt)
+			}
+			else {
+				$(arg.target).append('<p>Not Verified</p>')
+			}
 		}
 	})
 }

@@ -1,7 +1,6 @@
 <?php	
 require 'passwordVerify.php';
 require 'jsonPHP.php';
-//$var1 = $_GET['var1'];
 
 $params = array();
 parse_str($_POST['fData'], $params);
@@ -15,11 +14,13 @@ if (!empty($user_name) and isset($user_name) and $user_name != 'wrong username')
 	if(!empty($user_password) and isset($user_password) and $user_password != 'wrong password') {
 		
 		$identity_result = check_user_identity($user_name, $user_password);
-		if ($identity_result) {
-			echo "verified";
+		if ($identity_result['i_result']) {
+			$pr1 = $identity_result['mainProfile']['primaryUser'];
+			$pr2 = $identity_result['mainProfile']['User2']
+			echo json_encode(array('profile1' => $pr1, 'profile2' => $pr2));
 		}
 		else {
-			echo "not verified";
+			echo json_encode('not verified');
 		}
 	}
 	else {
@@ -29,15 +30,6 @@ if (!empty($user_name) and isset($user_name) and $user_name != 'wrong username')
 else {
 	echo "Sorry But an Error has occured please try again";
 }
-/*
-if (!empty($var1) and isset($var1) and $var1 == 'help' and preg_match("/^[0-9a-zA-Z-' ]*$/",$var1)) {
-	// code...
-	$info_var = '';
-
-	$user_prompt = '';
-
-	echo json_encode(array('a' => $info_var, 'b' => $user_prompt));	
-}*/
 
 
 
