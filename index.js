@@ -7,12 +7,13 @@ const synthesis = window.speechSynthesis;
 
 var result;
 const greetMsg = 'Hello there, I am Blueberry. What is your name ?';
-var userName = '', userPassword = null, hasForgot = null; //varibales to store user details
 var infoVar = '<h2>How-to-Use</h2>\
-		<li>Press <i class="material-icons-outlined">campaign</i> button to start this Blueberry bot\
+		<li>Press <i class="material-icons-outlined">campaign</i> button to login and start this Blueberry bot\
 		<li>Press <i class="material-icons-outlined">mic</i> button to start speech recording\
 		<li>Press <i class="material-icons-outlined">stop</i> button to stop recording speech\
-		<li>For now only English language is supported',
+		<li>For now only English language is supported\
+		<li>Without Login you cannot use this bot',
+	userLogin = null,	
 	userPrompt = '<h2>User Prompt</h2>\
 		<form type="POST" id="login-form-id" onsubmit="loginForm(event)">\
 			<div class="fields">\
@@ -38,24 +39,28 @@ var infoVar = '<h2>How-to-Use</h2>\
 // Speech Recognition Function 
 function speechRecog (arg) {
 	if ('SpeechRecognition' in window) {
-		
-		recognition.continuous = arg;
-		console.log(recognition.continuous);
-		
-		recognition.onresult = (event) => {
-			result = result + event.results[event.results.length -1][0].transcript;
-			if (result.startsWith('undefined') || result.startsWith('undefined')) {
-				result = result.replace('undefined',"");
+		if (userLogin) {
+			recognition.continuous = arg;
+			console.log(recognition.continuous);
+			
+			recognition.onresult = (event) => {
+				result = result + event.results[event.results.length -1][0].transcript;
+				if (result.startsWith('undefined') || result.startsWith('undefined')) {
+					result = result.replace('undefined',"");
+				}
+				$('#message-id').append('User: ' + result + '<br>');
 			}
-			$('#message-id').append('User: ' + result + '<br>');
-		}
-		
-		if (arg) {
-			recognition.start();
+			
+			if (arg) {
+				recognition.start();
+			}
+			else {
+				recognition.stop();
+				queryProcess(result);
+			}
 		}
 		else {
-			recognition.stop();
-			queryProcess(result);
+			alert('please login')
 		}
 	}
 	else
@@ -124,6 +129,7 @@ function loginForm (arg) {
 		dataType: 'json',
 		data: { fData: $(arg.target).serialize() },
 		success: function (argument) {
+			userLogin = true
 			console.log(argument)
 			if (argument) {
 				userPrompt = '<h2>User Prompt</h2>\
@@ -133,6 +139,7 @@ function loginForm (arg) {
 			}
 		},
 		error: (argument) => {
+			userLogin = false
 			$(arg.target).append('<p>Not Verified</p>')
 			console.log(argument.responseText)
 		}
