@@ -1,8 +1,6 @@
 {
 
 	"mainAccounts" : ["@main_user12", "@main_user22", "@main_user32"],
-	//"users": ["primaryUser", "user2"],
-
 	"allUsersDetails" : {
 		"@main_user12" : {
 			"masterPassword" : "@main_user12",
@@ -50,6 +48,5 @@
 				} 
 			}
 		}
-
 	}
 }

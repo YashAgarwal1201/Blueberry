@@ -1,34 +1,30 @@
 <?php 
 
 $jsonFileName = 'userData2.json';
-$jsonFileData = file_get_contents($jsonFileName); // get the json file content
+$jsonFileData = stripslashes(html_entity_decode(file_get_contents($jsonFileName))); // get the json file content
 $jsonData = json_decode($jsonFileData, true); // decode the string format json file data in associative array format
-print_r($jsonData);
+//print_r($jsonData);
 
 function check_user_identity($u_name, $u_password) {
 	GLOBAL $jsonData;
 	if (strtolower(gettype($jsonData)) == 'array') {
-		if (in_array($u_name, $jsonData['allUsersDetails'])) {
-			for ($i = 0; $i < count($jsonData['allUsersDetails']); $i++) { 
-				if ($u_password == $jsonData['allUsersDetails'][$i]['masterPassword']) {
-					echo "true";
-					//return true;
-				}
-				else {
-					echo "false 2";
-					//return false;
+		if (in_array($u_name, array_keys($jsonData['allUsersDetails']))) {
+			foreach ($jsonData['allUsersDetails'] as $key => $value) {
+				foreach ($value as $key2 => $value2) {
+					if ($u_password == $value2) {
+						return true;
+					}
+					else
+						return false;
 				}
 			}
-			// code...
 		}
 		else {
-			echo "false 1";
-			//return false;
+			return false;
 		}
-		//return true;
 	}
 	else {
-		echo "false 3";
+		return false;
 	}
 }
 
