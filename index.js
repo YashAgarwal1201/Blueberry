@@ -124,18 +124,16 @@ function loginForm (arg) {
 		dataType: 'json',
 		data: { fData: $(arg.target).serialize() },
 		success: function (argument) {
-			//console.log(argument)
+			console.log(argument)
 			if (argument) {
 				userPrompt = '<h2>User Prompt</h2>\
-					<p>You are a logged in User</p>'
+					<p>You are a logged in User. Choose your Profile</p>' + argument.profiles	
 				$(arg.target)[0].reset()
 				displayInfo(userPrompt)
 			}
-			else {
-				$(arg.target).append('<p>Not Verified</p>')
-			}
 		},
 		error: (argument) => {
+			$(arg.target).append('<p>Not Verified</p>')
 			console.log(argument.responseText)
 		}
 	})

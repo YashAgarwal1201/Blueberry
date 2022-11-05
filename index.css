@@ -170,3 +170,16 @@ form a,form a:active {
 	color: var(--color4); 
 	font-weight: bold; 
 }
+
+.profiles {
+	width: 75%;
+	margin: auto;
+}
+.profile {
+	width: 45%;
+	margin: 7px;
+}
+.profile button {
+	width: 100%;
+	height: 100%;
+}

@@ -17,17 +17,9 @@ function check_user_identity($u_name, $u_password) {
 						return array($i_result, $mainProfile);
 						//return array('i_result' => true, 'mainProfile' => $jsonData['allUsersDetails'][$key]);
 					}
-					else
-						return false;
 				}
 			}
 		}
-		else {
-			return false;
-		}
-	}
-	else {
-		return false;
 	}
 }
 

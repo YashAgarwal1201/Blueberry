@@ -11,7 +11,7 @@
 				"isPrimary" : true,
 				"userDetails" : {
 					"age" : 22,
-					"gender" : "male"
+					"profileType" : "adult"
 				} 
 			},
 			"user2" : {
@@ -21,7 +21,7 @@
 				"isPrimary" : false,
 				"userDetails" : {
 					"age" : 22,
-					"gender" : "male"
+					"profileType" : "kids"
 				} 
 			}
 		},
@@ -34,7 +34,7 @@
 				"isPrimary" : true,
 				"userDetails" : {
 					"age" : 22,
-					"gender" : "male"
+					"profileType" : "adult"
 				} 
 			},
 			"user2" : {
@@ -44,7 +44,7 @@
 				"isPrimary" : false,
 				"userDetails" : {
 					"age" : 22,
-					"gender" : "male"
+					"profileType" : "kids"
 				} 
 			}
 		}
