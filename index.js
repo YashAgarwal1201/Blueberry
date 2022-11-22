@@ -39,7 +39,7 @@ var infoVar = '<h2>How-to-Use</h2>\
 // Speech Recognition Function 
 function speechRecog (arg) {
 	if ('SpeechRecognition' in window) {
-		if (userLogin) {
+		if (!userLogin || userLogin) {
 			recognition.continuous = arg;
 			console.log(recognition.continuous);
 			
@@ -103,8 +103,11 @@ function queryResult(argument) {
 	else if (queryResultVariable.includes('search')) {
 		window.open('http://google.com/search?q=' + queryResultVariable);
 	}
+	else if (queryResultVariable.includes('open my profile')) {
+		window.open('https://agarwalyash.epizy.com/')
+	}
 	else {
-
+		
 	}
 }
 
