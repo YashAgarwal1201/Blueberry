@@ -36,15 +36,16 @@ var infoVar = '<h2>How-to-Use</h2>\
 			</div>\
 		</form>'
 
+var searchFunctionArray = null, greetResponseArray = null		
+
 // Speech Recognition Function 
 function speechRecog (arg) {
 	if ('SpeechRecognition' in window) {
 		if (!userLogin || userLogin) {
 			recognition.continuous = arg;
-			console.log(recognition.continuous);
 			
 			recognition.onresult = (event) => {
-				result = result + event.results[event.results.length -1][0].transcript;
+				result = event.results[event.results.length -1][0].transcript;
 				if (result.startsWith('undefined') || result.startsWith('undefined')) {
 					result = result.replace('undefined',"");
 				}
@@ -87,10 +88,7 @@ function speechSpeak (arg) {
 
 // function to process user's input query
 function queryProcess(arg) {
-	let queryProcessVariable = arg
-	if (queryProcessVariable.includes('say hello')) {
-		speechSpeak('hello there, I am Blueberry.')
-	}
+	let queryProcessVariable = arg.toLowerCase()
 	queryResult(queryProcessVariable)
 }
 
@@ -101,13 +99,19 @@ function queryResult(argument) {
 		speechSpeak('hello there, I am Blueberry.')
 	}
 	else if (queryResultVariable.includes('search')) {
-		window.open('http://google.com/search?q=' + queryResultVariable);
+		if (queryResultVariable.includes('google')) 
+			window.open('https://google.com/search?q=' + queryResultVariable);
+		else if (queryResultVariable.includes('yahoo'))
+			window.open('https://yahoo.com/search?q=' + queryResultVariable)
+		else {
+
+		}
 	}
 	else if (queryResultVariable.includes('open my profile')) {
 		window.open('https://agarwalyash.epizy.com/')
 	}
 	else {
-		
+
 	}
 }
 
@@ -125,7 +129,6 @@ function supportedVoice() {
 
 function loginForm (arg) {
 	arg.preventDefault()
-	//console.log($(arg.target).serialize())
 	$.ajax({
 		url: 'ajaxHandler.php',
 		type: 'POST',
