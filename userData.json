@@ -1,51 +1,18 @@
 {
 
-	"mainAccounts" : ["@main_user12", "@main_user22", "@main_user32"],
+	"mainAccounts" : ["@main_user12", "@main_user22"],
 	"allUsersDetails" : {
 		"@main_user12" : {
-			"primaryUser" : {
-				"userName" : "@main_user12",
-				"password" : "@main_user12",
-				"name" : "Yash Agarwal", 
-				"isPrimary" : true,
-				"userDetails" : {
-					"age" : 22,
-					"gender" : "male"
-				} 
-			},
-			"user2" : {
-				"userName" : "@user13",
-				"password" : "@user13",
-				"name" : "Yash Ag", 
-				"isPrimary" : false,
-				"userDetails" : {
-					"age" : 22,
-					"gender" : "male"
-				} 
-			}
+			"masterPassword" : "@main_user12",
+			"name" : "Yash Agarwal",
+			"email" : "",
+			"age" : 22
 		},
 		"@main_user22" : {
-			"primaryUser" : {
-				"userName" : "@main_user22",
-				"password" : "@main_user22",
-				"name" : "Yash Agarwal", 
-				"isPrimary" : true,
-				"userDetails" : {
-					"age" : 22,
-					"gender" : "male"
-				} 
-			},
-			"user2" : {
-				"userName" : "@user99",
-				"password" : "@user99",
-				"name" : "Yash Ag", 
-				"isPrimary" : false,
-				"userDetails" : {
-					"age" : 22,
-					"gender" : "male"
-				} 
-			}
+			"masterPassword" : "@main_user22",
+			"name" : "Yash Agarwal",
+			"email" : "",
+			"age" : 22
 		}
-
 	}
 }
