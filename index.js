@@ -187,6 +187,13 @@ $(document).ready(function () {
 			//infoVar = argument.a
 			//userPrompt = argument.b
 		}
+	})
+	let query = "hello mister",
+	fromLang = "en", toLang = "es"
+	let apiUrl = `https://api.translate.google.co.in/?sl=${fromLang}&tl=${toLang}&text=${query}&op=translate`
+	//url = "https://translate.google.co.in/?sl=en&tl=es&text=hello%20mister&op=translate"
+	fetch(apiUrl).then(res => res.json()).then(data => {
+		console.log(data)
 	})*/
 	mainFunction()
 })
