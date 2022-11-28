@@ -18,6 +18,7 @@
 	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+	<script src="//unpkg.com/brain.js"></script>
 	<link rel="stylesheet" type="text/css" href="index.css">
 </head>
 
@@ -59,6 +60,7 @@
 </body>
 <!--script src="https://cdn.jsdelivr.net/npm/daq-proc/dist/daq-proc.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.i18n/1.0.7/jquery.i18n.min.js" integrity="sha512-a0tGMh5o0nCoRDiMVaSmiWgB9s/JqfC+PQZHWANTzIhasvm5eH9NkWTmJ4WloaQWLT8fEzRBjvADgFNDf0WusQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script-->
+<script src="textProcessing.js"></script>
 <script src="index.js"></script>
-<script src="userDefinedFunctions.js"></script>
+<!--script src="userDefinedFunctions.js"></script-->
 </html>

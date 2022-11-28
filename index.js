@@ -34,9 +34,7 @@ var infoVar = '<h2>How-to-Use</h2>\
 				<button type="submit" title="Click to send your feedback"><i class="material-icons">send</i></button>\
 				<button type="reset" title="Click to reset this form"><i class="material-icons">delete</i></button>\
 			</div>\
-		</form>'
-
-var searchFunctionArray = null, greetResponseArray = null		
+		</form>'		
 
 // Speech Recognition Function 
 function speechRecog (arg) {
@@ -60,9 +58,8 @@ function speechRecog (arg) {
 				queryProcess(result);
 			}
 		}
-		else {
+		else 
 			alert('please login')
-		}
 	}
 	else
 		$('#output-id').text('speech not supported by your browser');
@@ -89,6 +86,7 @@ function speechSpeak (arg) {
 // function to process user's input query
 function queryProcess(arg) {
 	let queryProcessVariable = arg.toLowerCase()
+	queryProcessVariable = textProcess(queryProcessVariable)
 	queryResult(queryProcessVariable)
 }
 
@@ -158,7 +156,6 @@ function mainFunction() {
 	$('#command-btns-id button').click(function (event) {
 		$('#results-id').hide();
 		if (event.target.matches('#speak-btn, #speak-btn i')) {
-			//speechSpeak(greetMsg)
 			displayInfo(userPrompt)
 		}
 		else if (event.target.matches('#start-btn, #start-btn i')) {
