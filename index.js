@@ -71,11 +71,11 @@ function speechSpeak (arg) {
 		
 		let utterance = new SpeechSynthesisUtterance(arg);
 		utterance.lang = 'en-US';
-		console.log(utterance)
 
 		if (arg) {
 			//speechSynthesis.speak(utterance);
 			synthesis.speak(utterance);
+			console.log(synthesis.speak(utterance))
 			$('#message-id').append('Bot: ' + arg + '<br>');
 		}
 	}
@@ -86,7 +86,7 @@ function speechSpeak (arg) {
 // function to process user's input query
 function queryProcess(arg) {
 	let queryProcessVariable = arg.toLowerCase()
-	queryProcessVariable = textProcess(queryProcessVariable)
+	//queryProcessVariable = textProcess(queryProcessVariable)
 	queryResult(queryProcessVariable)
 }
 
@@ -108,6 +108,9 @@ function queryResult(argument) {
 	else if (queryResultVariable.includes('open my profile')) {
 		window.open('https://agarwalyash.epizy.com/')
 	}
+	else if (queryResultVariable.includes('battery')) {
+		batteryStat()
+	}
 	else {
 
 	}
@@ -124,6 +127,35 @@ function supportedVoice() {
 		console.log(voices[i])
 	}
 }
+
+//function to show client's battery status (results may not be accurate)
+function batteryStat(arg) {
+	var batteryStatVar, batteryStatResult
+	if ('getBattery' in navigator || ('battery' in navigator && 'Promise' in window)) {
+		if('getBattery' in navigator)
+			batteryStatVar = navigator.getBattery()
+		else
+			batteryStatVar = Promise.resolve(navigator.battery)
+
+		batteryStatVar.then((battery) => {
+			batteryStatResult = `<h2>Battery Status</h2>
+				<p><strong>Note:</strong> Results may not be accurate</p>
+				Battery Charging : ${battery.charging ? 'Yes' : 'No'}<br>
+				Percentage : ${battery.level * 100}%<br>
+				${battery.charging ? 'Time left for full charge : ' : 'Time remaining : '}
+				${battery.charging ? battery.chargingTime : battery.dischargingTime} s<br>`
+			displayInfo(batteryStatResult)
+			if (arg == 'charging') {
+				$('#speak-btn').trigger('click')
+			}
+		})
+	}
+	else {
+		batteryStatResult = 'sorry but Battery Status API is not supported by the browser'
+		displayInfo(batteryStatResult)
+	}
+}
+batteryStat('charging')
 
 function loginForm (arg) {
 	arg.preventDefault()
@@ -149,6 +181,7 @@ function loginForm (arg) {
 		}
 	})
 }
+$('#speak-btn').click((arg) => { speechSpeak(arg) })
 
 // main function
 function mainFunction() {
@@ -157,6 +190,7 @@ function mainFunction() {
 		$('#results-id').hide();
 		if (event.target.matches('#speak-btn, #speak-btn i')) {
 			displayInfo(userPrompt)
+			$('#speak-btn')
 		}
 		else if (event.target.matches('#start-btn, #start-btn i')) {
 			speechRecog(true);
