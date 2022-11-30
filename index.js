@@ -73,7 +73,6 @@ function speechSpeak (arg) {
 		utterance.lang = 'en-US';
 
 		if (arg) {
-			//speechSynthesis.speak(utterance);
 			synthesis.speak(utterance)
 			$('#message-id').append('Bot: ' + arg + '<br>');
 		}
@@ -109,6 +108,9 @@ function queryResult(argument) {
 	}
 	else if (queryResultVariable.includes('charging')) {
 		batteryStat(queryResultVariable)
+	}
+	else if (queryResultVariable.includes('wikipedia')) {
+		wikiSearch('javascript')
 	}
 	else {
 
@@ -156,6 +158,12 @@ function batteryStat(arg) {
 	}
 }
 //batteryStat('charging')
+
+function wikiSearch(arg) {
+	var info = fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${arg}`)//WIKIPEDIA.getData(`http://en.wikipedia.org/wiki/${arg}`)
+	displayInfo(info)
+}
+
 
 function loginForm (arg) {
 	arg.preventDefault()
