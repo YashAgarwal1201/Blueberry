@@ -74,8 +74,7 @@ function speechSpeak (arg) {
 
 		if (arg) {
 			//speechSynthesis.speak(utterance);
-			synthesis.speak(utterance);
-			console.log(synthesis.speak(utterance))
+			synthesis.speak(utterance)
 			$('#message-id').append('Bot: ' + arg + '<br>');
 		}
 	}
@@ -108,8 +107,8 @@ function queryResult(argument) {
 	else if (queryResultVariable.includes('open my profile')) {
 		window.open('https://agarwalyash.epizy.com/')
 	}
-	else if (queryResultVariable.includes('battery')) {
-		batteryStat()
+	else if (queryResultVariable.includes('charging')) {
+		batteryStat(queryResultVariable)
 	}
 	else {
 
@@ -146,7 +145,8 @@ function batteryStat(arg) {
 				${battery.charging ? battery.chargingTime : battery.dischargingTime} s<br>`
 			displayInfo(batteryStatResult)
 			if (arg == 'charging') {
-				$('#speak-btn').trigger('click')
+				//$('#speak-btn').click(() => { speechSpeak(arg) }).trigger('click')
+				speechSpeak(arg)
 			}
 		})
 	}
@@ -155,7 +155,7 @@ function batteryStat(arg) {
 		displayInfo(batteryStatResult)
 	}
 }
-batteryStat('charging')
+//batteryStat('charging')
 
 function loginForm (arg) {
 	arg.preventDefault()
@@ -181,7 +181,7 @@ function loginForm (arg) {
 		}
 	})
 }
-$('#speak-btn').click((arg) => { speechSpeak(arg) })
+//$('#speak-btn').click((event) => { speechSpeak(arg) })
 
 // main function
 function mainFunction() {
@@ -190,7 +190,8 @@ function mainFunction() {
 		$('#results-id').hide();
 		if (event.target.matches('#speak-btn, #speak-btn i')) {
 			displayInfo(userPrompt)
-			$('#speak-btn')
+			speechSpeak(greetMsg)
+			//$('#speak-btn').trigger('click')
 		}
 		else if (event.target.matches('#start-btn, #start-btn i')) {
 			speechRecog(true);
