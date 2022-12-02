@@ -112,6 +112,9 @@ function queryResult(argument) {
 	else if (queryResultVariable.includes('wikipedia')) {
 		wikiSearch('javascript')
 	}
+	else if (queryResultVariable.includes('open url')) {
+		window.open(`https://${argument}`)
+	}
 	else {
 
 	}
@@ -148,7 +151,9 @@ function batteryStat(arg) {
 			displayInfo(batteryStatResult)
 			if (arg == 'charging') {
 				//$('#speak-btn').click(() => { speechSpeak(arg) }).trigger('click')
-				speechSpeak(arg)
+				batteryStatMsg = `Battery is ${battery.charging ? '' : 'Not'} charging. 
+					Battery percentage is ${battery.level * 100}%.`
+				speechSpeak(batteryStatMsg)
 			}
 		})
 	}
@@ -159,11 +164,31 @@ function batteryStat(arg) {
 }
 //batteryStat('charging')
 
+// function to perform wikipedia search
 function wikiSearch(arg) {
-	var info = fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${arg}`)//WIKIPEDIA.getData(`http://en.wikipedia.org/wiki/${arg}`)
-	displayInfo(info)
+	let wikiSearchResult = ``
+	var info = fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${arg}`)
+	//WIKIPEDIA.getData(`http://en.wikipedia.org/wiki/${arg}`)
+	info.then((res) => res.json()).then((argument) => {
+		wikiSearchResult = `<h2>Wikipedia Search Results</h2>
+			<content>
+				<h3>${argument.title}</h3>
+				<p>${argument.description}</p>
+			</content>
+			<content>
+				<img src="${argument.originalimage.source}" 
+					style="width: ${argument.thumbnail.width}px; 
+							height: ${argument.thumbnail.height}px; margin: auto;" />
+				<p>${argument.extract}</p>	
+			</content>
+			<a href="${argument.content_urls.desktop.page}" target="_blank">
+				<u>Click to view Page</u> <i class="material-icons-outlined">chevron_right</i>
+			</a>`
+		displayInfo(`${wikiSearchResult}`)
+		speechSpeak(`${argument.extract}`)
+		console.log(argument)
+	})
 }
-
 
 function loginForm (arg) {
 	arg.preventDefault()
