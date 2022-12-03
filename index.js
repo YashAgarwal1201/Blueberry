@@ -250,7 +250,7 @@ $(document).ready(function () {
 	$.ajax({
 		type: 'POST',
 		url: 'ajaxHandler.php',
-		//dataType: 'json',
+		dataType: 'json',
 		data: {fType: 'translate'},
 		success: function(argument) {
 			translateData = argument

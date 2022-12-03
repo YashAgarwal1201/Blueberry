@@ -45,15 +45,39 @@ else if ($_POST['fType'] == 'register-form-id') {
 }
 else if ($_POST['fType'] == 'translate') {
 	// code...
+	$directory_path = './Translate Folder/'; // directory to be created along with path
+	//$file_name = $directory_path . 'translations-file.json'; // file to be created along with path
+	
+	if (!is_dir($directory_path)) {
+		mkdir($directory_path); // make a directory
+	}
+	else {
 
-	$source = 'auto';
-	$target = 'en';
-	$text = 'kaise ho';
+		$source = 'auto';
+		$target = 'en';
+		$text = 'kaise ho';
+		//$trans = new GoogleTranslate();
+		$result = 'How are you';//$trans->translate($source, $target, $text);
 
-	$trans = new GoogleTranslate();
-	$result = $trans->translate($source, $target, $text);
+		$file_name = $directory_path . $source . 'translations-file.txt';
+		$file_pointer = fopen($file_name, 'a') or die('unable to open file'); // create and open the file
+		
+		while (!feof($file_pointer)) {
+			// code...
+			$val = fgets($file_pointer);
+			$val = explode(" : ", $val);
+			if ($val[0] != $text) {
+				$translateValue = $text . ' : ' . $result;
+				fwrite($file_pointer, $translateValue);
+			}
+		}
+		fclose($file_pointer); // close the file
 
-	echo $result;
+		
+		readfile($new_file_name); // read the content of file just created
+	}
+
+	echo json_encode(array('a' => $result));
 }
 else {
 
