@@ -25,11 +25,23 @@ network.train([
 // Display the probability for "zero" and "one"
 //console.log( "two: " + resultt["two"] + "\n" + "zero: " + resultt["zero"])
 
-//web worker for training part
-//if(typeof(Worker) !== 'undefined' || typeof(Worker) !== null) {
-    //
-//} 
+/*const {
+    highlight,
+    levenMatch
+} = dqp
+const query = ['interesting', 'words']
+  const searchResult = ['some', 'interesting', 'words', 'to', 'remember']
+
+console.log(highlight(query, searchResult))
+
+const index2 = ['return', 'all', 'word', 'matches', 'between', 'two', 'arrays', 'within', 'given', 'levenshtein', 'distance', 'intended', 'use', 'is', 'to', 'words', 'in', 'a', 'query', 'that', 'has', 'an', 'index', 'good', 'for', 'autocomplete', 'type', 'functionality,', 'and', 'some', 'cases', 'also', 'searching']
+  const query2 = ['qvery', 'words', 'levensthein']
+
+  console.log(levenMatch(query2, index2, {distance: 2}))*/
 
 function textProcess(argument) {
-    console.log(argument)
+    let textProcessVar = argument
+    textProcessVar = textProcessVar.split('.')
+    console.log(textProcessVar)
 }
+textProcess('open my profile. and display it')

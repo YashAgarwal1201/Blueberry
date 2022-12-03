@@ -2,11 +2,10 @@
 // Some global declarations 
 window.SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
 const recognition = new window.SpeechRecognition();
-
 const synthesis = window.speechSynthesis;
 
-var result;
-const greetMsg = 'Hello there, I am Blueberry. What is your name ?';
+const greetMsg = 'Hello there, I am Blueberry. What is your name ?',
+	errorMsg = 'Sorry but I coudn\'t understand what you just said.' 
 var infoVar = '<h2>How-to-Use</h2>\
 		<li>Press <i class="material-icons-outlined">campaign</i> button to login and start this Blueberry bot\
 		<li>Press <i class="material-icons-outlined">mic</i> button to start speech recording\
@@ -34,7 +33,9 @@ var infoVar = '<h2>How-to-Use</h2>\
 				<button type="submit" title="Click to send your feedback"><i class="material-icons">send</i></button>\
 				<button type="reset" title="Click to reset this form"><i class="material-icons">delete</i></button>\
 			</div>\
-		</form>'		
+		</form>',
+	translateData = null,
+	result			
 
 // Speech Recognition Function 
 function speechRecog (arg) {
@@ -55,6 +56,7 @@ function speechRecog (arg) {
 			}
 			else {
 				recognition.stop();
+				console.log(recognition.lang)
 				queryProcess(result);
 			}
 		}
@@ -70,7 +72,7 @@ function speechSpeak (arg) {
 	if ('speechSynthesis' in window) {
 		
 		let utterance = new SpeechSynthesisUtterance(arg);
-		utterance.lang = 'en-US';
+		//utterance.lang = recognition.lang//'en-US';
 
 		if (arg) {
 			synthesis.speak(utterance)
@@ -84,6 +86,9 @@ function speechSpeak (arg) {
 // function to process user's input query
 function queryProcess(arg) {
 	let queryProcessVariable = arg.toLowerCase()
+	if (translateData) {
+
+	}
 	//queryProcessVariable = textProcess(queryProcessVariable)
 	queryResult(queryProcessVariable)
 }
@@ -113,10 +118,11 @@ function queryResult(argument) {
 		wikiSearch('javascript')
 	}
 	else if (queryResultVariable.includes('open url')) {
-		window.open(`https://${argument}`)
+		let urlVar = prompt('Type the url starting with \'https://\' ')
+		window.open(urlVar)
 	}
 	else {
-
+		speechSpeak(errorMsg)
 	}
 }
 
@@ -131,6 +137,7 @@ function supportedVoice() {
 		console.log(voices[i])
 	}
 }
+supportedVoice()
 
 //function to show client's battery status (results may not be accurate)
 function batteryStat(arg) {
@@ -162,7 +169,6 @@ function batteryStat(arg) {
 		displayInfo(batteryStatResult)
 	}
 }
-//batteryStat('charging')
 
 // function to perform wikipedia search
 function wikiSearch(arg) {
@@ -186,7 +192,7 @@ function wikiSearch(arg) {
 			</a>`
 		displayInfo(`${wikiSearchResult}`)
 		speechSpeak(`${argument.extract}`)
-		console.log(argument)
+		//console.log(argument)
 	})
 }
 
@@ -196,7 +202,7 @@ function loginForm (arg) {
 		url: 'ajaxHandler.php',
 		type: 'POST',
 		dataType: 'json',
-		data: { fData: $(arg.target).serialize() },
+		data: { fData: $(arg.target).serialize(), fType: arg.target.id },
 		success: function (argument) {
 			userLogin = true
 			console.log(argument)
@@ -224,7 +230,6 @@ function mainFunction() {
 		if (event.target.matches('#speak-btn, #speak-btn i')) {
 			displayInfo(userPrompt)
 			speechSpeak(greetMsg)
-			//$('#speak-btn').trigger('click')
 		}
 		else if (event.target.matches('#start-btn, #start-btn i')) {
 			speechRecog(true);
@@ -242,23 +247,15 @@ function mainFunction() {
 }
 
 $(document).ready(function () {
-	/*$.ajax({
-		type: 'GET',
+	$.ajax({
+		type: 'POST',
 		url: 'ajaxHandler.php',
-		dataType: 'json',
-		data: {var1: 'help'},
+		//dataType: 'json',
+		data: {fType: 'translate'},
 		success: function(argument) {
-			//
-			//infoVar = argument.a
-			//userPrompt = argument.b
+			translateData = argument
+			console.log(translateData)
 		}
 	})
-	let query = "hello mister",
-	fromLang = "en", toLang = "es"
-	let apiUrl = `https://api.translate.google.co.in/?sl=${fromLang}&tl=${toLang}&text=${query}&op=translate`
-	//url = "https://translate.google.co.in/?sl=en&tl=es&text=hello%20mister&op=translate"
-	fetch(apiUrl).then(res => res.json()).then(data => {
-		console.log(data)
-	})*/
 	mainFunction()
 })

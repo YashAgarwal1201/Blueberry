@@ -1,6 +1,8 @@
 <?php	
 require 'passwordVerify.php';
 require 'jsonPHP.php';
+include '../../vendor/autoload.php';
+use \Statickidz\GoogleTranslate;
 
 if ($_POST['fType'] == 'login-form-id') {
 
@@ -40,6 +42,21 @@ else if ($_POST['fType'] == 'register-form-id') {
 			}
 		}
 	}
+}
+else if ($_POST['fType'] == 'translate') {
+	// code...
+
+	$source = 'auto';
+	$target = 'en';
+	$text = 'kaise ho';
+
+	$trans = new GoogleTranslate();
+	$result = $trans->translate($source, $target, $text);
+
+	echo $result;
+}
+else {
+
 }
 
 // function to return user details

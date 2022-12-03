@@ -5,8 +5,19 @@
 /*if ($_SESSION['userName'] == 'alpha') {
 	// code...
 	echo "current User";
-}*/
+}*//*
+require_once ('../../vendor/autoload.php');
+use \Statickidz\GoogleTranslate;
 
+$source = 'auto';
+$target = 'en';
+$text = 'kaise ho';
+
+$trans = new GoogleTranslate();
+$result = $trans->translate($source, $target, $text);
+
+// Good morning
+echo $result;*/
 ?>
 
 <!DOCTYPE html>
@@ -19,7 +30,7 @@
 	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
 	<script src="//unpkg.com/brain.js"></script>
-	<script src='http://okfnlabs.org/wikipediajs/wikipedia.js'></script>
+	<!--script src='http://okfnlabs.org/wikipediajs/wikipedia.js'></script-->
 	<link rel="stylesheet" type="text/css" href="index.css">
 </head>
 
@@ -59,8 +70,9 @@
 		<button onclick="console.log(typeof(typeof(10)))">lick</button>
 	</div-->
 </body>
-<!--script src="https://cdn.jsdelivr.net/npm/daq-proc/dist/daq-proc.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.i18n/1.0.7/jquery.i18n.min.js" integrity="sha512-a0tGMh5o0nCoRDiMVaSmiWgB9s/JqfC+PQZHWANTzIhasvm5eH9NkWTmJ4WloaQWLT8fEzRBjvADgFNDf0WusQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script-->
+<script src="https://cdn.jsdelivr.net/npm/daq-proc/dist/daq-proc.umd.min.js"></script>
+<script src="https://github.com/sufeiweb/google-translate-free"></script>
+<!--script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.i18n/1.0.7/jquery.i18n.min.js" integrity="sha512-a0tGMh5o0nCoRDiMVaSmiWgB9s/JqfC+PQZHWANTzIhasvm5eH9NkWTmJ4WloaQWLT8fEzRBjvADgFNDf0WusQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script-->
 <script src="textProcessing.js"></script>
 <script src="index.js"></script>
 <!--script src="userDefinedFunctions.js"></script-->
