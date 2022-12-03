@@ -55,29 +55,42 @@ else if ($_POST['fType'] == 'translate') {
 
 		$source = 'auto';
 		$target = 'en';
-		$text = 'kaise ho';
-		//$trans = new GoogleTranslate();
-		$result = 'How are you';//$trans->translate($source, $target, $text);
+		$text = $_POST['fData'];//'kaise ho';
+		$trans = new GoogleTranslate();
+		$result = $trans->translate($source, $target, $text);
 
 		$file_name = $directory_path . $source . 'translations-file.txt';
-		$file_pointer = fopen($file_name, 'a') or die('unable to open file'); // create and open the file
+		$file_pointer = fopen($file_name, 'r+') or die('unable to open file'); // create and open the file
 		
 		while (!feof($file_pointer)) {
-			// code...
+			
 			$val = fgets($file_pointer);
 			$val = explode(" : ", $val);
 			if ($val[0] != $text) {
-				$translateValue = $text . ' : ' . $result;
-				fwrite($file_pointer, $translateValue);
+				$result = $text . ' : ' . $result . PHP_EOL;
+				fwrite($file_pointer, $result);
 			}
 		}
 		fclose($file_pointer); // close the file
-
-		
-		readfile($new_file_name); // read the content of file just created
+		echo $result;//json_encode(array('a' => $result));
 	}
-
-	echo json_encode(array('a' => $result));
+}
+else if ($_POST['fType'] == 'datatranslate') {
+	
+	$directory_path = './Translate Folder/';
+	if (is_dir($directory_path)) {
+		
+		$data = '';
+		$files = scandir($directory_path, 0);
+		for ($i = 2; $i < count($files); $i++) { 
+			$file_n = $directory_path . $files[$i];
+			$fp = fopen($file_n, 'r');
+			while(!feof($fp)) {
+				$data .= fgets($fp) . PHP_EOL;
+			}
+		}
+		echo(json_encode($data));
+	}
 }
 else {
 

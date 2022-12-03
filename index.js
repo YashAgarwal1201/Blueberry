@@ -56,7 +56,7 @@ function speechRecog (arg) {
 			}
 			else {
 				recognition.stop();
-				console.log(recognition.lang)
+				//console.log(recognition.lang)
 				queryProcess(result);
 			}
 		}
@@ -87,7 +87,18 @@ function speechSpeak (arg) {
 function queryProcess(arg) {
 	let queryProcessVariable = arg.toLowerCase()
 	if (translateData) {
-
+		$.ajax({
+			type: 'POST',
+			url: 'ajaxHandler.php',
+			data: {fType: 'translate', fData: queryProcessVariable}
+		}).done((argument) => {
+			//translateData += argument
+			argument = argument.replace(/\r\n/g, ',')
+		translateData = argument.split(',').filter(function(n) {return n; })
+			console.log(translateData)
+		}).fail((error) => {
+			console.log(error.responseText)
+		})
 	}
 	//queryProcessVariable = textProcess(queryProcessVariable)
 	queryResult(queryProcessVariable)
@@ -251,11 +262,13 @@ $(document).ready(function () {
 		type: 'POST',
 		url: 'ajaxHandler.php',
 		dataType: 'json',
-		data: {fType: 'translate'},
-		success: function(argument) {
-			translateData = argument
-			console.log(translateData)
-		}
+		data: {fType: 'datatranslate'}
+	}).done( (argument) => {
+		translateData = argument.replace(/\r\n/g, ',')
+		translateData = translateData.split(',').filter(function(n) {return n; })
+		console.log(translateData)
+	}).fail((error) => {
+		console.log(error.responseText)
 	})
 	mainFunction()
 })
