@@ -1,275 +1,3 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Express CRUD UI</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: #f4f6fb;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      color: #333;
-    }
-    .container {
-      background: #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      border-radius: 12px;
-      padding: 2em 2.5em;
-      margin-top: 3em;
-      width: 100%;
-      max-width: 600px;
-    }
-    h1 {
-      color: #2d3a4a;
-      text-align: center;
-      margin-bottom: 0.5em;
-    }
-    h2 {
-      color: #2d3a4a;
-      border-bottom: 2px solid #e0e7ef;
-      padding-bottom: 0.5em;
-      margin-top: 1.5em;
-    }
-    .form-group {
-      margin-bottom: 1em;
-    }
-    label {
-      display: block;
-      margin-bottom: 0.5em;
-      font-weight: 500;
-      color: #4a5568;
-    }
-    input[type="text"] {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 0.8em;
-      border: 1px solid #cfd8dc;
-      border-radius: 6px;
-      font-size: 1em;
-      background: #f9fbfc;
-    }
-    button {
-      background: #2d7ef7;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      padding: 0.8em 1.2em;
-      font-size: 1em;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    button:hover {
-      background: #195bb5;
-    }
-    .list-container {
-      margin-top: 2em;
-    }
-    #items-list {
-      list-style-type: none;
-      padding: 0;
-    }
-    .item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.8em 1em;
-      border: 1px solid #e0e7ef;
-      border-radius: 8px;
-      background: #fdfdfd;
-      margin-bottom: 0.5em;
-      transition: background 0.2s;
-    }
-    .item:hover {
-      background: #f6fafd;
-    }
-    .item-name {
-      flex-grow: 1;
-      margin-right: 1em;
-    }
-    .item button {
-      padding: 0.4em 0.8em;
-      margin-left: 0.5em;
-    }
-    .delete-btn {
-      background: #dc3545;
-    }
-    .delete-btn:hover {
-      background: #c82333;
-    }
-    pre {
-      background: #f0f4f7;
-      border-radius: 8px;
-      padding: 1em;
-      white-space: pre-wrap;
-      word-break: break-all;
-      font-size: 0.9em;
-      color: #3a4a5a;
-      overflow-x: auto;
-    }
-    #status-message {
-      margin-top: 1.5em;
-      padding: 1em;
-      border-radius: 8px;
-      background: #e9f5ff;
-      border: 1px solid #b3d9ff;
-      color: #004085;
-      display: none;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Express CRUD Demo UI</h1>
-    <div id="status-message"></div>
-
-    <div class="list-container">
-      <h2>Items List (READ)</h2>
-      <ul id="items-list"></ul>
-    </div>
-
-    <form id="createForm">
-      <h2>Create New Item (POST)</h2>
-      <div class="form-group">
-        <label for="createName">Item Name:</label>
-        <input type="text" id="createName" required>
-      </div>
-      <button type="submit">Create Item</button>
-    </form>
-    
-    <form id="updateForm">
-      <h2>Update Item (PUT)</h2>
-      <div class="form-group">
-        <label for="updateId">Item ID:</label>
-        <input type="text" id="updateId" required>
-      </div>
-      <div class="form-group">
-        <label for="updateName">New Item Name:</label>
-        <input type="text" id="updateName" required>
-      </div>
-      <button type="submit">Update Item</button>
-    </form>
-  </div>
-
-  <script>
-    const API_URL = 'http://localhost:3000/items';
-    const itemsList = document.getElementById('items-list');
-    const statusMessage = document.getElementById('status-message');
-
-    // Display a status message
-    function showStatus(message, isError = false) {
-      statusMessage.textContent = message;
-      statusMessage.style.display = 'block';
-      statusMessage.style.background = isError ? '#f8d7da' : '#d4edda';
-      statusMessage.style.borderColor = isError ? '#f5c6cb' : '#c3e6cb';
-      statusMessage.style.color = isError ? '#721c24' : '#155724';
-      setTimeout(() => {
-        statusMessage.style.display = 'none';
-      }, 3000);
-    }
-
-    // Function to fetch and render all items (READ)
-    async function fetchItems() {
-      try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        itemsList.innerHTML = ''; // Clear the list
-        data.forEach(item => {
-          const li = document.createElement('li');
-          li.className = 'item';
-          li.innerHTML = `
-            <span class="item-name">ID: ${item.id} | Name: ${item.name}</span>
-            <button class="delete-btn" onclick="deleteItem(${item.id})">Delete</button>
-          `;
-          itemsList.appendChild(li);
-        });
-      } catch (error) {
-        console.error('Failed to fetch items:', error);
-        showStatus('Failed to load items.', true);
-      }
-    }
-
-    // Handle Create (POST)
-    document.getElementById('createForm').onsubmit = async function(e) {
-      e.preventDefault();
-      const name = document.getElementById('createName').value;
-      try {
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name })
-        });
-        if (res.ok) {
-          showStatus('Item created successfully!');
-          document.getElementById('createName').value = '';
-          fetchItems(); // Refresh the list
-        } else {
-          const errorText = await res.text();
-          showStatus(`Error creating item: ${errorText}`, true);
-        }
-      } catch (error) {
-        showStatus('Failed to connect to the server.', true);
-      }
-    };
-
-    // Handle Update (PUT)
-    document.getElementById('updateForm').onsubmit = async function(e) {
-      e.preventDefault();
-      const id = document.getElementById('updateId').value;
-      const name = document.getElementById('updateName').value;
-      try {
-        const res = await fetch(`${API_URL}/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name })
-        });
-        if (res.ok) {
-          showStatus('Item updated successfully!');
-          document.getElementById('updateId').value = '';
-          document.getElementById('updateName').value = '';
-          fetchItems(); // Refresh the list
-        } else {
-          const errorText = await res.text();
-          showStatus(`Error updating item: ${errorText}`, true);
-        }
-      } catch (error) {
-        showStatus('Failed to connect to the server.', true);
-      }
-    };
-    
-    // Handle Delete (DELETE)
-    async function deleteItem(id) {
-      if (!confirm('Are you sure you want to delete this item?')) {
-        return;
-      }
-      try {
-        const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          showStatus('Item deleted successfully!');
-          fetchItems(); // Refresh the list
-        } else {
-          const errorText = await res.text();
-          showStatus(`Error deleting item: ${errorText}`, true);
-        }
-      } catch (error) {
-        showStatus('Failed to connect to the server.', true);
-      }
-    }
-
-    // Initial fetch to populate the list when the page loads
-    document.addEventListener('DOMContentLoaded', fetchItems);
-  </script>
-</body>
-</html> -->
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -322,8 +50,8 @@
 </head>
 <body class="transition-colors duration-300">
 
-  <div class="min-h-screen flex flex-col items-center p-4 sm:p-6 bg-[var(--color-bg-primary)]">
-    <div class="w-full max-w-2xl bg-[var(--color-bg-card)] rounded-xl shadow-lg p-6 sm:p-8 mt-8 border border-[var(--color-border)]">
+  <div class="w-dvw h-dvh flex flex-col items-center p-4 sm:p-6 bg-[var(--color-bg-primary)]">
+    <div class="w-full bg-[var(--color-bg-card)] rounded-xl shadow-lg p-6 sm:p-8 border border-[var(--color-border)]">
       
       <!-- Header with title and theme toggle -->
       <header class="flex flex-col justify-between items-center gap-4 mb-6">
@@ -353,7 +81,7 @@
           <input type="text" id="createName" required placeholder="Enter item name" 
             class="flex-grow px-4 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] mb-4 sm:mb-0">
           <button type="submit" 
-            class="px-6 py-2 rounded-lg font-semibold text-white bg-[var(--color-button-bg)] hover:bg-[var(--color-button-hover)] transition-colors duration-300">
+            class="flex-shrink-0 px-6 py-2 rounded-lg font-semibold text-white bg-[var(--color-button-bg)] hover:bg-[var(--color-button-hover)] transition-colors duration-300">
             <i class="fas fa-plus mr-2"></i> Create
           </button>
         </form>
@@ -368,7 +96,7 @@
           <input type="text" id="updateName" required placeholder="New name" 
             class="w-full sm:w-2/3 px-4 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] mb-4 sm:mb-0">
           <button type="submit" 
-            class="px-6 py-2 rounded-lg font-semibold text-white bg-[var(--color-button-bg)] hover:bg-[var(--color-button-hover)] transition-colors duration-300">
+            class="flex-shrink-0 px-6 py-2 rounded-lg font-semibold text-white bg-[var(--color-button-bg)] hover:bg-[var(--color-button-hover)] transition-colors duration-300">
             <i class="fas fa-edit mr-2"></i> Update
           </button>
         </form>
@@ -378,7 +106,7 @@
   </div>
 
   <script>
-    const API_URL = 'http://localhost:3000/items';
+    const API_URL = 'http://localhost:8100/items';
     const itemsList = document.getElementById('items-list');
     const statusMessage = document.getElementById('status-message');
     const themeToggleBtn = document.getElementById('theme-toggle');
@@ -398,7 +126,7 @@
       }
       setTimeout(() => {
         statusMessage.classList.add('hidden');
-      }, 3000);
+      }, 8100);
     }
 
     // Function to fetch and render all items (READ)

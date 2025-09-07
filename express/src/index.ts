@@ -3,7 +3,7 @@
 // const itemsRouter = require("./routes/items");
 
 // const app = express();
-// const PORT = 3000;
+// const PORT = 8100;
 
 // // Use the middleware for all incoming requests
 // app.use(loggerMiddleware);
@@ -36,7 +36,7 @@ import { loggerMiddleware } from "./middleware/logger-middleware";
 import itemsRouter from "./routes/items";
 
 const app: Application = express();
-const PORT: number = 3000;
+const PORT: number = 8100;
 
 app.use(loggerMiddleware);
 

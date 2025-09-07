@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Blueberry | CRUD using FastAPI</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 w-dvw h-dvh flex flex-col">
+
+    <header class="bg-blue-600 text-white p-6 shadow-md flex flex-col md:flex-row justify-between items-center flex-shrink-0">
+        <h1 class="text-3xl font-bold mb-4 md:mb-0 text-center">FastAPI CRUD Operations</h1>
+        <div class="flex gap-4">
+            <a href="https://yashagarwal1201.vercel.app/" target="_blank" rel="noopener noreferrer nofollow" class="bg-blue-800 hover:bg-blue-900 px-4 py-2 rounded-md transition">
+                Developer Profile
+            </a>
+            <a href="https://github.com/YashAgarwal1201/Blueberry" target="_blank" rel="noopener noreferrer nofollow" class="bg-blue-800 hover:bg-blue-900 px-4 py-2 rounded-md transition">
+                View Repo
+            </a>
+        </div>
+    </header>
+
+    <main class="container mx-auto flex-grow p-4 flex flex-col gap-8 max-w-full overflow-y-auto">
+
+        <!-- Create User Form -->
+        <section class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Create User</h2>
+            <form id="createForm" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <input type="text" id="name" placeholder="Name" required class="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                <input type="email" id="email" placeholder="Email" required class="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                <input type="number" id="age" placeholder="Age" required class="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                <button type="submit" class="sm:col-span-3 bg-blue-600 text-white rounded-md py-2 hover:bg-blue-700 transition">Create User</button>
+            </form>
+        </section>
+
+        <!-- Users List -->
+        <section class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800 flex justify-between items-center">
+                Users List
+                <button id="loadUsers" class="bg-blue-600 text-white rounded-md px-4 py-2 hover:bg-blue-700 transition flex items-center gap-2">
+                    Refresh
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display:none;" id="spinner">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582a9 9 0 018.841-6v3a6 6 0 00-6 6H4z" />
+                    </svg>
+                </button>
+            </h2>
+            <div id="usersList" class="space-y-4"></div>
+        </section>
+
+        <!-- Update User Form -->
+        <section class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Update User</h2>
+            <form id="updateForm" class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+                <input type="number" id="updateId" placeholder="User ID" required class="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                <input type="text" id="updateName" placeholder="New Name" class="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                <input type="email" id="updateEmail" placeholder="New Email" class="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                <input type="number" id="updateAge" placeholder="New Age" class="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                <button type="submit" class="sm:col-span-4 bg-green-600 text-white rounded-md py-2 hover:bg-green-700 transition">Update User</button>
+            </form>
+        </section>
+
+        <!-- Delete User -->
+        <section class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Delete User</h2>
+            <form id="deleteForm" class="flex gap-4 flex-col sm:flex-row items-center">
+                <input type="number" id="deleteId" placeholder="User ID" required class="border border-gray-300 rounded-md p-2 flex-grow focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                <button type="submit" class="bg-red-600 text-white rounded-md py-2 px-6 hover:bg-red-700 transition">Delete User</button>
+            </form>
+        </section>
+
+        <!-- Messages -->
+        <section id="message" class="hidden rounded-md p-4"></section>
+
+    </main>
+
+    
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
