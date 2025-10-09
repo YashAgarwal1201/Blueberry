@@ -4,16 +4,17 @@ const router: Router = express.Router();
 
 interface Item {
   id: number;
-  name: string;
+  title: string;
+  description?: string;
 }
 
 interface ItemRequestBody {
-  name: string;
+  title: string;
 }
 
 let items: Item[] = [
-  { id: 1, name: "Item 1" },
-  { id: 2, name: "Item 2" },
+  { id: 1, title: "Avengers", description: "" },
+  { id: 2, title: "Jumanji", description: "abcd" },
 ];
 
 let nextId: number = 3;
@@ -42,16 +43,16 @@ router.post(
     req: Request<{}, Item, ItemRequestBody>,
     res: Response<Item | string>
   ): void => {
-    const { name } = req.body;
+    const { title } = req.body;
 
-    if (!name) {
+    if (!title) {
       res.status(400).send("Name is required.");
       return;
     }
 
     const newItem: Item = {
       id: nextId++,
-      name: name,
+      title: title,
     };
 
     items.push(newItem);
@@ -74,13 +75,13 @@ router.put(
       return;
     }
 
-    const { name } = req.body;
-    if (!name) {
+    const { title } = req.body;
+    if (!title) {
       res.status(400).send("Name is required.");
       return;
     }
 
-    item.name = name;
+    item.title = title;
     res.json(item);
   }
 );
