@@ -11,11 +11,12 @@
 
     <div class="flex gap-3">
       <button
-        v-for="(backend, key) in backendList"
+        v-for="(backend, key) in backendOptions"
         :key="key"
         :title="backend.title"
-        @click="mainStore.backend = backend"
-        class="w-24 aspect-video rounded-xl flex items-center justify-center gap-x-2 cursor-pointer bg-indigo-700 dark:bg-indigo-600 text-white dark:text-white"
+        :disabled="backend.status !== 'online'"
+        @click="useBackend(backend)"
+        class="disabled:opacity-70 disabled:cursor-not-allowed w-24 aspect-video rounded-xl flex items-center justify-center gap-x-2 cursor-pointer bg-indigo-700 dark:bg-indigo-600 text-white dark:text-white"
       >
         {{ backend.title }}
       </button>
@@ -42,18 +43,35 @@
 
 <script setup lang="ts">
 import { useMainStore } from '@/stores/mainStore'
+import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 
-const backendList = [
-  {
-    title: 'Express',
-    url: 'http://localhost:8100',
-  },
-  {
-    title: 'Fast API',
-    url: 'http://localhost:8000',
-  },
-]
+// const backendList = [
+//   {
+//     title: 'Express',
+//     url: 'http://localhost:8100',
+//   },
+//   {
+//     title: 'Fast API',
+//     url: 'http://localhost:8000',
+//   },
+// ]
 
 const mainStore = useMainStore()
+
+const backendOptions = ref(mainStore.backends.map((b) => ({ ...b, status: 'unknown' })))
+
+onMounted(async () => {
+  for (const b of backendOptions.value) {
+    const alive = await mainStore.checkBackendHealth(b.url)
+    b.status = alive ? 'online' : 'offline'
+  }
+})
+
+async function useBackend(b: { status: string; url: string }) {
+  if (b.status === 'online') {
+    await mainStore.selectBackend(b.url)
+    // navigate to dashboard
+  }
+}
 </script>

@@ -147,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useMoviesStore } from '@/stores/moviesStore'
 import { useMainStore } from '@/stores/mainStore'
 import { useRouter, RouterLink } from 'vue-router'
@@ -193,6 +193,18 @@ onMounted(() => {
     showToast('warn', 'Warning', 'No backend selected. Navigating to home page.')
     router.push('/')
   }
+})
+
+onMounted(() => {
+  const checkInterval = setInterval(async () => {
+    const isAlive = await mainStore.checkBackendHealth(mainStore.backend.url)
+    if (!isAlive) {
+      showToast('error', 'Disconnected', 'Backend went offline. Redirecting home...')
+      router.push('/')
+    }
+  }, 10000) // check every 10s
+
+  onUnmounted(() => clearInterval(checkInterval))
 })
 
 // Dialog state
