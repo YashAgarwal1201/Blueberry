@@ -1,0 +1,17 @@
+{
+  "short_name": "Blueberry",
+  "name": "Blueberry Dashboard",
+  "icons": [
+    {
+      "src": "./logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#fafafa",
+  "background_color": "#0f172b",
+  "prefer-related-application": true
+}

@@ -39,21 +39,34 @@ import cors from "cors";
 const app: Application = express();
 const PORT: number = 8100;
 
-// --- CORS FIX HERE ---
 app.use(
   cors({
     origin: "http://localhost:5130", // your frontend URL
     credentials: true, // if you need to send cookies or auth headers
   })
 );
-// ---------------------
 
 app.use(loggerMiddleware);
 
 app.use(express.json());
-app.use(express.static("public"));
+
+app.get("/health", (req: Request, res: Response): void => {
+  const clientIp =
+    req.headers["x-forwarded-for"]?.toString().split(",")[0].trim() ||
+    req.socket.remoteAddress ||
+    "unknown";
+
+  res.status(200).json({
+    status: "ok",
+    message: "Server is healthy.",
+    ip: clientIp,
+    timestamp: new Date().toISOString(),
+  });
+});
 
 app.use("/items", itemsRouter);
+
+app.use(express.static("public"));
 
 app.get("/", (req: Request, res: Response): void => {
   // res.send('Welcome to Express CRUD learning!');
