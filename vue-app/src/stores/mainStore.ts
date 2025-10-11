@@ -15,6 +15,7 @@ export const useMainStore = defineStore('mainStore', () => {
     url: '',
     status: 'unknown' as BackendStatus,
   })
+  const showSideMenu = ref<boolean>(false)
 
   const backends = [
     {
@@ -55,5 +56,9 @@ export const useMainStore = defineStore('mainStore', () => {
     }
   }
 
-  return { backend, backends, selectBackend, checkBackendHealth }
+  const toggleSideMenu = () => {
+    showSideMenu.value = !showSideMenu.value
+  }
+
+  return { backend, backends, showSideMenu, selectBackend, checkBackendHealth, toggleSideMenu }
 })

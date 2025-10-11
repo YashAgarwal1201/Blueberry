@@ -2,6 +2,7 @@
 import { RouterView } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import { Toast } from 'primevue'
+import SideMenu from './components/SideMenu.vue'
 </script>
 
 <template>
@@ -17,7 +18,7 @@ import { Toast } from 'primevue'
       <RouterView />
     </div>
 
-    <!-- <SideMenu /> -->
+    <SideMenu />
   </div>
 </template>
 
