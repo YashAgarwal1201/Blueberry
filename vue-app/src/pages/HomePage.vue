@@ -4,9 +4,11 @@
   >
     <div>
       <h1 class="font-heading text-2xl sm:text-3xl text-slate-900 dark:text-slate-100">
-        Welcome to blueberry
+        Welcome to Blueberry
       </h1>
-      <p class="font-content text-slate-600 dark:text-slate-400">Choose you backend.</p>
+      <p class="font-content text-slate-600 dark:text-slate-400">
+        Choose you backend to view your movies collection.
+      </p>
     </div>
 
     <div class="flex gap-3">
@@ -16,16 +18,24 @@
         :title="backend.title"
         :disabled="backend.status !== 'online'"
         @click="useBackend(backend)"
-        class="disabled:opacity-70 disabled:cursor-not-allowed w-24 aspect-video rounded-xl flex items-center justify-center gap-x-2 cursor-pointer bg-indigo-700 dark:bg-indigo-600 text-white dark:text-white"
+        class="disabled:opacity-70 disabled:cursor-not-allowed relative w-24 aspect-video rounded-xl flex items-center justify-center gap-x-2 cursor-pointer bg-indigo-700 dark:bg-indigo-600 text-white dark:text-white"
       >
         {{ backend.title }}
+
+        <Check
+          :size="16"
+          class="absolute -top-1 -right-1 bg-green-500 rounded-full p-1"
+          v-if="mainStore.backend.title === backend.title"
+        />
       </button>
     </div>
 
     <div class="text-slate-600 dark:text-slate-400">
-      Current selected backend is,
+      Your current selected backend is,
       <span class="text-slate-900 dark:text-slate-100 underline">{{
-        mainStore.backend.title ?? 'N/A'
+        mainStore.backend.title && mainStore.backend.title.length
+          ? mainStore.backend.title
+          : 'No backend'
       }}</span
       >.
     </div>
@@ -43,19 +53,9 @@
 
 <script setup lang="ts">
 import { useMainStore } from '@/stores/mainStore'
+import { Check } from 'lucide-vue-next'
 import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
-
-// const backendList = [
-//   {
-//     title: 'Express',
-//     url: 'http://localhost:8100',
-//   },
-//   {
-//     title: 'Fast API',
-//     url: 'http://localhost:8000',
-//   },
-// ]
 
 const mainStore = useMainStore()
 

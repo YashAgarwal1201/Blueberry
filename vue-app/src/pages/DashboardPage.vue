@@ -2,16 +2,21 @@
   <div
     class="w-full h-full p-2 sm:p-3 flex flex-col gap-y-6 md:gap-y-8 border border-slate-200 dark:border-slate-700 rounded-xl"
   >
-    <div>
+    <div class="flex-shrink-0">
       <h1 class="font-heading text-2xl sm:text-3xl text-slate-900 dark:text-slate-100">
         Dashboard
       </h1>
-      <p class="font-content text-slate-600 dark:text-slate-400">View your movies collection.</p>
+      <p class="font-content text-slate-600 dark:text-slate-400">
+        View your movies collection
+        {{ mainStore.backend.title.length ? 'from ' + mainStore.backend.title + ' backend' : '' }}
+      </p>
     </div>
 
     <!-- Toolbar -->
-    <div class="flex flex-col gap-y-3 p-2 sm:p-3 bg-blue-50 dark:bg-slate-800 rounded-lg">
-      <div class="flex flex-row items-center gap-x-2 md:gap-x-3">
+    <div
+      class="flex-grow flex flex-col gap-y-3 p-2 sm:p-3 bg-blue-50 dark:bg-slate-800 rounded-lg min-h-0"
+    >
+      <div class="flex-shrink-0 flex flex-row items-center gap-x-2 md:gap-x-3">
         <!-- Global Search -->
         <InputText
           v-model="globalFilter"
@@ -49,7 +54,9 @@
         paginator
         :rows="10"
         :loading="moviesStore.loading"
-        class="p-datatable-gridlines !rounded-xl"
+        class="p-datatable-gridlines !rounded-xl !flex-grow min-h-0"
+        scrollable
+        scroll-height="flex"
       >
         <Column field="id" header="ID" style="width: 90px" sortable class="w-24" />
         <Column field="title" header="Title" sortable class="w-2xs" />
@@ -82,7 +89,7 @@
     </div>
 
     <!-- Back button -->
-    <div class="mt-auto flex justify-start">
+    <div class="flex-shrink-0 mt-auto flex justify-start">
       <RouterLink
         to="/"
         class="px-4 py-2 rounded-full flex items-center justify-center gap-x-2 cursor-pointer bg-indigo-700 dark:bg-indigo-600 text-white"
