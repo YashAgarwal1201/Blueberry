@@ -29,13 +29,6 @@ const updateStmt = db.prepare(
 );
 const deleteStmt = db.prepare("DELETE FROM items WHERE id = ?");
 
-// let items: Item[] = [
-//   { id: 1, title: "Avengers", description: "Superhero team saves the world." },
-//   { id: 2, title: "Jumanji", description: "Adventurous board game gone wild." },
-// ];
-
-// let nextId = 3;
-
 // Helper to parse ID safely
 // const getItemById = (req: Request): Item | undefined => {
 //   const id = parseInt(req.params.id);
@@ -80,7 +73,13 @@ router.post(
 
     // items.push(newItem);
 
-    const info = insertStmt.run(title.trim(), (description ?? "").trim());
+    const info = insertStmt.run(
+      title.trim(),
+      (description && description.length > 0
+        ? description
+        : "Description not available."
+      )?.trim()
+    );
     const created = selectByIdStmt.get(info.lastInsertRowid);
     res.status(201).json(created);
   }
