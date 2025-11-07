@@ -1,3 +1,4 @@
+import HomePage from '@/pages/HomePage.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
@@ -6,12 +7,52 @@ const router = createRouter({
     {
       path: '/',
       name: 'Home',
-      component: () => import('./../pages/HomePage.vue'), // or any placeholder component
+      component: HomePage,
     },
     {
-      path: '/dashboard',
-      name: 'Dashboard',
-      component: () => import('./../pages/DashboardPage.vue'),
+      path: '/profile',
+      name: 'Profile',
+      component: () => import('../pages/ProfilePage.vue'),
+    },
+    {
+      path: '/settings',
+      name: 'Settings',
+      component: () => import('./../pages/SettingsPage.vue'),
+    },
+    {
+      path: '/genres',
+      name: 'Genres',
+      component: () => import('../pages/GenresPage.vue'),
+    },
+    {
+      path: '/languages',
+      name: 'Languages',
+      component: () => import('./../pages/LanguagesPage.vue'),
+    },
+    {
+      path: '/watchlist',
+      name: 'Watchlist',
+      component: () => import('./../pages/WatchListPage.vue'),
+    },
+    {
+      path: '/movies',
+      name: 'movies',
+      component: () => import('@/pages/AllMoviesPage.vue'),
+    },
+    {
+      path: '/movies/:id',
+      name: 'movie-detail',
+      component: () => import('@/pages/MovieDetailsPage.vue'),
+    },
+    {
+      path: '/movies/add',
+      name: 'add-movie',
+      component: () => import('@/pages/MovieFormPage.vue'),
+    },
+    {
+      path: '/movies/:id/edit',
+      name: 'edit-movie',
+      component: () => import('@/pages/MovieFormPage.vue'),
     },
   ],
 })

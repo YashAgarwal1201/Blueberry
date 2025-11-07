@@ -38,6 +38,50 @@
 
             <div class="mx-2 my-1 p-0 max-w-full h-[1.5px] bg-slate-200 dark:bg-slate-700"></div>
 
+            <RouterLink
+              :class="buttonStyles"
+              :to="'/watchlist'"
+              class="text-slate-900 dark:text-slate-100 !border-none !flex !items-center !justify-start shadow-none"
+            >
+              <List :size="16" class="text-slate-500" />
+              <span>Watchlist</span>
+            </RouterLink>
+
+            <div class="mx-2 my-1 p-0 max-w-full h-[1.5px] bg-slate-200 dark:bg-slate-700"></div>
+
+            <RouterLink
+              :class="buttonStyles"
+              :to="'/languages'"
+              class="text-slate-900 dark:text-slate-100 !border-none !flex !items-center !justify-start shadow-none"
+            >
+              <Blocks :size="16" class="text-slate-500" />
+              <span>Languages</span>
+            </RouterLink>
+
+            <div class="mx-2 my-1 p-0 max-w-full h-[1.5px] bg-slate-200 dark:bg-slate-700"></div>
+
+            <RouterLink
+              :class="buttonStyles"
+              :to="'/genres'"
+              class="text-slate-900 dark:text-slate-100 !border-none !flex !items-center !justify-start shadow-none"
+            >
+              <Blocks :size="16" class="text-slate-500" />
+              <span>Genres</span>
+            </RouterLink>
+
+            <div class="mx-2 my-1 p-0 max-w-full h-[1.5px] bg-slate-200 dark:bg-slate-700"></div>
+
+            <RouterLink
+              :class="buttonStyles"
+              :to="'/settings'"
+              class="text-slate-900 dark:text-slate-100 !border-none !flex !items-center !justify-start shadow-none"
+            >
+              <Wrench :size="16" class="text-slate-500" />
+              <span>Settings</span>
+            </RouterLink>
+
+            <div class="mx-2 my-1 p-0 max-w-full h-[1.5px] bg-slate-200 dark:bg-slate-700"></div>
+
             <a
               :class="buttonStyles"
               :href="DEVELOPER_PROFILE"
@@ -56,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { Palette, UserCircle } from 'lucide-vue-next'
+import { Blocks, List, Palette, UserCircle, Wrench } from 'lucide-vue-next'
 import { Drawer, Select } from 'primevue'
 // import { ref } from "vue";
 import { useMainStore } from '@/stores/mainStore'
