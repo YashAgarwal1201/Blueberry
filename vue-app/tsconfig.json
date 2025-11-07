@@ -9,7 +9,10 @@
     }
   ],
   "compilerOptions": {
-    "noImplicitAny": false,
-    "strict": false
+    "noImplicitAny": true,
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noEmitOnError": false
   }
 }

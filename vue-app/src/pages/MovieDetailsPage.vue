@@ -176,7 +176,7 @@ import { useMoviesStore } from '@/stores/moviesStore'
 import { useLanguagesStore } from '@/stores/languagesStore'
 // import { useMainStore } from '@/stores/mainStore'
 import { useWatchlistStore } from '@/stores/watchListStore'
-import type { Movie, UpdateMovieRequest } from '@/types/movies'
+import type { MovieWithLanguages, UpdateMovieRequest } from '@/types/movies'
 import { Button } from 'primevue'
 
 const route = useRoute()
@@ -186,7 +186,7 @@ const languagesStore = useLanguagesStore()
 const watchlistStore = useWatchlistStore()
 // const mainStore = useMainStore()
 
-const movie = ref<Movie | null>(null)
+const movie = ref<MovieWithLanguages | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 // const showEditDialog = ref(false)
