@@ -14,47 +14,45 @@ interface ItemRequestBody {
   description?: string;
 }
 
-// prepared statements for speed + safety
+// Prepared statements
 const insertStmt = db.prepare(
   "INSERT INTO items (title, description) VALUES (?, ?)"
 );
+
 const selectAllStmt = db.prepare(
   "SELECT id, title, description FROM items ORDER BY id"
 );
+
 const selectByIdStmt = db.prepare(
   "SELECT id, title, description FROM items WHERE id = ?"
 );
+
 const updateStmt = db.prepare(
   "UPDATE items SET title = ?, description = ? WHERE id = ?"
 );
+
 const deleteStmt = db.prepare("DELETE FROM items WHERE id = ?");
 
-// Helper to parse ID safely
-// const getItemById = (req: Request): Item | undefined => {
-//   const id = parseInt(req.params.id);
-//   return items.find((i) => i.id === id);
-// };
-
-// GET all items (READ)
+// GET /items - Get all items
 router.get("/", (req: Request, res: Response): void => {
   const data = selectAllStmt.all();
   res.json({ items: data });
 });
 
-// GET single item (READ)
+// GET /items/:id - Get single item
 router.get("/:id", (req: Request, res: Response): void => {
   const id = parseInt(req.params.id);
-
   const item = selectByIdStmt.get(id);
-  // const item = getItemById(req);
+
   if (!item) {
     res.status(404).json({ error: "Item not found." });
     return;
   }
+
   res.json(item);
 });
 
-// POST new item (CREATE)
+// POST /items - Create new item
 router.post(
   "/",
   (req: Request<{}, Item, ItemRequestBody>, res: Response): void => {
@@ -65,14 +63,6 @@ router.post(
       return;
     }
 
-    // const newItem: Item = {
-    //   id: nextId++,
-    //   title: title.trim(),
-    //   description: description?.trim() || "",
-    // };
-
-    // items.push(newItem);
-
     const info = insertStmt.run(
       title.trim(),
       (description && description.length > 0
@@ -80,33 +70,28 @@ router.post(
         : "Description not available."
       )?.trim()
     );
+
     const created = selectByIdStmt.get(info.lastInsertRowid);
     res.status(201).json(created);
   }
 );
 
-// PATCH update (partial UPDATE)
+// PATCH /items/:id - Update item
 router.patch(
   "/:id",
   (
     req: Request<{ id: string }, Item | string, ItemRequestBody>,
     res: Response
   ): void => {
-    // const item = getItemById(req);
     const id = Number(req.params.id);
     if (Number.isNaN(id)) {
       res.status(400).json({ error: "Invalid id" });
       return;
     }
 
-    // if (!item) {
-    //   res.status(404).json({ error: "Item not found." });
-    //   return;
-    // }
-
     const { title, description } = req.body;
-
     const existing: any = selectByIdStmt.get(id);
+
     if (!existing) {
       res.status(404).json({ error: "Item not found" });
       return;
@@ -129,7 +114,7 @@ router.patch(
   }
 );
 
-// DELETE (REMOVE)
+// DELETE /items/:id - Delete item
 router.delete("/:id", (req: Request<{ id: string }>, res: Response): void => {
   const id = Number(req.params.id);
   if (Number.isNaN(id)) {

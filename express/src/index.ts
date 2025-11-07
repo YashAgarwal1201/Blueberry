@@ -1,54 +1,34 @@
-// const express = require("express");
-// const { loggerMiddleware } = require("./middleware/logger-middleware");
-// const itemsRouter = require("./routes/items");
-
-// const app = express();
-// const PORT = 8100;
-
-// // Use the middleware for all incoming requests
-// app.use(loggerMiddleware);
-
-// app.use(express.json());
-// app.use(express.static("public"));
-
-// app.use("/items", itemsRouter);
-
-// // Sample route
-// app.get("/", (req, res) => {
-//   // res.send('Welcome to Express CRUD learning!');
-//   res.sendFile(__dirname + "/public/index.html");
-// });
-
-// // Placeholder for CRUD routes
-// // TODO: Add create, read, update, delete endpoints
-
-// app.post("/", (req, res) => {
-//   // res.send('Welcome to Express CRUD learning!');
-//   res.send("hellow ");
-// });
-
-// app.listen(PORT, () => {
-//   console.log(`Server running on http://localhost:${PORT}`);
-// });
-
+// src/index.ts
 import express, { Request, Response, Application } from "express";
+import cors from "cors";
 import { loggerMiddleware } from "./middleware/logger-middleware";
 import itemsRouter from "./routes/items";
-import cors from "cors";
+import moviesRouter from "./routes/movies";
+import languagesRouter from "./routes/languages";
+import watchlistRouter from "./routes/watchlist";
 
 const app: Application = express();
-const PORT: number = 8100;
+const PORT = process.env.PORT || 8100;
 
 app.use(
   cors({
-    origin: "http://localhost:5130", // your frontend URL
-    credentials: true, // if you need to send cookies or auth headers
+    origin: "http://localhost:5130", // my frontend URL
+    credentials: true, // if i need to send cookies or auth headers
   })
 );
 
 app.use(loggerMiddleware);
 
+// Middleware
+// app.use(cors());
+// app.use(loggerMiddleware);
 app.use(express.json());
+app.use(express.static("public"));
+
+// Health check endpoint
+// app.get("/health", (req: Request, res: Response) => {
+//   res.json({ status: "ok", timestamp: new Date().toISOString() });
+// });
 
 app.get("/health", (req: Request, res: Response): void => {
   const clientIp =
@@ -64,20 +44,40 @@ app.get("/health", (req: Request, res: Response): void => {
   });
 });
 
-app.use("/items", itemsRouter);
+// Routes
+app.use("/items", itemsRouter); // Keeping old routes
+app.use("/movies", moviesRouter);
+app.use("/languages", languagesRouter);
+app.use("/watchlist", watchlistRouter);
 
-app.use(express.static("public"));
-
-app.get("/", (req: Request, res: Response): void => {
-  // res.send('Welcome to Express CRUD learning!');
-  res.sendFile(__dirname + "/public/index.html");
+// Root endpoint
+app.get("/", (req: Request, res: Response) => {
+  res.json({
+    message: "Movie Database API",
+    version: "1.0.0",
+    endpoints: {
+      movies: "/movies",
+      languages: "/languages",
+      watchlist: "/watchlist",
+      health: "/health",
+    },
+  });
 });
 
-app.post("/", (req: Request, res: Response): void => {
-  res.send("Welcome to Blueberry Express BE!");
-  // res.send("hello");
+// 404 handler
+app.use((req: Request, res: Response) => {
+  res.status(404).json({
+    success: false,
+    error: "Route not found",
+    path: req.path,
+  });
 });
 
-app.listen(PORT, (): void => {
+// Start server
+app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Database: SQLite (data/app.db)`);
+  console.log(`Routes: /movies, /languages, /watchlist`);
 });
+
+export default app;

@@ -8,7 +8,9 @@ const loggerMiddleware = (
   console.log(
     `Log: [${new Date().toISOString()}] ${req.method} ${req.originalUrl}`
   );
-  next(); // Pass control to the next middleware or route handler
+
+  // It passes control to the next middleware or route handler
+  next();
 };
 
 export { loggerMiddleware };

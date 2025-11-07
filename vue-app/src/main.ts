@@ -8,6 +8,7 @@ import ToastService from 'primevue/toastservice'
 
 import './styles.css'
 import { ConfirmationService } from 'primevue'
+import { startBackendMonitoring } from './services/apiInterceptors'
 
 if (typeof window !== 'undefined') {
   const savedTheme = localStorage.getItem('watermelon-theme') || 'system'
@@ -31,7 +32,9 @@ app.use(PrimeVue, {
     preset: Aura,
   },
 })
-app.use(ConfirmationService)
 app.use(ToastService)
+app.use(ConfirmationService)
+
+startBackendMonitoring()
 
 app.mount('#app')
