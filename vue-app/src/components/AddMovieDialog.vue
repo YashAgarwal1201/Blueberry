@@ -152,12 +152,12 @@ import MultiSelect from 'primevue/multiselect'
 import Button from 'primevue/button'
 import { useMoviesStore } from '@/stores/moviesStore'
 import { useLanguagesStore } from '@/stores/languagesStore'
-import type { Movie, CreateMovieRequest, UpdateMovieRequest } from '@/types/movies'
+import type { CreateMovieRequest, UpdateMovieRequest, MovieWithLanguages } from '@/types/movies'
 
 // Props
 interface Props {
   visible: boolean
-  movie?: Movie | null // If provided, it's edit mode
+  movie?: MovieWithLanguages | null // If provided, it's edit mode
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -168,8 +168,8 @@ const props = withDefaults(defineProps<Props>(), {
 // Emits
 const emit = defineEmits<{
   'update:visible': [value: boolean]
-  'movie-added': [movie: Movie]
-  'movie-updated': [movie: Movie]
+  'movie-added': [movie: MovieWithLanguages]
+  'movie-updated': [movie: MovieWithLanguages]
 }>()
 
 // Stores
