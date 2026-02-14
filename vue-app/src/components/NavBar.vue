@@ -19,11 +19,11 @@
         ><Blocks :size="16" />
       </RouterLink>
 
-      <RouterLink
+      <!-- <RouterLink
         to="/profile"
         class="cursor-pointer w-auto md:w-full h-full md:h-auto aspect-square rounded-2xl bg-indigo-700 dark:bg-indigo-600 text-white dark:text-white flex items-center justify-center"
         ><User :size="16" />
-      </RouterLink>
+      </RouterLink> -->
 
       <RouterLink
         to="/settings"
@@ -43,7 +43,7 @@
 
 <script setup lang="ts">
 import { useMainStore } from '@/stores/mainStore'
-import { Blocks, Film, Home, Menu, User, Wrench } from 'lucide-vue-next'
+import { Blocks, Film, Home, Menu, Wrench } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
 
 const mainStore = useMainStore()
