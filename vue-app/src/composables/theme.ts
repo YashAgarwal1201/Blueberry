@@ -2,6 +2,8 @@
 
 import { onMounted, ref, watch } from 'vue'
 
+const THEME_KEY = 'blueberry-theme'
+
 export const useTheme = () => {
   const theme = ref<'light' | 'dark' | 'system'>('system')
   const isDark = ref(false)
@@ -10,10 +12,8 @@ export const useTheme = () => {
 
   const updateTheme = (newTheme: 'light' | 'dark' | 'system') => {
     theme.value = newTheme
-
     if (!isClient) return
-
-    localStorage.setItem('watermelon-theme', newTheme)
+    localStorage.setItem(THEME_KEY, newTheme)
     applyTheme(newTheme)
   }
 
@@ -44,20 +44,22 @@ export const useTheme = () => {
   const initTheme = () => {
     if (!isClient) return
 
-    const savedTheme =
-      (localStorage.getItem('watermelon-theme') as 'light' | 'dark' | 'system') || 'system'
+    // migrate old key
+    const legacy = localStorage.getItem('watermelon-theme')
+    if (legacy) {
+      localStorage.setItem(THEME_KEY, legacy)
+      localStorage.removeItem('watermelon-theme')
+    }
+
+    const savedTheme = (localStorage.getItem(THEME_KEY) as 'light' | 'dark' | 'system') || 'system'
     theme.value = savedTheme
     applyTheme(savedTheme)
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     const handleChange = () => {
-      if (theme.value === 'system') {
-        applyTheme('system')
-      }
+      if (theme.value === 'system') applyTheme('system')
     }
-
     mediaQuery.addEventListener('change', handleChange)
-
     return () => mediaQuery.removeEventListener('change', handleChange)
   }
 

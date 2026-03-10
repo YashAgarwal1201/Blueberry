@@ -1,15 +1,78 @@
-/* @import url(https://fonts.bunny.net/css?family=space-mono:400,400i,700,700i|work-sans:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900i); */
-
 @import 'tailwindcss';
-
 @import 'primeicons/primeicons.css';
 
-@theme {
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Step 1: @theme inline — aliases only, NO hard-coded values ── */
+@theme inline {
   --font-heading: 'Space Mono', monospace;
   --font-content: 'Work Sans', sans-serif;
+
+  --breakpoint-3xl: 110rem;
+
+  /* Brand primitive scale — these are static, fine in @theme */
+  --color-brand-50: #fdf4ff;
+  --color-brand-100: #fae8ff;
+  --color-brand-200: #f5d0fe;
+  --color-brand-300: #e879f9;
+  --color-brand-400: #d946ef;
+  --color-brand-500: #c026d3;
+  --color-brand-600: #a21caf;
+  --color-brand-700: #86198f;
+  --color-brand-800: #701a75;
+  --color-brand-900: #581c6e;
+  --color-brand-950: #3b0764;
+
+  /* Semantic tokens — point to raw vars, NOT hard-coded colors */
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-on-primary: var(--on-primary);
+  --color-ring: var(--ring);
 }
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* ── Step 2: @layer base — actual values per scheme ── */
+@layer base {
+  :root {
+    --surface-0: #faf9f8;
+    --surface-1: #f3f1ef;
+    --surface-2: #eceae7;
+    --surface-3: #e4e1dd;
+    --border: #d4d0ca;
+    --text: #1c1917;
+    --text-muted: #78716c;
+    --primary: #a21caf;
+    --primary-hover: #86198f;
+    --primary-active: #701a75;
+    --primary-subtle: #fae8ff;
+    --on-primary: #ffffff;
+    --ring: #d946ef;
+  }
+
+  .dark {
+    --surface-0: #111110;
+    --surface-1: #1c1b1a;
+    --surface-2: #252422;
+    --surface-3: #2e2c2a;
+    --border: #3d3a37;
+    --text: #f5f5f4;
+    --text-muted: #a8a29e;
+    --primary: #d946ef;
+    --primary-hover: #e879f9;
+    --primary-active: #f5d0fe;
+    --primary-subtle: #3b0764;
+    --on-primary: #0d0009;
+    --ring: #d946ef;
+  }
+}
 
 * {
   box-sizing: border-box;

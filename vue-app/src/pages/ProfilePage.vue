@@ -1,12 +1,10 @@
 <template>
   <div
-    class="w-full h-full p-2 sm:p-3 flex flex-col gap-y-6 md:gap-y-8 border border-slate-200 dark:border-slate-700 rounded-xl"
+    class="w-full h-full p-2 sm:p-3 flex flex-col gap-y-6 md:gap-y-8 border border-border rounded-xl"
   >
     <div class="flex-shrink-0">
-      <h1 class="font-heading text-2xl sm:text-3xl text-slate-900 dark:text-slate-100">
-        Dashboard
-      </h1>
-      <p class="font-content text-slate-600 dark:text-slate-400">
+      <h1 class="font-heading text-2xl sm:text-3xl text-text">Dashboard</h1>
+      <p class="font-content text-text-muted">
         View your movies collection
         {{ mainStore.backend.title.length ? 'from ' + mainStore.backend.title + ' backend' : '' }}
       </p>
@@ -16,6 +14,7 @@
   </div>
 </template>
 
+<!-- script unchanged -->
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useMoviesStore } from '@/stores/moviesStore'
@@ -30,7 +29,6 @@ const mainStore = useMainStore()
 const router = useRouter()
 const showToast = toastHandler().showToast
 
-// Global filter
 const globalFilter = ref<string | null>(null)
 const filters = ref({
   global: { value: '', matchMode: FilterMatchMode.CONTAINS },
@@ -42,10 +40,8 @@ watch(globalFilter, (val) => {
   filters.value.global.value = val ?? ''
 })
 
-// Reactive movie list
 const movies = computed(() => moviesStore.movies)
 
-// Lifecycle
 onMounted(() => {
   if (mainStore.backend.url?.trim() !== '') {
     if (movies.value.length < 1) moviesStore.fetchMovies()
@@ -62,7 +58,7 @@ onMounted(() => {
       showToast('error', 'Disconnected', 'Backend went offline. Redirecting home...')
       router.push('/')
     }
-  }, 10000) // check every 10s
+  }, 10000)
 
   onUnmounted(() => clearInterval(checkInterval))
 })
