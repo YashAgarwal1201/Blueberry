@@ -1,16 +1,17 @@
 // stores/languagesStore.ts
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-// import { useMainStore } from './mainStore'
 import apiClient from '@/services/apiInterceptors'
-import type { Language } from '@/types/movies'
+import type { Language, MovieWithLanguages } from '@/types/movies'
 
 export const useLanguagesStore = defineStore('languagesStore', () => {
-  // const mainStore = useMainStore()
-
   const languages = ref<Language[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+
+  // Map keyed by language code — holds movies for multiple languages simultaneously
+  const moviesByLanguage = ref<Map<string, MovieWithLanguages[]>>(new Map())
+  const moviesLoadingMap = ref<Map<string, boolean>>(new Map())
 
   const languageMap = computed(() => {
     const map = new Map<number, Language>()
@@ -33,9 +34,8 @@ export const useLanguagesStore = defineStore('languagesStore', () => {
     error.value = null
     try {
       const response = await apiClient.get('/languages')
-      const data = response.data
-      languages.value = data.languages || []
-      return data.languages
+      languages.value = response.data.languages || []
+      return languages.value
     } catch (err: any) {
       console.error('Error fetching languages:', err)
       error.value = err.message
@@ -50,9 +50,8 @@ export const useLanguagesStore = defineStore('languagesStore', () => {
     error.value = null
     try {
       const response = await apiClient.post('/languages', { name, code })
-      const data = response.data
-      languages.value.push(data.language)
-      return data.language
+      languages.value.push(response.data.language)
+      return response.data.language as Language
     } catch (err: any) {
       console.error('Error adding language:', err)
       error.value = err.message
@@ -62,14 +61,33 @@ export const useLanguagesStore = defineStore('languagesStore', () => {
     }
   }
 
+  const fetchMoviesByLanguage = async (code: string) => {
+    moviesLoadingMap.value.set(code, true)
+    try {
+      const response = await apiClient.get(`/languages/${code}/movies?sort=recent`)
+      const movies: MovieWithLanguages[] = response.data.movies || []
+      moviesByLanguage.value.set(code, movies)
+      return movies
+    } catch (err: any) {
+      console.error(`Error fetching movies for language ${code}:`, err)
+      moviesByLanguage.value.set(code, [])
+      throw err
+    } finally {
+      moviesLoadingMap.value.set(code, false)
+    }
+  }
+
   return {
     languages,
     loading,
     error,
+    moviesByLanguage,
+    moviesLoadingMap,
     languageMap,
     languageByCode,
     getLanguageName,
     fetchLanguages,
     addLanguage,
+    fetchMoviesByLanguage,
   }
 })

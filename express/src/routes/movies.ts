@@ -1,163 +1,264 @@
 // src/routes/movies.ts
-
 import express, { Request, Response, Router } from "express";
 import db from "../db";
-import {
+import type {
   Movie,
-  MovieWithLanguages,
+  MovieWithDetails,
   Language,
+  Genre,
+  CastMember,
+  MovieCompany,
   CreateMovieRequest,
   UpdateMovieRequest,
+  CastMemberRequest,
+  CompanyRequest,
 } from "../types.ts";
 
 const router: Router = express.Router();
 
-// Prepared statements for database queries
-const insertMovieStmt = db.prepare(`
-  INSERT INTO movies (title, description, release_year, director, poster_url, runtime)
-  VALUES (?, ?, ?, ?, ?, ?)
-`);
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-const selectAllMoviesStmt = db.prepare(`
-  SELECT id, title, description, release_year, director, poster_url, runtime, created_at, updated_at
-  FROM movies
-  ORDER BY created_at DESC
-`);
-
-const selectMovieByIdStmt = db.prepare(`
-  SELECT id, title, description, release_year, director, poster_url, runtime, created_at, updated_at
-  FROM movies
-  WHERE id = ?
-`);
-
-const updateMovieStmt = db.prepare(`
-  UPDATE movies
-  SET title = ?, description = ?, release_year = ?, director = ?, poster_url = ?, runtime = ?, updated_at = datetime('now')
-  WHERE id = ?
-`);
-
-const deleteMovieStmt = db.prepare(`DELETE FROM movies WHERE id = ?`);
-
-const insertMovieLanguageStmt = db.prepare(`
-  INSERT OR IGNORE INTO movie_languages (movie_id, language_id)
-  VALUES (?, ?)
-`);
-
-const deleteMovieLanguagesStmt = db.prepare(`
-  DELETE FROM movie_languages WHERE movie_id = ?
-`);
-
-const selectLanguagesByMovieStmt = db.prepare(`
-  SELECT l.id, l.name, l.code
-  FROM languages l
-  INNER JOIN movie_languages ml ON l.id = ml.language_id
-  WHERE ml.movie_id = ?
-`);
-
-// Attach languages to a single movie
-function attachLanguagesToMovie(movie: Movie): MovieWithLanguages {
-  const languages = selectLanguagesByMovieStmt.all(movie.id) as Language[];
-  return {
-    ...movie,
-    languages,
-  };
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 }
 
-// Attach languages to multiple movies efficiently
-function attachLanguagesToMovies(movies: Movie[]): MovieWithLanguages[] {
-  const movieLanguagesMap = new Map<number, Language[]>();
-  if (movies.length === 0) return [];
+// normalize optional strings: trim and convert empty -> null
+function clean(str?: string | null): string | null {
+  if (str === undefined || str === null) return null;
+  const t = str.trim();
+  return t === "" ? null : t;
+}
 
-  const movieIds = movies.map((m) => m.id);
+/** Fetch full details for one movie: languages, genres, cast, companies */
+function getMovieWithDetails(id: number): MovieWithDetails | undefined {
+  const movie = db.prepare(`SELECT * FROM movies WHERE id = ?`).get(id) as
+    | Movie
+    | undefined;
+  if (!movie) return undefined;
 
-  // Get all languages for all movies in one query
-  const allLanguages = db
+  const languages = db
     .prepare(
       `
-      SELECT ml.movie_id, l.id, l.name, l.code
-      FROM languages l
-      INNER JOIN movie_languages ml ON l.id = ml.language_id
-      WHERE ml.movie_id IN (${movieIds.map(() => "?").join(",")})
-      `
+    SELECT l.id, l.name, l.code, l.native_script
+    FROM languages l
+    JOIN movie_languages ml ON l.id = ml.language_id
+    WHERE ml.movie_id = ?
+  `,
     )
-    .all(...movieIds) as Array<Language & { movie_id: number }>;
+    .all(id) as Language[];
 
-  // Build a map of movie_id to languages array
-  allLanguages.forEach((lang) => {
-    if (!movieLanguagesMap.has(lang.movie_id)) {
-      movieLanguagesMap.set(lang.movie_id, []);
-    }
-    const { movie_id, ...language } = lang;
-    movieLanguagesMap.get(lang.movie_id)!.push(language);
+  const genres = db
+    .prepare(
+      `
+    SELECT g.id, g.name, g.slug, g.description, g.created_at
+    FROM genres g
+    JOIN movie_genres mg ON g.id = mg.genre_id
+    WHERE mg.movie_id = ?
+  `,
+    )
+    .all(id) as Genre[];
+
+  const cast = db
+    .prepare(
+      `
+    SELECT p.id, p.name, p.also_known_as, p.profile_url, p.tmdb_id, p.imdb_id,
+           mc.role, mc.character, mc.display_order
+    FROM people p
+    JOIN movie_cast mc ON p.id = mc.person_id
+    WHERE mc.movie_id = ?
+    ORDER BY mc.display_order ASC, mc.role ASC
+  `,
+    )
+    .all(id) as CastMember[];
+
+  const companies = db
+    .prepare(
+      `
+    SELECT c.id, c.name, c.type, c.logo_url, c.country, c.tmdb_id,
+           mco.role
+    FROM companies c
+    JOIN movie_companies mco ON c.id = mco.company_id
+    WHERE mco.movie_id = ?
+    ORDER BY c.name ASC
+  `,
+    )
+    .all(id) as MovieCompany[];
+
+  return { ...movie, languages, genres, cast, companies };
+}
+
+/** Bulk-attach languages + genres to a list of movies (2 queries total) */
+function attachDetailsToMovies(movies: Movie[]): MovieWithDetails[] {
+  if (movies.length === 0) return [];
+  const ids = movies.map((m) => m.id);
+  const placeholders = ids.map(() => "?").join(",");
+
+  const allLangs = db
+    .prepare(
+      `
+    SELECT ml.movie_id, l.id, l.name, l.code, l.native_script
+    FROM languages l JOIN movie_languages ml ON l.id = ml.language_id
+    WHERE ml.movie_id IN (${placeholders})
+  `,
+    )
+    .all(...ids) as Array<Language & { movie_id: number }>;
+
+  const allGenres = db
+    .prepare(
+      `
+    SELECT mg.movie_id, g.id, g.name, g.slug, g.description, g.created_at
+    FROM genres g JOIN movie_genres mg ON g.id = mg.genre_id
+    WHERE mg.movie_id IN (${placeholders})
+  `,
+    )
+    .all(...ids) as Array<Genre & { movie_id: number }>;
+
+  const allCast = db
+    .prepare(
+      `
+    SELECT mc.movie_id, p.id, p.name, p.profile_url, p.tmdb_id,
+           mc.role, mc.character, mc.display_order
+    FROM people p JOIN movie_cast mc ON p.id = mc.person_id
+    WHERE mc.movie_id IN (${placeholders})
+    ORDER BY mc.display_order ASC
+  `,
+    )
+    .all(...ids) as Array<CastMember & { movie_id: number }>;
+
+  const allCompanies = db
+    .prepare(
+      `
+    SELECT mco.movie_id, c.id, c.name, c.type, c.logo_url, c.country, mco.role
+    FROM companies c JOIN movie_companies mco ON c.id = mco.company_id
+    WHERE mco.movie_id IN (${placeholders})
+  `,
+    )
+    .all(...ids) as Array<MovieCompany & { movie_id: number }>;
+
+  // Build maps
+  const langMap = new Map<number, Language[]>();
+  const genreMap = new Map<number, Genre[]>();
+  const castMap = new Map<number, CastMember[]>();
+  const companyMap = new Map<number, MovieCompany[]>();
+
+  allLangs.forEach(({ movie_id, ...l }) => {
+    if (!langMap.has(movie_id)) langMap.set(movie_id, []);
+    langMap.get(movie_id)!.push(l as Language);
+  });
+  allGenres.forEach(({ movie_id, ...g }) => {
+    if (!genreMap.has(movie_id)) genreMap.set(movie_id, []);
+    genreMap.get(movie_id)!.push(g as Genre);
+  });
+  allCast.forEach(({ movie_id, ...c }) => {
+    if (!castMap.has(movie_id)) castMap.set(movie_id, []);
+    castMap.get(movie_id)!.push(c as CastMember);
+  });
+  allCompanies.forEach(({ movie_id, ...c }) => {
+    if (!companyMap.has(movie_id)) companyMap.set(movie_id, []);
+    companyMap.get(movie_id)!.push(c as MovieCompany);
   });
 
-  return movies.map((movie) => ({
-    ...movie,
-    languages: movieLanguagesMap.get(movie.id) || [],
+  return movies.map((m) => ({
+    ...m,
+    languages: langMap.get(m.id) ?? [],
+    genres: genreMap.get(m.id) ?? [],
+    cast: castMap.get(m.id) ?? [],
+    companies: companyMap.get(m.id) ?? [],
   }));
 }
 
-// Validate language IDs against database
-function validateLanguageIds(languageIds: number[]): number[] {
-  if (!languageIds || languageIds.length === 0) return [];
-
-  const validLanguages = db.prepare(`SELECT id FROM languages`).all() as {
-    id: number;
-  }[];
-
-  const validIdSet = new Set(validLanguages.map((l) => l.id));
-  const uniqueIds = [...new Set(languageIds)];
-
-  return uniqueIds.filter((id) => validIdSet.has(id));
+/** Upsert a person, return their id */
+function upsertPerson(req: CastMemberRequest): number {
+  if (req.person_id) return req.person_id;
+  const existing = db
+    .prepare(`SELECT id FROM people WHERE name = ? COLLATE NOCASE`)
+    .get(req.name) as { id: number } | undefined;
+  if (existing) return existing.id;
+  const info = db
+    .prepare(
+      `
+    INSERT INTO people (name, profile_url, tmdb_id, imdb_id)
+    VALUES (?, ?, ?, ?)
+  `,
+    )
+    .run(
+      req.name.trim(),
+      req.profile_url ?? null,
+      req.tmdb_id ?? null,
+      req.imdb_id ?? null,
+    );
+  return info.lastInsertRowid as number;
 }
 
-// GET /movies - Get all movies with optional filters
+/** Upsert a company, return its id */
+function upsertCompany(req: CompanyRequest): number {
+  if (req.company_id) return req.company_id;
+  const existing = db
+    .prepare(`SELECT id FROM companies WHERE name = ? COLLATE NOCASE`)
+    .get(req.name) as { id: number } | undefined;
+  if (existing) return existing.id;
+  const info = db
+    .prepare(
+      `
+    INSERT INTO companies (name, type, logo_url, country)
+    VALUES (?, ?, ?, ?)
+  `,
+    )
+    .run(
+      req.name.trim(),
+      req.type ?? "production",
+      req.logo_url ?? null,
+      req.country ?? null,
+    );
+  return info.lastInsertRowid as number;
+}
+
+// ── GET /movies ───────────────────────────────────────────────────────────────
 router.get("/", (req: Request, res: Response) => {
   try {
-    const { search, language, year, sort = "recent" } = req.query;
-    let movies = selectAllMoviesStmt.all() as Movie[];
+    const { search, language, genre, year, sort = "recent" } = req.query;
 
-    // Filter by search term
+    let movies = db
+      .prepare(`SELECT * FROM movies ORDER BY created_at DESC`)
+      .all() as Movie[];
+
     if (search && typeof search === "string") {
-      const searchLower = search.toLowerCase();
+      const q = search.toLowerCase();
       movies = movies.filter(
         (m) =>
-          m.title.toLowerCase().includes(searchLower) ||
-          (m.description && m.description.toLowerCase().includes(searchLower))
+          m.title.toLowerCase().includes(q) ||
+          m.description?.toLowerCase().includes(q) ||
+          m.director?.toLowerCase().includes(q) ||
+          m.tagline?.toLowerCase().includes(q),
       );
     }
 
-    // Filter by year
-    if (year && typeof year === "string") {
-      const yearNum = parseInt(year);
-      movies = movies.filter((m) => m.release_year === yearNum);
-    }
-
-    let moviesWithLangs = attachLanguagesToMovies(movies);
-
-    // Filter by language
-    if (language && typeof language === "string") {
-      moviesWithLangs = moviesWithLangs.filter((m) =>
-        m.languages.some((l) => l.code === language)
+    if (year)
+      movies = movies.filter(
+        (m) => m.release_year === parseInt(year as string),
       );
-    }
 
-    // Sort movies
-    if (sort === "title") {
-      moviesWithLangs.sort((a, b) => a.title.localeCompare(b.title));
-    } else if (sort === "year") {
-      moviesWithLangs.sort(
-        (a, b) => (b.release_year || 0) - (a.release_year || 0)
+    let result = attachDetailsToMovies(movies);
+
+    if (language)
+      result = result.filter((m) =>
+        m.languages.some((l) => l.code === language),
       );
-    }
+    if (genre)
+      result = result.filter((m) => m.genres.some((g) => g.slug === genre));
 
-    res.json({
-      success: true,
-      count: moviesWithLangs.length,
-      movies: moviesWithLangs,
-    });
+    if (sort === "title") result.sort((a, b) => a.title.localeCompare(b.title));
+    else if (sort === "year")
+      result.sort((a, b) => (b.release_year ?? 0) - (a.release_year ?? 0));
+    else if (sort === "rating")
+      result.sort((a, b) => (b.rating_imdb ?? 0) - (a.rating_imdb ?? 0));
+
+    res.json({ success: true, count: result.length, movies: result });
   } catch (err: any) {
-    console.error("Error fetching movies:", err);
     res.status(500).json({
       success: false,
       error: "Failed to fetch movies",
@@ -166,32 +267,21 @@ router.get("/", (req: Request, res: Response) => {
   }
 });
 
-// GET /movies/:id - Get a single movie
+// ── GET /movies/:id ───────────────────────────────────────────────────────────
 router.get("/:id", (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid movie ID",
-      });
-    }
+    if (isNaN(id))
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid movie ID" });
 
-    const movie = selectMovieByIdStmt.get(id) as Movie | undefined;
-    if (!movie) {
-      return res.status(404).json({
-        success: false,
-        error: "Movie not found",
-      });
-    }
+    const movie = getMovieWithDetails(id);
+    if (!movie)
+      return res.status(404).json({ success: false, error: "Movie not found" });
 
-    const movieWithLanguages = attachLanguagesToMovie(movie);
-    res.json({
-      success: true,
-      movie: movieWithLanguages,
-    });
+    res.json({ success: true, movie });
   } catch (err: any) {
-    console.error("Error fetching movie:", err);
     res.status(500).json({
       success: false,
       error: "Failed to fetch movie",
@@ -200,65 +290,97 @@ router.get("/:id", (req: Request, res: Response) => {
   }
 });
 
-// POST /movies - Create a new movie
+// ── POST /movies ──────────────────────────────────────────────────────────────
 router.post("/", (req: Request, res: Response) => {
   try {
-    const {
-      title,
-      description,
-      release_year,
-      director,
-      poster_url,
-      runtime,
-      language_ids,
-    } = req.body as CreateMovieRequest;
+    const body = req.body as CreateMovieRequest;
 
-    if (!title || title.trim().length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Title is required",
-      });
+    if (!body.title?.trim()) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Title is required" });
     }
 
-    if (
-      release_year !== undefined &&
-      (release_year < 1800 || release_year > new Date().getFullYear() + 5)
-    ) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid release year",
-      });
-    }
-
-    if (runtime !== undefined && runtime < 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Runtime must be a positive number",
-      });
-    }
-
-    // Use transaction to ensure atomicity
     const result = db.transaction(() => {
-      const info = insertMovieStmt.run(
-        title.trim(),
-        description?.trim() || "",
-        release_year || null,
-        director?.trim() || null,
-        poster_url?.trim() || null,
-        runtime || null
-      );
+      const info = db
+        .prepare(
+          `
+    INSERT INTO movies (
+      title, tagline, description, status, release_year, runtime,
+      origin_country, original_language, age_rating, director,
+      imdb_id, tmdb_id, poster_url, backdrop_url, trailer_url,
+      budget, box_office, rating_imdb, rating_rt, rating_metacritic
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  `,
+        )
+        .run(
+          // 20 arguments in the exact order of the columns above
+          body.title.trim(), // title (required)
+          clean(body.tagline), // tagline
+          body.description?.trim() ?? "", // description (default empty string in your schema)
+          body.status ?? "released", // status
+          body.release_year ?? null, // release_year
+          body.runtime ?? null, // runtime
+          clean(body.origin_country), // origin_country
+          clean(body.original_language), // original_language
+          clean(body.age_rating), // age_rating
+          clean(body.director), // director
+          clean(body.imdb_id), // imdb_id
+          body.tmdb_id ?? null, // tmdb_id
+          clean(body.poster_url), // poster_url
+          clean(body.backdrop_url), // backdrop_url
+          clean(body.trailer_url), // trailer_url
+          body.budget ?? null, // budget
+          body.box_office ?? null, // box_office
+          body.rating_imdb ?? null, // rating_imdb
+          body.rating_rt ?? null, // rating_rt
+          body.rating_metacritic ?? null, // rating_metacritic
+        );
       const movieId = info.lastInsertRowid as number;
 
-      // Add language relationships
-      if (language_ids && language_ids.length > 0) {
-        const validIds = validateLanguageIds(language_ids);
-        validIds.forEach((langId) => {
-          insertMovieLanguageStmt.run(movieId, langId);
-        });
-      }
+      // Languages
+      (body.language_ids ?? []).forEach((lid) => {
+        db.prepare(
+          `INSERT OR IGNORE INTO movie_languages (movie_id, language_id) VALUES (?,?)`,
+        ).run(movieId, lid);
+      });
 
-      const movie = selectMovieByIdStmt.get(movieId) as Movie;
-      return attachLanguagesToMovie(movie);
+      // Genres
+      (body.genre_ids ?? []).forEach((gid) => {
+        db.prepare(
+          `INSERT OR IGNORE INTO movie_genres (movie_id, genre_id) VALUES (?,?)`,
+        ).run(movieId, gid);
+      });
+
+      // Cast
+      (body.cast ?? []).forEach((c, i) => {
+        const personId = upsertPerson(c);
+        db.prepare(
+          `
+          INSERT OR IGNORE INTO movie_cast (movie_id, person_id, role, character, display_order)
+          VALUES (?,?,?,?,?)
+        `,
+        ).run(
+          movieId,
+          personId,
+          c.role,
+          c.character ?? null,
+          c.display_order ?? i,
+        );
+      });
+
+      // Companies
+      (body.companies ?? []).forEach((c) => {
+        const companyId = upsertCompany(c);
+        db.prepare(
+          `
+          INSERT OR IGNORE INTO movie_companies (movie_id, company_id, role)
+          VALUES (?,?,?)
+        `,
+        ).run(movieId, companyId, c.role);
+      });
+
+      return getMovieWithDetails(movieId)!;
     })();
 
     res.status(201).json({
@@ -267,7 +389,6 @@ router.post("/", (req: Request, res: Response) => {
       movie: result,
     });
   } catch (err: any) {
-    console.error("Error creating movie:", err);
     res.status(500).json({
       success: false,
       error: "Failed to create movie",
@@ -276,83 +397,112 @@ router.post("/", (req: Request, res: Response) => {
   }
 });
 
-// PUT /movies/:id - Update an existing movie
+// ── PUT /movies/:id ───────────────────────────────────────────────────────────
 router.put("/:id", (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid movie ID",
-      });
-    }
+    if (isNaN(id))
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid movie ID" });
 
-    const existingMovie = selectMovieByIdStmt.get(id) as Movie | undefined;
-    if (!existingMovie) {
-      return res.status(404).json({
-        success: false,
-        error: "Movie not found",
-      });
-    }
+    const existing = db.prepare(`SELECT * FROM movies WHERE id = ?`).get(id) as
+      | Movie
+      | undefined;
+    if (!existing)
+      return res.status(404).json({ success: false, error: "Movie not found" });
 
-    const {
-      title,
-      description,
-      release_year,
-      director,
-      poster_url,
-      runtime,
-      language_ids,
-    } = req.body as UpdateMovieRequest;
+    const body = req.body as UpdateMovieRequest;
 
-    // Merge with existing data
-    const updatedTitle =
-      title !== undefined ? title.trim() : existingMovie.title;
-    const updatedDescription =
-      description !== undefined
-        ? description.trim()
-        : existingMovie.description;
-    const updatedYear =
-      release_year !== undefined ? release_year : existingMovie.release_year;
-    const updatedDirector =
-      director !== undefined ? director?.trim() : existingMovie.director;
-    const updatedPoster =
-      poster_url !== undefined ? poster_url?.trim() : existingMovie.poster_url;
-    const updatedRuntime =
-      runtime !== undefined ? runtime : existingMovie.runtime;
-
-    if (updatedTitle.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Title cannot be empty",
-      });
-    }
-
-    // Use transaction to ensure atomicity
     const result = db.transaction(() => {
-      updateMovieStmt.run(
-        updatedTitle,
-        updatedDescription || "",
-        updatedYear || null,
-        updatedDirector || null,
-        updatedPoster || null,
-        updatedRuntime || null,
-        id
+      db.prepare(
+        `
+  UPDATE movies SET
+    title = ?, tagline = ?, description = ?, status = ?,
+    release_year = ?, runtime = ?, origin_country = ?,
+    original_language = ?, age_rating = ?, director = ?,
+    imdb_id = ?, tmdb_id = ?, poster_url = ?, backdrop_url = ?,
+    trailer_url = ?, budget = ?, box_office = ?,
+    rating_imdb = ?, rating_rt = ?, rating_metacritic = ?,
+    updated_at = datetime('now')
+  WHERE id = ?
+  `,
+      ).run(
+        // same order as the SET list, then id
+        body.title?.trim() ?? existing.title,
+        clean(body.tagline ?? existing.tagline ?? null),
+        body.description?.trim() ?? existing.description ?? "",
+        body.status ?? existing.status ?? "released",
+        body.release_year ?? existing.release_year ?? null,
+        body.runtime ?? existing.runtime ?? null,
+        clean(body.origin_country ?? existing.origin_country ?? null),
+        clean(body.original_language ?? existing.original_language ?? null),
+        clean(body.age_rating ?? existing.age_rating ?? null),
+        clean(body.director ?? existing.director ?? null),
+        clean(body.imdb_id ?? existing.imdb_id ?? null),
+        body.tmdb_id ?? existing.tmdb_id ?? null,
+        clean(body.poster_url ?? existing.poster_url ?? null),
+        clean(body.backdrop_url ?? existing.backdrop_url ?? null),
+        clean(body.trailer_url ?? existing.trailer_url ?? null),
+        body.budget ?? existing.budget ?? null,
+        body.box_office ?? existing.box_office ?? null,
+        body.rating_imdb ?? existing.rating_imdb ?? null,
+        body.rating_rt ?? existing.rating_rt ?? null,
+        body.rating_metacritic ?? existing.rating_metacritic ?? null,
+        id, // <<< final placeholder for WHERE id = ?
       );
 
-      // Update languages if provided
-      if (language_ids !== undefined) {
-        deleteMovieLanguagesStmt.run(id);
-        if (language_ids.length > 0) {
-          const validIds = validateLanguageIds(language_ids);
-          validIds.forEach((langId) => {
-            insertMovieLanguageStmt.run(id, langId);
-          });
-        }
+      if (body.language_ids !== undefined) {
+        db.prepare(`DELETE FROM movie_languages WHERE movie_id = ?`).run(id);
+        body.language_ids.forEach((lid) => {
+          db.prepare(
+            `INSERT OR IGNORE INTO movie_languages (movie_id, language_id) VALUES (?,?)`,
+          ).run(id, lid);
+        });
       }
 
-      const movie = selectMovieByIdStmt.get(id) as Movie;
-      return attachLanguagesToMovie(movie);
+      if (body.genre_ids !== undefined) {
+        db.prepare(`DELETE FROM movie_genres WHERE movie_id = ?`).run(id);
+        body.genre_ids.forEach((gid) => {
+          db.prepare(
+            `INSERT OR IGNORE INTO movie_genres (movie_id, genre_id) VALUES (?,?)`,
+          ).run(id, gid);
+        });
+      }
+
+      if (body.cast !== undefined) {
+        db.prepare(`DELETE FROM movie_cast WHERE movie_id = ?`).run(id);
+        body.cast.forEach((c, i) => {
+          const personId = upsertPerson(c);
+          db.prepare(
+            `
+            INSERT OR IGNORE INTO movie_cast (movie_id, person_id, role, character, display_order)
+            VALUES (?,?,?,?,?)
+          `,
+          ).run(
+            id,
+            personId,
+            c.role,
+            c.character ?? null,
+            c.display_order ?? i,
+          );
+        });
+      }
+
+      if (body.companies !== undefined) {
+        db.prepare(`DELETE FROM movie_companies WHERE movie_id = ?`).run(id);
+        body.companies.forEach((c) => {
+          const companyId = upsertCompany(c);
+          db.prepare(
+            `
+            INSERT OR IGNORE INTO movie_companies (movie_id, company_id, role)
+            VALUES (?,?,?)
+          `,
+          ).run(id, companyId, c.role);
+        });
+      }
+
+      return getMovieWithDetails(id)!;
     })();
 
     res.json({
@@ -361,7 +511,6 @@ router.put("/:id", (req: Request, res: Response) => {
       movie: result,
     });
   } catch (err: any) {
-    console.error("Error updating movie:", err);
     res.status(500).json({
       success: false,
       error: "Failed to update movie",
@@ -370,43 +519,28 @@ router.put("/:id", (req: Request, res: Response) => {
   }
 });
 
-// DELETE /movies/:id - Delete a movie
+// ── DELETE /movies/:id ────────────────────────────────────────────────────────
 router.delete("/:id", (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid movie ID",
-      });
-    }
+    if (isNaN(id))
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid movie ID" });
 
-    const movie = selectMovieByIdStmt.get(id) as Movie | undefined;
-    if (!movie) {
-      return res.status(404).json({
-        success: false,
-        error: "Movie not found",
-      });
-    }
+    const movie = db
+      .prepare(`SELECT id, title FROM movies WHERE id = ?`)
+      .get(id) as Pick<Movie, "id" | "title"> | undefined;
+    if (!movie)
+      return res.status(404).json({ success: false, error: "Movie not found" });
 
-    const info = deleteMovieStmt.run(id);
-    if (info.changes === 0) {
-      return res.status(404).json({
-        success: false,
-        error: "Movie not found",
-      });
-    }
-
+    db.prepare(`DELETE FROM movies WHERE id = ?`).run(id);
     res.json({
       success: true,
       message: "Movie deleted successfully",
-      deletedMovie: {
-        id: movie.id,
-        title: movie.title,
-      },
+      deletedMovie: movie,
     });
   } catch (err: any) {
-    console.error("Error deleting movie:", err);
     res.status(500).json({
       success: false,
       error: "Failed to delete movie",

@@ -7,6 +7,7 @@ import {
   WatchlistItemWithMovie,
   Movie,
   Language,
+  Genre,
   AddToWatchlistRequest,
   UpdateWatchlistRequest,
 } from "../types.ts";
@@ -60,91 +61,132 @@ const deleteWatchlistByMovieStmt = db.prepare(`
 
 // Fetch movie details with languages for a single watchlist item
 function attachMovieToWatchlistItem(
-  item: WatchlistItem
+  item: WatchlistItem,
 ): WatchlistItemWithMovie {
   const movie = db
     .prepare(
       `
-      SELECT id, title, description, release_year, director, poster_url, runtime, created_at, updated_at
-      FROM movies
-      WHERE id = ?
-      `
+    SELECT id, title, description, release_year, director, poster_url, runtime, created_at, updated_at
+    FROM movies WHERE id = ?
+  `,
     )
     .get(item.movie_id) as Movie;
 
   const languages = db
     .prepare(
       `
-      SELECT l.id, l.name, l.code
-      FROM languages l
-      INNER JOIN movie_languages ml ON l.id = ml.language_id
-      WHERE ml.movie_id = ?
-      `
+    SELECT l.id, l.name, l.code
+    FROM languages l
+    INNER JOIN movie_languages ml ON l.id = ml.language_id
+    WHERE ml.movie_id = ?
+  `,
     )
     .all(item.movie_id) as Language[];
 
+  const genres = db
+    .prepare(
+      `
+    SELECT g.id, g.name, g.slug, g.description, g.created_at
+    FROM genres g
+    INNER JOIN movie_genres mg ON g.id = mg.genre_id
+    WHERE mg.movie_id = ?
+  `,
+    )
+    .all(item.movie_id) as Genre[];
+
+  // return {
+  //   ...item,
+  //   movie: { ...movie, languages, genres },
+  // };
   return {
     ...item,
     movie: {
       ...movie,
       languages,
+      genres,
+      cast: [], // ✅ required by type
+      companies: [], // ✅ required by type
     },
   };
 }
 
 // Batch process all watchlist items with movies and languages
 function attachMoviesToWatchlistItems(
-  items: WatchlistItem[]
+  items: WatchlistItem[],
 ): WatchlistItemWithMovie[] {
   if (items.length === 0) return [];
 
   const movieIds = items.map((i) => i.movie_id);
+  const ph = movieIds.map(() => "?").join(",");
 
-  // Get all movies in one query
   const movies = db
     .prepare(
       `
-      SELECT id, title, description, release_year, director, poster_url, runtime, created_at, updated_at
-      FROM movies
-      WHERE id IN (${movieIds.map(() => "?").join(",")})
-      `
+    SELECT id, title, description, release_year, director, poster_url, runtime, created_at, updated_at
+    FROM movies WHERE id IN (${ph})
+  `,
     )
     .all(...movieIds) as Movie[];
 
-  // Get all languages for all movies in one query
   const allLanguages = db
     .prepare(
       `
-      SELECT ml.movie_id, l.id, l.name, l.code
-      FROM languages l
-      INNER JOIN movie_languages ml ON l.id = ml.language_id
-      WHERE ml.movie_id IN (${movieIds.map(() => "?").join(",")})
-      `
+    SELECT ml.movie_id, l.id, l.name, l.code
+    FROM languages l
+    INNER JOIN movie_languages ml ON l.id = ml.language_id
+    WHERE ml.movie_id IN (${ph})
+  `,
     )
     .all(...movieIds) as Array<Language & { movie_id: number }>;
 
-  // Create maps for faster lookups
+  const allGenres = db
+    .prepare(
+      `
+    SELECT mg.movie_id, g.id, g.name, g.slug, g.description, g.created_at
+    FROM genres g
+    INNER JOIN movie_genres mg ON g.id = mg.genre_id
+    WHERE mg.movie_id IN (${ph})
+  `,
+    )
+    .all(...movieIds) as Array<Genre & { movie_id: number }>;
+
   const movieMap = new Map<number, Movie>();
   movies.forEach((m) => movieMap.set(m.id, m));
 
   const languageMap = new Map<number, Language[]>();
-  allLanguages.forEach((lang) => {
-    if (!languageMap.has(lang.movie_id)) {
-      languageMap.set(lang.movie_id, []);
-    }
-    const { movie_id, ...language } = lang;
-    languageMap.get(lang.movie_id)!.push(language);
+  allLanguages.forEach(({ movie_id, ...lang }) => {
+    if (!languageMap.has(movie_id)) languageMap.set(movie_id, []);
+    languageMap.get(movie_id)!.push(lang);
   });
 
-  // Combine everything
+  const genreMap = new Map<number, Genre[]>();
+  allGenres.forEach(({ movie_id, ...genre }) => {
+    if (!genreMap.has(movie_id)) genreMap.set(movie_id, []);
+    genreMap.get(movie_id)!.push(genre);
+  });
+
+  // return items.map((item) => {
+  //   const movie = movieMap.get(item.movie_id)!;
+  //   return {
+  //     ...item,
+  //     movie: {
+  //       ...movie,
+  //       languages: languageMap.get(item.movie_id) || [],
+  //       genres: genreMap.get(item.movie_id) || [],
+  //     },
+  //   };
+  // });
+
   return items.map((item) => {
     const movie = movieMap.get(item.movie_id)!;
-    const languages = languageMap.get(item.movie_id) || [];
     return {
       ...item,
       movie: {
         ...movie,
-        languages,
+        languages: languageMap.get(item.movie_id) || [],
+        genres: genreMap.get(item.movie_id) || [],
+        cast: [], // ✅ required
+        companies: [], // ✅ required
       },
     };
   });
@@ -172,13 +214,16 @@ router.get("/", (req: Request, res: Response) => {
     const itemsWithMovies = attachMoviesToWatchlistItems(items);
 
     // Group items by status for easier frontend rendering
-    const grouped = itemsWithMovies.reduce((acc, item) => {
-      if (!acc[item.status]) {
-        acc[item.status] = [];
-      }
-      acc[item.status].push(item);
-      return acc;
-    }, {} as Record<string, WatchlistItemWithMovie[]>);
+    const grouped = itemsWithMovies.reduce(
+      (acc, item) => {
+        if (!acc[item.status]) {
+          acc[item.status] = [];
+        }
+        acc[item.status].push(item);
+        return acc;
+      },
+      {} as Record<string, WatchlistItemWithMovie[]>,
+    );
 
     res.json({
       success: true,

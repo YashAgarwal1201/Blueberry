@@ -5,21 +5,20 @@
       @hide="mainStore.showSideMenu = false"
       :dismissable="true"
       position="right"
-      class="!w-full md:!w-[768px] rounded-none md:!rounded-l-xl !bg-slate-50 dark:!bg-slate-900 !text-indigo-900 dark!text-indigo-200 font-content"
+      class="!w-full md:!w-[768px] !rounded-none md:!rounded-l-xl !bg-surface-1 !text-text font-content"
     >
       <template #header>
         <div class="flex justify-between items-center w-full font-heading">
-          <h3 class="text-lg sm:text-xl md:text-2xl text-slate-900 dark:text-slate-100">Menu</h3>
+          <h3 class="text-lg sm:text-xl md:text-2xl text-text font-heading">Menu</h3>
         </div>
       </template>
 
       <div class="w-full font-content">
         <div class="flex flex-col">
-          <div
-            class="w-full flex flex-col rounded-xl bg-blue-50 dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-700"
-          >
+          <div class="w-full flex flex-col rounded-xl bg-surface-2 p-4 border border-border">
+            <!-- Theme selector -->
             <div :class="buttonStyles">
-              <Palette :size="16" class="text-slate-500" />
+              <Palette :size="16" class="text-text-muted" />
               <span>Theme</span>
               <Select
                 :modelValue="theme"
@@ -28,68 +27,62 @@
                   { label: 'Dark', value: 'dark' },
                   { label: 'Light', value: 'light' },
                 ]"
-                class="!ml-auto !w-auto !text-sm !rounded-lg !bg-blue-100 dark:!bg-indigo-950 !text-slate-600 dark:!text-slate-400 !border-blue-300 dark:!border-indigo-800"
-                labelClass="!text-slate-600	dark:!text-slate-400"
+                class="!ml-auto !w-auto !text-sm !rounded-lg"
                 optionLabel="label"
                 optionValue="value"
                 @update:modelValue="handleThemeChange"
               />
             </div>
 
-            <div class="mx-2 my-1 p-0 max-w-full h-[1.5px] bg-slate-200 dark:bg-slate-700"></div>
+            <div class="mx-2 my-1 h-px bg-border" />
 
             <RouterLink
               :class="buttonStyles"
-              :to="'/watchlist'"
-              class="text-slate-900 dark:text-slate-100 !border-none !flex !items-center !justify-start shadow-none"
+              to="/watchlist"
+              @click="mainStore.showSideMenu = false"
             >
-              <List :size="16" class="text-slate-500" />
+              <List :size="16" class="text-text-muted" />
               <span>Watchlist</span>
             </RouterLink>
 
-            <div class="mx-2 my-1 p-0 max-w-full h-[1.5px] bg-slate-200 dark:bg-slate-700"></div>
+            <div class="mx-2 my-1 h-px bg-border" />
 
             <RouterLink
               :class="buttonStyles"
-              :to="'/languages'"
-              class="text-slate-900 dark:text-slate-100 !border-none !flex !items-center !justify-start shadow-none"
+              to="/languages"
+              @click="mainStore.showSideMenu = false"
             >
-              <Blocks :size="16" class="text-slate-500" />
+              <Languages :size="16" class="text-text-muted" />
               <span>Languages</span>
             </RouterLink>
 
-            <div class="mx-2 my-1 p-0 max-w-full h-[1.5px] bg-slate-200 dark:bg-slate-700"></div>
+            <div class="mx-2 my-1 h-px bg-border" />
 
-            <RouterLink
-              :class="buttonStyles"
-              :to="'/genres'"
-              class="text-slate-900 dark:text-slate-100 !border-none !flex !items-center !justify-start shadow-none"
-            >
-              <Blocks :size="16" class="text-slate-500" />
+            <RouterLink :class="buttonStyles" to="/genres" @click="mainStore.showSideMenu = false">
+              <Blocks :size="16" class="text-text-muted" />
               <span>Genres</span>
             </RouterLink>
 
-            <div class="mx-2 my-1 p-0 max-w-full h-[1.5px] bg-slate-200 dark:bg-slate-700"></div>
+            <div class="mx-2 my-1 h-px bg-border" />
 
             <RouterLink
               :class="buttonStyles"
-              :to="'/settings'"
-              class="text-slate-900 dark:text-slate-100 !border-none !flex !items-center !justify-start shadow-none"
+              to="/settings"
+              @click="mainStore.showSideMenu = false"
             >
-              <Wrench :size="16" class="text-slate-500" />
+              <Wrench :size="16" class="text-text-muted" />
               <span>Settings</span>
             </RouterLink>
 
-            <div class="mx-2 my-1 p-0 max-w-full h-[1.5px] bg-slate-200 dark:bg-slate-700"></div>
+            <div class="mx-2 my-1 h-px bg-border" />
 
             <a
               :class="buttonStyles"
               :href="DEVELOPER_PROFILE"
-              class="text-slate-900 dark:text-slate-100 !border-none !flex !items-center !justify-start shadow-none"
               rel="noopener noreferrer nofollow"
               target="_blank"
             >
-              <UserCircle :size="16" class="text-slate-500" />
+              <UserCircle :size="16" class="text-text-muted" />
               <span>Developer Profile</span>
             </a>
           </div>
@@ -100,12 +93,10 @@
 </template>
 
 <script setup lang="ts">
-import { Blocks, List, Palette, UserCircle, Wrench } from 'lucide-vue-next'
+import { Blocks, Languages, List, Palette, UserCircle, Wrench } from 'lucide-vue-next'
 import { Drawer, Select } from 'primevue'
-// import { ref } from "vue";
 import { useMainStore } from '@/stores/mainStore'
 import toastHandler from '@/composables/toastHandeler'
-// import { useTheme } from "@primeuix/themes";
 import { DEVELOPER_PROFILE } from '@/services/constants'
 import { useTheme } from '@/composables/theme'
 
@@ -113,16 +104,9 @@ const mainStore = useMainStore()
 const { showToast } = toastHandler()
 const { theme, updateTheme } = useTheme()
 
-// const isPanelCollapsed = ref(true);
-
 const buttonStyles =
-  '!px-2 !py-4 !bg-transparent !text-slate-900	dark:!text-slate-100 flex items-center !gap-x-3 !rounded-xl *:text-lg font-normal font-content transition-colors duration-200 !border-none'
+  'px-2 py-4 bg-transparent text-text flex items-center gap-x-3 rounded-xl text-base font-normal font-content transition-colors duration-200 hover:bg-surface-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
-// const togglePanel = () => {
-//   isPanelCollapsed.value = !isPanelCollapsed.value;
-// };
-
-// Theme change handler
 const handleThemeChange = (selectedTheme: string) => {
   updateTheme((selectedTheme as 'light' | 'dark' | 'system') || 'system')
   showToast(

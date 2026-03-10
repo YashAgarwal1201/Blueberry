@@ -14,10 +14,35 @@ const router = createRouter({
       name: 'Profile',
       component: () => import('../pages/ProfilePage.vue'),
     },
+    // {
+    //   path: '/settings',
+    //   name: 'Settings',
+    //   component: () => import('./../pages/SettingsPage.vue'),
+    // },
     {
       path: '/settings',
-      name: 'Settings',
-      component: () => import('./../pages/SettingsPage.vue'),
+      component: () => import('../pages/SettingsPage.vue'),
+      children: [
+        {
+          path: '',
+          redirect: '/settings/backend',
+        },
+        {
+          path: 'backend',
+          name: 'settings-backend',
+          component: () => import('../pages/settings/BackendSettingsPage.vue'),
+        },
+        {
+          path: 'movies-added',
+          name: 'settings-movies-added',
+          component: () => import('../pages/settings/MoviesAddedSettingsPage.vue'),
+        },
+        {
+          path: 'customise-homepage',
+          name: 'settings-customise-homepage',
+          component: () => import('../pages/settings/CustomiseHomepageSettingsPage.vue'),
+        },
+      ],
     },
     {
       path: '/genres',
@@ -25,10 +50,22 @@ const router = createRouter({
       component: () => import('../pages/GenresPage.vue'),
     },
     {
+      path: '/genres/:slug',
+      name: 'genre-content',
+      component: () => import('../pages/GenresContentPage.vue'),
+    },
+
+    {
       path: '/languages',
       name: 'Languages',
       component: () => import('./../pages/LanguagesPage.vue'),
     },
+    {
+      path: '/languages/:code',
+      name: 'language-content',
+      component: () => import('@/pages/LanguageContentPage.vue'),
+    },
+
     {
       path: '/watchlist',
       name: 'Watchlist',

@@ -325,4 +325,82 @@ router.delete("/:id", (req: Request, res: Response) => {
   }
 });
 
+// GET /languages/:code/movies
+router.get("/:code/movies", (req: Request, res: Response) => {
+  try {
+    const { code } = req.params;
+    const { year, sort = "recent" } = req.query;
+
+    const language = selectLanguageByCodeStmt.get(code.toLowerCase()) as
+      | Language
+      | undefined;
+    if (!language) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Language not found" });
+    }
+
+    let movies = db
+      .prepare(
+        `
+      SELECT m.id, m.title, m.description, m.release_year, m.director,
+             m.poster_url, m.runtime, m.created_at, m.updated_at
+      FROM movies m
+      INNER JOIN movie_languages ml ON m.id = ml.movie_id
+      WHERE ml.language_id = ?
+      ORDER BY m.created_at DESC
+    `,
+      )
+      .all(language.id) as any[];
+
+    if (year && typeof year === "string") {
+      const yearNum = parseInt(year);
+      if (!isNaN(yearNum))
+        movies = movies.filter((m) => m.release_year === yearNum);
+    }
+
+    // Attach all languages to each movie (not just the filtered one)
+    const movieIds = movies.map((m) => m.id);
+    const allLangs =
+      movieIds.length > 0
+        ? (db
+            .prepare(
+              `
+          SELECT ml.movie_id, l.id, l.name, l.code
+          FROM languages l
+          INNER JOIN movie_languages ml ON l.id = ml.language_id
+          WHERE ml.movie_id IN (${movieIds.map(() => "?").join(",")})
+        `,
+            )
+            .all(...movieIds) as Array<Language & { movie_id: number }>)
+        : [];
+
+    const langMap = new Map<number, Language[]>();
+    allLangs.forEach(({ movie_id, ...lang }) => {
+      if (!langMap.has(movie_id)) langMap.set(movie_id, []);
+      langMap.get(movie_id)!.push(lang);
+    });
+
+    let result = movies.map((m) => ({
+      ...m,
+      languages: langMap.get(m.id) || [],
+    }));
+
+    if (sort === "title") result.sort((a, b) => a.title.localeCompare(b.title));
+    else if (sort === "year")
+      result.sort((a, b) => (b.release_year || 0) - (a.release_year || 0));
+
+    res.json({ success: true, language, count: result.length, movies: result });
+  } catch (err: any) {
+    console.error("Error fetching movies by language:", err);
+    res
+      .status(500)
+      .json({
+        success: false,
+        error: "Failed to fetch movies for language",
+        message: err.message,
+      });
+  }
+});
+
 export default router;

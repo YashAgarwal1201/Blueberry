@@ -6,6 +6,9 @@ import itemsRouter from "./routes/items";
 import moviesRouter from "./routes/movies";
 import languagesRouter from "./routes/languages";
 import watchlistRouter from "./routes/watchlist";
+import genresRouter from "./routes/genres";
+import peopleRouter from "./routes/people";
+import companiesRouter from "./routes/companies";
 
 const app: Application = express();
 const PORT = process.env.PORT || 8100;
@@ -14,7 +17,7 @@ app.use(
   cors({
     origin: "http://localhost:5130", // my frontend URL
     credentials: true, // if i need to send cookies or auth headers
-  })
+  }),
 );
 
 app.use(loggerMiddleware);
@@ -49,6 +52,9 @@ app.use("/items", itemsRouter); // Keeping old routes
 app.use("/movies", moviesRouter);
 app.use("/languages", languagesRouter);
 app.use("/watchlist", watchlistRouter);
+app.use("/genres", genresRouter);
+app.use("/people", peopleRouter);
+app.use("/companies", companiesRouter);
 
 // Root endpoint
 app.get("/", (req: Request, res: Response) => {

@@ -31,7 +31,7 @@ export const useMainStore = defineStore('mainStore', () => {
   async function checkBackendHealth(url: string): Promise<boolean> {
     try {
       const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 2000)
+      const timeout = setTimeout(() => controller.abort(), 10000)
 
       const res = await fetch(`${url}/health`, { signal: controller.signal })
       clearTimeout(timeout)
