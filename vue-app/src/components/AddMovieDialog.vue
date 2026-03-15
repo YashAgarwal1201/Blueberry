@@ -81,6 +81,7 @@
         <!-- Poster Preview -->
         <div v-if="form.poster_url" class="mt-2">
           <img
+            loading="lazy"
             :src="form.poster_url"
             alt="Poster preview"
             class="w-32 h-48 object-cover rounded-lg"
@@ -260,7 +261,7 @@ function closeDialog() {
 }
 </script>
 
-<style scoped>
+<!-- <style scoped>
 :deep(.p-dialog-header) {
   @apply bg-surface-1 border-b border-border;
 }
@@ -270,4 +271,4 @@ function closeDialog() {
 :deep(.p-dialog-footer) {
   @apply bg-surface-1 border-t border-border;
 }
-</style>
+</style> -->

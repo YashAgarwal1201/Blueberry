@@ -1,297 +1,321 @@
 <template>
-  <div
-    class="w-full h-full p-2 sm:p-3 flex flex-col gap-y-6 md:gap-y-8 border border-border rounded-xl"
-  >
-    <!-- Header -->
-    <div class="flex items-center justify-between">
+  <div class="w-full h-full flex flex-col border border-border rounded-xl overflow-hidden">
+    <!-- ── Header (never scrolls) ── -->
+    <div class="flex items-center justify-between p-2 sm:p-3 shrink-0">
       <div>
         <h1 class="font-heading text-2xl sm:text-3xl text-text">All Movies</h1>
-        <p class="font-content text-text-muted">Browse and manage your movie collection</p>
+        <p class="font-content text-text-muted hidden sm:block">
+          Browse and manage your movie collection
+        </p>
       </div>
       <RouterLink
-        :to="'/movies/add'"
-        @click="showAddDialog = true"
-        class="px-4 py-2 rounded-lg bg-primary text-on-primary flex items-center gap-2"
+        to="/movies/add"
+        class="px-3 py-2 rounded-lg bg-primary text-on-primary text-sm flex items-center gap-1.5 shrink-0"
       >
-        <span>+ Add Movie</span>
+        <Plus :size="15" />
+        <span>Add Movie</span>
       </RouterLink>
     </div>
 
-    <!-- Filters & Search -->
-    <div class="flex flex-col sm:flex-row gap-3">
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Search movies..."
-        class="flex-1 px-4 py-2 rounded-lg border border-border bg-surface-2 text-text"
-      />
-      <select
-        v-model="selectedLanguage"
-        class="px-4 py-2 rounded-lg border border-border bg-surface-2 text-text"
-      >
-        <option value="">All Languages</option>
-        <option v-for="lang in languagesStore.languages" :key="lang.id" :value="lang.code">
-          {{ lang.name }}
-        </option>
-      </select>
-      <input
-        v-model.number="selectedYear"
-        type="number"
-        placeholder="Year"
-        class="w-32 px-4 py-2 rounded-lg border border-border bg-surface-2 text-text"
-      />
-      <select
-        v-model="sortBy"
-        class="px-4 py-2 rounded-lg border border-border bg-surface-2 text-text"
-      >
-        <option value="recent">Recent</option>
-        <option value="title">Title (A-Z)</option>
-        <option value="year">Year</option>
-      </select>
-      <button @click="applyFilters" class="px-4 py-2 rounded-lg bg-primary text-on-primary">
-        Apply
-      </button>
-    </div>
-
-    <!-- Movies Grid -->
-    <div v-if="moviesStore.loading" class="text-text-muted">Loading movies...</div>
-    <div v-else-if="moviesStore.movies.length === 0" class="text-text-muted">
-      No movies found. Add your first movie!
-    </div>
+    <!-- ── Sticky filter bar ── -->
     <div
-      v-else
-      class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 overflow-y-auto"
+      class="sticky top-0 z-10 bg-surface-0 border-b border-border px-2 sm:px-3 py-2 flex flex-col gap-2 shrink-0"
     >
-      <RouterLink
-        v-for="movie in moviesStore.movies"
-        :key="movie.id"
-        :to="`/movies/${movie.id}`"
-        class="rounded-xl bg-surface-2 p-3 flex flex-col gap-2 hover:shadow-lg transition-shadow cursor-pointer"
-      >
-        <div
-          v-if="movie.poster_url"
-          class="w-full aspect-[2/3] rounded-lg bg-surface-3"
-          :style="{
-            backgroundImage: `url(${movie.poster_url})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }"
-        ></div>
-        <div
-          v-else
-          class="w-full aspect-[2/3] rounded-lg bg-surface-3 flex items-center justify-center text-text-muted"
+      <!-- Row 1: Search (full width) -->
+      <div class="relative">
+        <Search
+          :size="15"
+          class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+        />
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search movies..."
+          class="w-full pl-9 pr-8 py-2 rounded-lg border border-border bg-surface-1 text-text text-sm placeholder:text-text-muted"
+        />
+        <button
+          v-if="searchQuery"
+          class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"
+          @click="searchQuery = ''"
         >
-          No Poster
-        </div>
+          <X :size="14" />
+        </button>
+      </div>
 
-        <div class="text-sm font-semibold text-text line-clamp-2">{{ movie.title }}</div>
-
-        <div class="text-xs text-text-muted flex items-center gap-2">
-          <span>{{ movie.release_year || 'N/A' }}</span>
-          <span v-if="movie.runtime">• {{ movie.runtime }} min</span>
-        </div>
-
-        <div class="flex flex-wrap gap-1">
-          <span
-            v-for="lang in movie.languages.slice(0, 2)"
-            :key="lang.id"
-            class="px-2 py-0.5 text-xs rounded-full bg-primary-subtle text-primary"
-          >
-            {{ lang.code }}
-          </span>
-          <span
-            v-if="movie.languages.length > 2"
-            class="px-2 py-0.5 text-xs rounded-full bg-surface-3 text-text-muted"
-          >
-            +{{ movie.languages.length - 2 }}
-          </span>
-        </div>
-
-        <div
-          v-if="watchlistStore.isInWatchlist(movie.id)"
-          class="text-xs text-red-500 flex items-center gap-1"
+      <!-- Row 2: Language + Year + Sort in one tight row -->
+      <div class="flex gap-2 items-center">
+        <!-- Language -->
+        <select
+          v-model="selectedLanguage"
+          class="flex-1 min-w-0 px-2 py-1.5 rounded-lg border border-border bg-surface-1 text-text text-xs"
+          @change="applyFilters"
         >
-          <span>❤️</span>
-          <span>In Watchlist</span>
-        </div>
-      </RouterLink>
+          <option value="">All Languages</option>
+          <option v-for="lang in languagesStore.languages" :key="lang.id" :value="lang.code">
+            {{ lang.name }}
+          </option>
+        </select>
+
+        <!-- Year -->
+        <select
+          v-model.number="selectedYear"
+          class="w-24 shrink-0 px-2 py-1.5 rounded-lg border border-border bg-surface-1 text-text text-xs"
+          @change="applyFilters"
+        >
+          <option :value="undefined">Year</option>
+          <option v-for="y in availableYears" :key="y" :value="y">{{ y }}</option>
+        </select>
+
+        <!-- Sort -->
+        <select
+          v-model="sortBy"
+          class="w-24 shrink-0 px-2 py-1.5 rounded-lg border border-border bg-surface-1 text-text text-xs"
+          @change="applyFilters"
+        >
+          <option value="recent">Recent</option>
+          <option value="title">A → Z</option>
+          <option value="year">Year</option>
+        </select>
+
+        <!-- Clear — only visible when a filter is active -->
+        <button
+          v-if="hasActiveFilters"
+          class="shrink-0 text-xs text-primary underline whitespace-nowrap"
+          @click="clearFilters"
+        >
+          Clear
+        </button>
+      </div>
+
+      <!-- Active filter chips -->
+      <div v-if="hasActiveFilters" class="flex flex-wrap gap-1.5">
+        <span
+          v-if="selectedLanguage"
+          class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-subtle text-primary text-xs"
+        >
+          {{ languageLabel }}
+          <button @click="((selectedLanguage = ''), applyFilters())">
+            <X :size="10" />
+          </button>
+        </span>
+        <span
+          v-if="selectedYear"
+          class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-subtle text-primary text-xs"
+        >
+          {{ selectedYear }}
+          <button @click="((selectedYear = undefined), applyFilters())">
+            <X :size="10" />
+          </button>
+        </span>
+        <span
+          v-if="sortBy !== 'recent'"
+          class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-2 text-text-muted text-xs"
+        >
+          Sort: {{ sortLabel }}
+          <button @click="((sortBy = 'recent'), applyFilters())">
+            <X :size="10" />
+          </button>
+        </span>
+      </div>
     </div>
 
-    <!-- Add Movie Dialog -->
-    <div
-      v-if="showAddDialog"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      @click.self="showAddDialog = false"
-    >
-      <div class="bg-surface-1 p-6 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <h3 class="text-xl font-semibold mb-4 text-text">Add New Movie</h3>
+    <!-- ── Scrollable content area ── -->
+    <div class="flex-1 overflow-y-auto p-2 sm:p-3">
+      <!-- Count line -->
+      <p v-if="!moviesStore.loading" class="text-xs text-text-muted mb-3">
+        {{ displayedMovies.length }} movie{{ displayedMovies.length !== 1 ? 's' : '' }}
+        <template v-if="hasActiveFilters"> — filtered</template>
+      </p>
 
-        <div class="flex flex-col gap-4">
-          <div>
-            <label class="block text-sm font-medium mb-1 text-text">Title *</label>
-            <input
-              v-model="movieForm.title"
-              type="text"
-              placeholder="Movie title"
-              class="w-full px-3 py-2 rounded-lg border border-border bg-surface-2 text-text"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium mb-1 text-text">Description</label>
-            <textarea
-              v-model="movieForm.description"
-              rows="3"
-              placeholder="Movie description"
-              class="w-full px-3 py-2 rounded-lg border border-border bg-surface-2 text-text"
-            ></textarea>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-sm font-medium mb-1 text-text">Release Year</label>
-              <input
-                v-model.number="movieForm.release_year"
-                type="number"
-                placeholder="2024"
-                class="w-full px-3 py-2 rounded-lg border border-border bg-surface-2 text-text"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-1 text-text">Runtime (mins)</label>
-              <input
-                v-model.number="movieForm.runtime"
-                type="number"
-                placeholder="120"
-                class="w-full px-3 py-2 rounded-lg border border-border bg-surface-2 text-text"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium mb-1 text-text">Director</label>
-            <input
-              v-model="movieForm.director"
-              type="text"
-              placeholder="Director name"
-              class="w-full px-3 py-2 rounded-lg border border-border bg-surface-2 text-text"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium mb-1 text-text">Poster URL</label>
-            <input
-              v-model="movieForm.poster_url"
-              type="text"
-              placeholder="https://example.com/poster.jpg"
-              class="w-full px-3 py-2 rounded-lg border border-border bg-surface-2 text-text"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium mb-1 text-text">Languages</label>
-            <div class="flex flex-wrap gap-2">
-              <label
-                v-for="lang in languagesStore.languages"
-                :key="lang.id"
-                class="flex items-center gap-2 px-3 py-2 rounded-lg border border-border cursor-pointer hover:bg-surface-3"
-              >
-                <input
-                  type="checkbox"
-                  :value="lang.id"
-                  v-model="movieForm.language_ids"
-                  class="rounded"
-                />
-                <span class="text-sm text-text">{{ lang.name }}</span>
-              </label>
-            </div>
-          </div>
+      <!-- Skeletons -->
+      <div
+        v-if="moviesStore.loading"
+        class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
+      >
+        <div v-for="n in 10" :key="n" class="flex flex-col gap-2">
+          <div class="w-full aspect-[2/3] rounded-xl bg-surface-3 animate-pulse" />
+          <div class="h-3 rounded bg-surface-3 animate-pulse w-3/4" />
+          <div class="h-3 rounded bg-surface-3 animate-pulse w-1/2" />
         </div>
+      </div>
 
-        <div class="flex gap-3 mt-6">
-          <button
-            @click="showAddDialog = false"
-            class="flex-1 px-4 py-2 rounded-lg border border-border text-text"
+      <!-- Empty state -->
+      <div
+        v-else-if="displayedMovies.length === 0"
+        class="flex flex-col items-center justify-center gap-3 py-20 text-center"
+      >
+        <span class="text-4xl">🎬</span>
+        <p class="text-text font-medium">
+          {{ hasActiveFilters ? 'No movies match your filters.' : 'No movies yet.' }}
+        </p>
+        <p class="text-text-muted text-sm">
+          {{
+            hasActiveFilters
+              ? 'Try adjusting or clearing the filters.'
+              : 'Add your first movie to get started.'
+          }}
+        </p>
+        <button
+          v-if="hasActiveFilters"
+          @click="clearFilters"
+          class="text-sm text-primary underline"
+        >
+          Clear filters
+        </button>
+      </div>
+
+      <!-- Grid -->
+      <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        <RouterLink
+          v-for="movie in displayedMovies"
+          :key="movie.id"
+          :to="`/movies/${movie.id}`"
+          class="flex flex-col gap-1.5 group cursor-pointer"
+        >
+          <!-- Poster -->
+          <div
+            v-if="movie.poster_url"
+            class="w-full aspect-[2/3] rounded-xl bg-surface-3 group-hover:ring-2 group-hover:ring-primary transition-all"
+            :style="{
+              backgroundImage: `url(${movie.poster_url})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }"
+          />
+          <div
+            v-else
+            class="w-full aspect-[2/3] rounded-xl bg-surface-3 flex items-center justify-center text-text-muted text-xs group-hover:ring-2 group-hover:ring-primary transition-all"
           >
-            Cancel
-          </button>
-          <button @click="addMovie" class="flex-1 px-4 py-2 rounded-lg bg-primary text-on-primary">
-            Add Movie
-          </button>
-        </div>
+            No Poster
+          </div>
+
+          <!-- Title -->
+          <p class="text-xs font-medium text-text line-clamp-2 px-0.5">{{ movie.title }}</p>
+
+          <!-- Meta row -->
+          <div class="flex items-center gap-1 px-0.5">
+            <span class="text-xs text-text-muted">{{ movie.release_year || 'N/A' }}</span>
+            <span v-if="movie.runtime" class="text-xs text-text-muted">• {{ movie.runtime }}m</span>
+          </div>
+
+          <!-- Language chips — max 2 -->
+          <div class="flex flex-wrap gap-1 px-0.5">
+            <span
+              v-for="lang in movie.languages.slice(0, 2)"
+              :key="lang.id"
+              class="px-1.5 py-0.5 text-xs rounded-full bg-primary-subtle text-primary"
+            >
+              {{ lang.code }}
+            </span>
+            <span
+              v-if="movie.languages.length > 2"
+              class="px-1.5 py-0.5 text-xs rounded-full bg-surface-3 text-text-muted"
+            >
+              +{{ movie.languages.length - 2 }}
+            </span>
+          </div>
+
+          <!-- Watchlist badge -->
+          <div
+            v-if="watchlistStore.isInWatchlist(movie.id)"
+            class="flex items-center gap-1 px-0.5 text-xs text-red-400"
+          >
+            <Heart :size="11" class="fill-red-400" />
+            <span>In Watchlist</span>
+          </div>
+        </RouterLink>
       </div>
     </div>
   </div>
 </template>
 
-<!-- script unchanged -->
-<script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink } from 'vue-router'
+import { Heart, Plus, Search, X } from 'lucide-vue-next'
 import { useMoviesStore } from '@/stores/moviesStore'
 import { useLanguagesStore } from '@/stores/languagesStore'
 import { useMainStore } from '@/stores/mainStore'
 import { useWatchlistStore } from '@/stores/watchListStore'
-import type { CreateMovieRequest } from '@/types/movies'
 
 const moviesStore = useMoviesStore()
 const languagesStore = useLanguagesStore()
 const watchlistStore = useWatchlistStore()
 const mainStore = useMainStore()
 
+// ── Filter state ──────────────────────────────────────────────────────────────
 const searchQuery = ref('')
 const selectedLanguage = ref('')
 const selectedYear = ref<number | undefined>(undefined)
 const sortBy = ref<'recent' | 'title' | 'year'>('recent')
 
-const showAddDialog = ref(false)
-const movieForm = ref<CreateMovieRequest>({
-  title: '',
-  description: '',
-  release_year: undefined,
-  director: '',
-  poster_url: '',
-  runtime: undefined,
-  language_ids: [],
+// ── Derived ───────────────────────────────────────────────────────────────────
+const hasActiveFilters = computed(
+  () =>
+    !!searchQuery.value.trim() ||
+    !!selectedLanguage.value ||
+    !!selectedYear.value ||
+    sortBy.value !== 'recent',
+)
+
+const availableYears = computed(() => {
+  const years = moviesStore.movies.map((m) => m.release_year).filter((y): y is number => !!y)
+  return [...new Set(years)].sort((a, b) => b - a)
 })
 
-onMounted(async () => {
-  if (mainStore.backend.url) {
-    await Promise.all([
-      moviesStore.fetchMovies({ sort: sortBy.value }),
-      languagesStore.fetchLanguages(),
-      watchlistStore.fetchWatchlist(),
-    ])
-  }
+const languageLabel = computed(() => {
+  const lang = languagesStore.languages.find((l) => l.code === selectedLanguage.value)
+  return lang?.name ?? selectedLanguage.value
 })
 
+const sortLabel = computed(() => ({ recent: 'Recent', title: 'A→Z', year: 'Year' })[sortBy.value])
+
+// ── Client-side display list ──────────────────────────────────────────────────
+// Search is always client-side (instant). Language/year/sort hit the API.
+const displayedMovies = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return moviesStore.movies
+  return moviesStore.movies.filter(
+    (m) =>
+      m.title.toLowerCase().includes(q) ||
+      m.director?.toLowerCase().includes(q) ||
+      m.description?.toLowerCase().includes(q) ||
+      m.genres.some((g) => g.name.toLowerCase().includes(q)) ||
+      m.cast.some((c) => c.name.toLowerCase().includes(q)),
+  )
+})
+
+// ── Search debounce — no API call, just filters displayedMovies computed ──────
+// (API calls only happen for language / year / sort changes)
+const searchTimer: ReturnType<typeof setTimeout> | null = null
+watch(searchQuery, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  // Intentionally no API call here — searchLocal is enough
+})
+
+// ── API filter application (language / year / sort) ──────────────────────────
 async function applyFilters() {
-  const params: any = { sort: sortBy.value }
-  if (searchQuery.value) params.search = searchQuery.value
+  const params: Parameters<typeof moviesStore.fetchMovies>[0] = { sort: sortBy.value }
   if (selectedLanguage.value) params.language = selectedLanguage.value
   if (selectedYear.value) params.year = selectedYear.value
   await moviesStore.fetchMovies(params)
 }
 
-async function addMovie() {
-  if (!movieForm.value.title?.trim()) {
-    alert('Title is required')
-    return
-  }
-  try {
-    await moviesStore.addMovie(movieForm.value)
-    showAddDialog.value = false
-    movieForm.value = {
-      title: '',
-      description: '',
-      release_year: undefined,
-      director: '',
-      poster_url: '',
-      runtime: undefined,
-      language_ids: [],
-    }
-  } catch (err: any) {
-    alert(err.message || 'Failed to add movie')
-  }
+function clearFilters() {
+  searchQuery.value = ''
+  selectedLanguage.value = ''
+  selectedYear.value = undefined
+  sortBy.value = 'recent'
+  moviesStore.fetchMovies({ sort: 'recent' })
 }
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+onMounted(async () => {
+  if (!mainStore.backend.url) return
+  await Promise.all([
+    moviesStore.fetchMovies({ sort: 'recent' }),
+    languagesStore.fetchLanguages(),
+    watchlistStore.fetchWatchlist(),
+  ])
+})
 </script>

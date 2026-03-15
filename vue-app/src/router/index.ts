@@ -72,6 +72,22 @@ const router = createRouter({
       component: () => import('./../pages/WatchListPage.vue'),
     },
     {
+      path: '/people',
+      name: 'People',
+      component: () => import('../pages/PeoplePage.vue'),
+    },
+    {
+      path: '/people/add',
+      name: 'add-person',
+      component: () => import('@/pages/PersonFormPage.vue'),
+    },
+    {
+      path: '/people/:id/edit',
+      name: 'edit-person',
+      component: () => import('@/pages/PersonFormPage.vue'),
+    },
+
+    {
       path: '/movies',
       name: 'movies',
       component: () => import('@/pages/AllMoviesPage.vue'),

@@ -130,12 +130,9 @@
           v-for="genre in genresStore.genres.slice(0, 10)"
           :key="genre.id"
           :to="`/genres/${genre.slug}`"
-          class="flex-shrink-0 aspect-video w-40 p-3 cursor-pointer rounded-2xl bg-surface-2 text-text flex flex-col items-center justify-center gap-1"
+          class="flex-shrink-0 aspect-video w-40 p-3 cursor-pointer rounded-2xl bg-surface-2 text-text flex items-center justify-center"
         >
-          <span class="font-medium text-sm">{{ genre.name }}</span>
-          <span class="text-xs text-text-muted">
-            {{ genre.movie_count ?? 0 }} movie{{ (genre.movie_count ?? 0) !== 1 ? 's' : '' }}
-          </span>
+          <span class="font-medium">{{ genre.name }}</span>
         </RouterLink>
       </div>
     </div>

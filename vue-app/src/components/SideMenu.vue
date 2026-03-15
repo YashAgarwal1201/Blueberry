@@ -44,6 +44,12 @@
               <List :size="16" class="text-text-muted" />
               <span>Watchlist</span>
             </RouterLink>
+            <div class="mx-2 my-1 h-px bg-border" />
+
+            <RouterLink :class="buttonStyles" to="/movies" @click="mainStore.showSideMenu = false">
+              <Blocks :size="16" class="text-text-muted" />
+              <span>Movies</span>
+            </RouterLink>
 
             <div class="mx-2 my-1 h-px bg-border" />
 
@@ -61,6 +67,13 @@
             <RouterLink :class="buttonStyles" to="/genres" @click="mainStore.showSideMenu = false">
               <Blocks :size="16" class="text-text-muted" />
               <span>Genres</span>
+            </RouterLink>
+
+            <div class="mx-2 my-1 h-px bg-border" />
+
+            <RouterLink :class="buttonStyles" to="/people" @click="mainStore.showSideMenu = false">
+              <UserSquare :size="16" class="text-text-muted" />
+              <span>People</span>
             </RouterLink>
 
             <div class="mx-2 my-1 h-px bg-border" />
@@ -93,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import { Blocks, Languages, List, Palette, UserCircle, Wrench } from 'lucide-vue-next'
+import { Blocks, Languages, List, Palette, UserCircle, UserSquare, Wrench } from 'lucide-vue-next'
 import { Drawer, Select } from 'primevue'
 import { useMainStore } from '@/stores/mainStore'
 import toastHandler from '@/composables/toastHandeler'

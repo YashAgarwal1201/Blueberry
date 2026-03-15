@@ -281,12 +281,12 @@
         </div>
       </div>
 
-      <div class="rounded-xl border border-border p-4 bg-surface-1">
-        <h2 class="font-heading text-lg text-text mb-2">Cast & Companies</h2>
-        <p class="text-sm text-text-muted">
-          The request shape already supports cast and companies. This page keeps those arrays in
-          form state, so you can extend the UI next without changing the payload structure.
-        </p>
+      <div class="flex flex-col gap-3">
+        <div>
+          <h2 class="font-heading text-lg text-text">Cast</h2>
+          <p class="text-sm text-text-muted">Add actors, directors, writers and other crew.</p>
+        </div>
+        <CastEditor v-model="form.cast" />
       </div>
 
       <div class="flex gap-3">
@@ -318,6 +318,7 @@ import { useLanguagesStore } from '@/stores/languagesStore'
 import { useGenresStore } from '@/stores/genresStore'
 import type { CreateMovieRequest, MovieWithDetails } from '@/types/movies'
 import toastHandler from '@/composables/toastHandeler'
+import CastEditor from '@/components/CastEditor.vue'
 
 const route = useRoute()
 const router = useRouter()
