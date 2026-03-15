@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import apiClient from '@/services/apiInterceptors'
 import type { Language, MovieWithLanguages } from '@/types/movies'
+import { getErrorMessage } from '@/services/errorUtils'
 
 export const useLanguagesStore = defineStore('languagesStore', () => {
   const languages = ref<Language[]>([])
@@ -36,9 +37,10 @@ export const useLanguagesStore = defineStore('languagesStore', () => {
       const response = await apiClient.get('/languages')
       languages.value = response.data.languages || []
       return languages.value
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error fetching languages data')
       console.error('Error fetching languages:', err)
-      error.value = err.message
+      error.value = message
       throw err
     } finally {
       loading.value = false
@@ -52,9 +54,10 @@ export const useLanguagesStore = defineStore('languagesStore', () => {
       const response = await apiClient.post('/languages', { name, code })
       languages.value.push(response.data.language)
       return response.data.language as Language
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error adding language')
       console.error('Error adding language:', err)
-      error.value = err.message
+      error.value = message
       throw err
     } finally {
       loading.value = false
@@ -68,7 +71,7 @@ export const useLanguagesStore = defineStore('languagesStore', () => {
       const movies: MovieWithLanguages[] = response.data.movies || []
       moviesByLanguage.value.set(code, movies)
       return movies
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(`Error fetching movies for language ${code}:`, err)
       moviesByLanguage.value.set(code, [])
       throw err

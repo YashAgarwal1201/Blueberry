@@ -266,6 +266,7 @@ import { useMoviesStore } from '@/stores/moviesStore'
 import { useWatchlistStore } from '@/stores/watchListStore'
 import type { MovieWithDetails, WatchlistItemWithMovie, WatchlistStatus } from '@/types/movies'
 import toastHandler from '@/composables/toastHandeler'
+import { getErrorMessage } from '@/services/errorUtils'
 
 const route = useRoute()
 const router = useRouter()
@@ -318,8 +319,9 @@ async function loadMovie() {
     if (!id) throw new Error('Invalid movie ID')
     movie.value = await moviesStore.fetchMovieById(id)
     await watchlistStore.fetchWatchlist()
-  } catch (err: any) {
-    error.value = err.message || 'Failed to load movie'
+  } catch (err: unknown) {
+    const message = getErrorMessage(err, 'Failed to load movie')
+    error.value = message
   } finally {
     loading.value = false
   }
@@ -330,8 +332,9 @@ async function addToWatchlist() {
   try {
     await watchlistStore.addToWatchlist(movie.value.id, 'want_to_watch')
     showToast('success', 'Added', 'Movie added to watchlist')
-  } catch (err: any) {
-    showToast('error', 'Error', err.message || 'Failed to add movie')
+  } catch (err: unknown) {
+    // showToast('error', 'Error', err.message || 'Failed to add movie')
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to add movie'))
   }
 }
 
@@ -340,8 +343,9 @@ async function removeFromWatchlist() {
   try {
     await watchlistStore.removeFromWatchlist(watchlistItem.value.id)
     showToast('success', 'Removed', 'Movie removed from watchlist')
-  } catch (err: any) {
-    showToast('error', 'Error', err.message || 'Failed to remove movie')
+  } catch (err: unknown) {
+    // showToast('error', 'Error', err.message || 'Failed to remove movie')
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to remove movie'))
   }
 }
 
@@ -352,8 +356,9 @@ async function onStatusChange(event: Event) {
   try {
     await watchlistStore.updateStatus(watchlistItem.value.id, status)
     showToast('success', 'Updated', 'Watchlist status updated')
-  } catch (err: any) {
-    showToast('error', 'Error', err.message || 'Failed to update status')
+  } catch (err: unknown) {
+    // showToast('error', 'Error', err.message || 'Failed to update status')
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to update status'))
   }
 }
 
@@ -365,8 +370,9 @@ async function confirmDelete() {
     await moviesStore.deleteMovie(movie.value.id)
     showToast('success', 'Deleted', 'Movie deleted successfully')
     router.push('/movies')
-  } catch (err: any) {
-    showToast('error', 'Error', err.message || 'Failed to delete movie')
+  } catch (err: unknown) {
+    // showToast('error', 'Error', err.message || 'Failed to delete movie')
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to delete movie'))
   }
 }
 

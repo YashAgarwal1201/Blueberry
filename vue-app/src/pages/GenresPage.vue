@@ -128,9 +128,13 @@ import { ref, onMounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useGenresStore } from '@/stores/genresStore'
 import { useMainStore } from '@/stores/mainStore'
+import { getErrorMessage } from '@/services/errorUtils'
+import toastHandler from '@/composables/toastHandeler'
 
 const genresStore = useGenresStore()
 const mainStore = useMainStore()
+
+const showToast = toastHandler().showToast
 
 const showAddDialog = ref(false)
 const newGenre = ref({ name: '', description: '' })
@@ -162,8 +166,9 @@ async function addGenre() {
     // Fetch movies for the newly added genre too
     const added = genresStore.genres[genresStore.genres.length - 1]
     if (added) await genresStore.fetchMoviesByGenre(added.slug)
-  } catch (err: any) {
-    alert(err.message || 'Failed to add genre')
+  } catch (err: unknown) {
+    // alert(err.message || 'Failed to add genre')
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to add genre'))
   }
 }
 </script>

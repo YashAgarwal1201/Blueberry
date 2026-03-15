@@ -81,6 +81,7 @@
         <!-- Poster Preview -->
         <div v-if="form.poster_url" class="mt-2">
           <img
+            loading="lazy"
             :src="form.poster_url"
             alt="Poster preview"
             class="w-32 h-48 object-cover rounded-lg"
@@ -142,6 +143,7 @@ import Button from 'primevue/button'
 import { useMoviesStore } from '@/stores/moviesStore'
 import { useLanguagesStore } from '@/stores/languagesStore'
 import type { CreateMovieRequest, UpdateMovieRequest, MovieWithLanguages } from '@/types/movies'
+import { getErrorMessage } from '@/services/errorUtils'
 
 interface Props {
   visible: boolean
@@ -247,8 +249,9 @@ async function handleSubmit() {
     }
     closeDialog()
     resetForm()
-  } catch (err: any) {
-    errors.value.general = err.message || 'Failed to save movie'
+  } catch (err: unknown) {
+    const message = getErrorMessage(err, 'Failed to save movie')
+    errors.value.general = message
   } finally {
     submitting.value = false
   }
@@ -260,7 +263,7 @@ function closeDialog() {
 }
 </script>
 
-<style scoped>
+<!-- <style scoped>
 :deep(.p-dialog-header) {
   @apply bg-surface-1 border-b border-border;
 }
@@ -270,4 +273,4 @@ function closeDialog() {
 :deep(.p-dialog-footer) {
   @apply bg-surface-1 border-t border-border;
 }
-</style>
+</style> -->

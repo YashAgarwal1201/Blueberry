@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import apiClient from '@/services/apiInterceptors'
 import type { Genre, MovieWithLanguages } from '@/types/movies'
+import { getErrorMessage } from '@/services/errorUtils'
 
 export const useGenresStore = defineStore('genresStore', () => {
   const genres = ref<Genre[]>([])
@@ -31,9 +32,10 @@ export const useGenresStore = defineStore('genresStore', () => {
       const response = await apiClient.get('/genres')
       genres.value = response.data.genres || []
       return genres.value
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error fetching genres')
       console.error('Error fetching genres:', err)
-      error.value = err.message
+      error.value = message
       throw err
     } finally {
       loading.value = false
@@ -47,9 +49,10 @@ export const useGenresStore = defineStore('genresStore', () => {
       const response = await apiClient.post('/genres', { name, description })
       genres.value.push(response.data.genre)
       return response.data.genre as Genre
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error adding genre')
       console.error('Error adding genre:', err)
-      error.value = err.message
+      error.value = message
       throw err
     } finally {
       loading.value = false
@@ -63,7 +66,8 @@ export const useGenresStore = defineStore('genresStore', () => {
       const movies: MovieWithLanguages[] = response.data.movies || []
       moviesByGenre.value.set(slug, movies)
       return movies
-    } catch (err: any) {
+    } catch (err: unknown) {
+      // const message = getErrorMessage(err, 'Error creating person')
       console.error(`Error fetching movies for genre ${slug}:`, err)
       moviesByGenre.value.set(slug, [])
       throw err
