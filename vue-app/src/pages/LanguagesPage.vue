@@ -134,9 +134,13 @@ import { ref, onMounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useLanguagesStore } from '@/stores/languagesStore'
 import { useMainStore } from '@/stores/mainStore'
+import { getErrorMessage } from '@/services/errorUtils'
+import toastHandler from '@/composables/toastHandeler'
 
 const languagesStore = useLanguagesStore()
 const mainStore = useMainStore()
+
+const showToast = toastHandler().showToast
 
 const showAddDialog = ref(false)
 const newLanguage = ref({ name: '', code: '' })
@@ -162,7 +166,8 @@ onMounted(async () => {
 
 async function addLanguage() {
   if (!newLanguage.value.name || !newLanguage.value.code) {
-    alert('Please fill all fields')
+    // alert('Please fill all fields')
+    showToast('warn', 'Warning', 'Please fill all fields')
     return
   }
   try {
@@ -172,8 +177,9 @@ async function addLanguage() {
     // Fetch movies for newly added language
     const added = languagesStore.languages[languagesStore.languages.length - 1]
     if (added) await languagesStore.fetchMoviesByLanguage(added.code)
-  } catch (err: any) {
-    alert(err.message || 'Failed to add language')
+  } catch (err: unknown) {
+    // alert(err.message || 'Failed to add language')
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to add language'))
   }
 }
 </script>

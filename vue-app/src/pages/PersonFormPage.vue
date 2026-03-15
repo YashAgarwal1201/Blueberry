@@ -160,7 +160,8 @@ import { usePeopleStore } from '@/stores/peopleStore'
 import { useMainStore } from '@/stores/mainStore'
 import apiClient from '@/services/apiInterceptors'
 import toastHandler from '@/composables/toastHandeler'
-import type { CreatePersonRequest } from '@/types/movies'
+import type { CreatePersonRequest, Person } from '@/types/movies'
+import { getErrorMessage, getErrorStatus } from '@/services/errorUtils'
 
 const route = useRoute()
 const router = useRouter()
@@ -221,8 +222,9 @@ async function loadData() {
       imdb_id: person.imdb_id ?? '',
       tmdb_id: person.tmdb_id,
     }
-  } catch (err: any) {
-    showToast('error', 'Error', err.message || 'Failed to load person')
+  } catch (err: unknown) {
+    // showToast('error', 'Error', err.message || 'Failed to load person')
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to load person data'))
     router.push('/people')
   } finally {
     loading.value = false
@@ -235,7 +237,7 @@ async function submitForm() {
   try {
     if (isEditMode.value && personId.value) {
       const res = await apiClient.put(`people/${personId.value}`, form.value)
-      const updated = res.data.person
+      const updated = res.data.person as Person
       const idx = peopleStore.people.findIndex((p) => p.id === updated.id)
       if (idx !== -1) peopleStore.people[idx] = updated
       showToast('success', 'Updated', `${updated.name} updated successfully`)
@@ -244,11 +246,11 @@ async function submitForm() {
       showToast('success', 'Added', `${created.name} added successfully`)
     }
     router.push('/people')
-  } catch (err: any) {
-    if (err?.response?.status === 409) {
+  } catch (err: unknown) {
+    if (getErrorStatus(err) === 409) {
       showToast('warn', 'Duplicate', `"${form.value.name}" already exists.`)
     } else {
-      showToast('error', 'Error', err.message || 'Failed to save person')
+      showToast('error', 'Error', getErrorMessage(err, 'Failed to save person'))
     }
   } finally {
     saving.value = false

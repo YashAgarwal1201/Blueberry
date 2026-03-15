@@ -4,6 +4,7 @@ import { defineStore } from 'pinia'
 // import { useMainStore } from './mainStore'
 import apiClient from '@/services/apiInterceptors'
 import type { WatchlistItemWithMovie, WatchlistStatus, AddToWatchlistRequest } from '@/types/movies'
+import { getErrorMessage } from '@/services/errorUtils'
 
 export const useWatchlistStore = defineStore('watchlistStore', () => {
   // const mainStore = useMainStore()
@@ -50,9 +51,10 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
       const data = response.data
       items.value = data.items || []
       return data.items
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error fetching watchlist')
       console.error('Error fetching watchlist:', err)
-      error.value = err.message
+      error.value = message
       throw err
     } finally {
       loading.value = false
@@ -70,9 +72,10 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
       const data = response.data
       items.value.unshift(data.item)
       return data.item
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error adding to watchlist')
       console.error('Error adding to watchlist:', err)
-      error.value = err.message
+      error.value = message
       throw err
     } finally {
       loading.value = false
@@ -91,9 +94,10 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
         items.value[idx] = updatedItem
       }
       return updatedItem
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error updating watchlist')
       console.error('Error updating watchlist:', err)
-      error.value = err.message
+      error.value = message
       throw err
     } finally {
       loading.value = false
@@ -107,9 +111,10 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
       await apiClient.delete(`/watchlist/${itemId}`)
       items.value = items.value.filter((i) => i.id !== itemId)
       return true
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error removing from watchlist')
       console.error('Error removing from watchlist:', err)
-      error.value = err.message
+      error.value = message
       throw err
     } finally {
       loading.value = false
@@ -124,7 +129,7 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
         inWatchlist: data.inWatchlist,
         item: data.item as WatchlistItemWithMovie | null,
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error checking watchlist status:', err)
       return { inWatchlist: false, item: null }
     }

@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import apiClient from '@/services/apiInterceptors'
 import type { Person, CreatePersonRequest } from '@/types/movies'
+import { getErrorMessage } from '@/services/errorUtils'
 
 export const usePeopleStore = defineStore('peopleStore', () => {
   const people = ref<Person[]>([])
@@ -18,9 +19,10 @@ export const usePeopleStore = defineStore('peopleStore', () => {
       const response = await apiClient.get(`people${params}`)
       people.value = response.data.people || []
       return people.value
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error fetching people')
       console.error('Error fetching people:', err)
-      error.value = err.message
+      error.value = message
       throw err
     } finally {
       loading.value = false
@@ -35,9 +37,10 @@ export const usePeopleStore = defineStore('peopleStore', () => {
       const newPerson: Person = response.data.person
       people.value.push(newPerson)
       return newPerson
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error creating person')
       console.error('Error creating person:', err)
-      error.value = err.message
+      error.value = message
       throw err
     } finally {
       creating.value = false
@@ -49,7 +52,8 @@ export const usePeopleStore = defineStore('peopleStore', () => {
     try {
       const response = await apiClient.get(`people?search=${encodeURIComponent(query.trim())}`)
       return response.data.people || []
-    } catch (err: any) {
+    } catch (err: unknown) {
+      // const message = getErrorMessage(err, 'Error updating watchlist')
       console.error('Error searching people:', err)
       return []
     }

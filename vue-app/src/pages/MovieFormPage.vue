@@ -286,7 +286,8 @@
           <h2 class="font-heading text-lg text-text">Cast</h2>
           <p class="text-sm text-text-muted">Add actors, directors, writers and other crew.</p>
         </div>
-        <CastEditor v-model="form.cast" />
+        <!-- <CastEditor v-model="form.cast" /> -->
+        <CastEditor :model-value="form.cast ?? []" @update:model-value="form.cast = $event" />
       </div>
 
       <div class="flex gap-3">
@@ -319,6 +320,7 @@ import { useGenresStore } from '@/stores/genresStore'
 import type { CreateMovieRequest, MovieWithDetails } from '@/types/movies'
 import toastHandler from '@/composables/toastHandeler'
 import CastEditor from '@/components/CastEditor.vue'
+import { getErrorMessage } from '@/services/errorUtils'
 
 const route = useRoute()
 const router = useRouter()
@@ -424,8 +426,9 @@ async function loadData() {
       const movie = await moviesStore.fetchMovieById(movieId.value)
       applyMovieToForm(movie)
     }
-  } catch (err: any) {
-    showToast('error', 'Error', err.message || 'Failed to load data')
+  } catch (err: unknown) {
+    // showToast('error', 'Error', err.message || 'Failed to load data')
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to load data'))
   } finally {
     loading.value = false
   }
@@ -448,8 +451,9 @@ async function submitForm() {
       showToast('success', 'Created', 'Movie created successfully')
       router.push(`/movies/${created.id}`)
     }
-  } catch (err: any) {
-    showToast('error', 'Error', err.message || 'Failed to save movie')
+  } catch (err: unknown) {
+    // showToast('error', 'Error', err.message || 'Failed to save movie')
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to save movie'))
   } finally {
     saving.value = false
   }

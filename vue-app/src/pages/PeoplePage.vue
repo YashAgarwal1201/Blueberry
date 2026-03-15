@@ -223,6 +223,7 @@ import PersonProfileDrawer from '@/components/people/PersonProfileDrawer.vue'
 import PersonAddDialog from '@/components/people/PersonAddDialog.vue'
 import type { CreatePersonRequest, Person, CastRole } from '@/types/movies'
 import router from '@/router'
+import { getErrorMessage, getErrorStatus } from '@/services/errorUtils'
 
 const peopleStore = usePeopleStore()
 const moviesStore = useMoviesStore()
@@ -327,8 +328,9 @@ async function loadFilmography() {
     const res = await apiClient.get(`people/${selectedPerson.value.id}`)
     filmography.value = res.data.person.filmography || []
     filmographyLoaded.value = true
-  } catch (err: any) {
-    showToast('error', 'Error', err.message || 'Failed to load filmography')
+  } catch (err: unknown) {
+    // showToast('error', 'Error', err.message || 'Failed to load filmography')
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to load filmography'))
   } finally {
     filmographyLoading.value = false
   }
@@ -347,8 +349,9 @@ async function saveEdit(form: CreatePersonRequest) {
     if (idx !== -1) peopleStore.people[idx] = updated
     selectedPerson.value = updated
     showToast('success', 'Saved', `${updated.name} updated successfully`)
-  } catch (err: any) {
-    showToast('error', 'Error', err.message || 'Failed to save changes')
+  } catch (err: unknown) {
+    // showToast('error', 'Error', err.message || 'Failed to save changes')
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to save changes'))
   } finally {
     saving.value = false
   }
@@ -380,15 +383,15 @@ function confirmDelete() {
         peopleStore.people = peopleStore.people.filter((p) => p.id !== selectedPerson.value!.id)
         showToast('success', 'Deleted', `${selectedPerson.value.name} removed`)
         showProfile.value = false
-      } catch (err: any) {
-        if (err?.response?.status === 409) {
+      } catch (err: unknown) {
+        if (getErrorStatus(err) === 409) {
           showToast(
             'warn',
             'Cannot Delete',
-            err.response.data?.error || 'This person is credited in movies.',
+            getErrorMessage(err, 'This person is credited in movies.'),
           )
         } else {
-          showToast('error', 'Error', err.message || 'Failed to delete person')
+          showToast('error', 'Error', getErrorMessage(err, 'Failed to delete person'))
         }
       } finally {
         deleting.value = false
@@ -400,16 +403,20 @@ function confirmDelete() {
 // ── Add ───────────────────────────────────────────────────────────────────────
 const showAddDialog = ref(false)
 
-async function submitAdd(form: CreatePersonRequest) {
+async function submitAdd(personForm: CreatePersonRequest) {
   try {
-    const created = await peopleStore.createPerson(form)
+    const created = await peopleStore.createPerson(personForm)
     showToast('success', 'Added', `${created.name} added successfully`)
     showAddDialog.value = false
-  } catch (err: any) {
-    if (err?.response?.status === 409) {
-      showToast('warn', 'Duplicate', `"${form.name}" already exists. Search for them instead.`)
+  } catch (err: unknown) {
+    if (getErrorStatus(err) === 409) {
+      showToast(
+        'warn',
+        'Duplicate',
+        `"${personForm.name}" already exists. Search for them instead.`,
+      )
     } else {
-      showToast('error', 'Error', err.message || 'Failed to add person')
+      showToast('error', 'Error', getErrorMessage(err, 'Failed to add person'))
     }
   }
 }

@@ -253,6 +253,7 @@ import { ref } from 'vue'
 import { Plus, User, X } from 'lucide-vue-next'
 import { usePeopleStore } from '@/stores/peopleStore'
 import type { CastMemberRequest, CastRole, CreatePersonRequest, Person } from '@/types/movies'
+import { getErrorStatus } from '@/services/errorUtils'
 
 const props = defineProps<{
   modelValue: CastMemberRequest[]
@@ -347,9 +348,8 @@ async function createAndAdd() {
     pendingPerson.value = created
     pendingRole.value = 'actor'
     pendingCharacter.value = ''
-  } catch (err: any) {
-    // 409 = duplicate — backend returns existing_id, surface it
-    if (err?.response?.status === 409) {
+  } catch (err: unknown) {
+    if (getErrorStatus(err) === 409) {
       alert(`A person named "${newPerson.value.name}" already exists. Search for them instead.`)
     }
   }

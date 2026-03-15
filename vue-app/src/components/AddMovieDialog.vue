@@ -143,6 +143,7 @@ import Button from 'primevue/button'
 import { useMoviesStore } from '@/stores/moviesStore'
 import { useLanguagesStore } from '@/stores/languagesStore'
 import type { CreateMovieRequest, UpdateMovieRequest, MovieWithLanguages } from '@/types/movies'
+import { getErrorMessage } from '@/services/errorUtils'
 
 interface Props {
   visible: boolean
@@ -248,8 +249,9 @@ async function handleSubmit() {
     }
     closeDialog()
     resetForm()
-  } catch (err: any) {
-    errors.value.general = err.message || 'Failed to save movie'
+  } catch (err: unknown) {
+    const message = getErrorMessage(err, 'Failed to save movie')
+    errors.value.general = message
   } finally {
     submitting.value = false
   }
