@@ -23,13 +23,13 @@
       </div>
 
       <div v-if="moviesStore.loading" class="text-text-muted">Loading movies...</div>
-      <div v-else-if="recentMovies.length === 0" class="text-text-muted">No movies found</div>
+      <div v-else-if="recentMovies?.length === 0" class="text-text-muted">No movies found</div>
       <div v-else class="flex flex-nowrap items-center gap-3 overflow-x-auto">
         <RouterLink
           v-for="movie in recentMovies"
           :key="movie.id"
           :to="`/movies/${movie.id}`"
-          class="flex-shrink-0 w-40 h-60 p-3 cursor-pointer rounded-2xl bg-surface-2 flex flex-col gap-2"
+          class="shrink-0 w-40 h-60 p-3 cursor-pointer rounded-2xl bg-surface-2 flex flex-col gap-2"
         >
           <div
             v-if="movie.poster_url"
@@ -68,7 +68,7 @@
       </div>
 
       <div v-if="watchlistStore.loading" class="text-text-muted">Loading watchlist...</div>
-      <div v-else-if="watchlistPreview.length === 0" class="text-text-muted">
+      <div v-else-if="watchlistPreview?.length === 0" class="text-text-muted">
         Your watchlist is empty
       </div>
       <div v-else class="flex flex-nowrap items-center gap-3 overflow-x-auto">
@@ -76,7 +76,7 @@
           v-for="item in watchlistPreview"
           :key="item.id"
           :to="`/movies/${item.movie_id}`"
-          class="flex-shrink-0 w-40 h-60 p-3 cursor-pointer rounded-2xl bg-surface-2 flex flex-col gap-2 relative"
+          class="shrink-0 w-40 h-60 p-3 cursor-pointer rounded-2xl bg-surface-2 flex flex-col gap-2 relative"
         >
           <!-- Status Badge -->
           <div
@@ -122,15 +122,15 @@
         </RouterLink>
       </div>
       <div v-if="genresStore.loading" class="text-text-muted">Loading genres...</div>
-      <div v-else-if="genresStore.genres.length === 0" class="text-text-muted">
+      <div v-else-if="genresStore.genres?.length === 0" class="text-text-muted">
         No genres available
       </div>
       <div v-else class="flex flex-nowrap items-center gap-3 overflow-x-auto">
         <RouterLink
-          v-for="genre in genresStore.genres.slice(0, 10)"
+          v-for="genre in genresStore.genres?.slice(0, 10)"
           :key="genre.id"
           :to="`/genres/${genre.slug}`"
-          class="flex-shrink-0 aspect-video w-40 p-3 cursor-pointer rounded-2xl bg-surface-2 text-text flex items-center justify-center"
+          class="shrink-0 aspect-video w-40 p-3 cursor-pointer rounded-2xl bg-surface-2 text-text flex items-center justify-center"
         >
           <span class="font-medium">{{ genre.name }}</span>
         </RouterLink>
@@ -154,15 +154,15 @@
       </div>
 
       <div v-if="languagesStore.loading" class="text-text-muted">Loading languages...</div>
-      <div v-else-if="languagesStore.languages.length === 0" class="text-text-muted">
+      <div v-else-if="languagesStore.languages?.length === 0" class="text-text-muted">
         No languages available
       </div>
       <div v-else class="flex flex-nowrap items-center gap-3 overflow-x-auto">
         <RouterLink
-          v-for="lang in languagesStore.languages.slice(0, 10)"
+          v-for="lang in languagesStore.languages?.slice(0, 10)"
           :key="lang.id"
           :to="`/languages/${lang.code}`"
-          class="flex-shrink-0 aspect-video w-40 p-3 cursor-pointer rounded-2xl bg-surface-2 text-text flex items-center justify-center"
+          class="shrink-0 aspect-video w-40 p-3 cursor-pointer rounded-2xl bg-surface-2 text-text flex items-center justify-center"
         >
           <span class="font-medium">{{ lang.name }}</span>
         </RouterLink>
@@ -189,17 +189,19 @@ const genresStore = useGenresStore()
 const mainStore = useMainStore()
 const showToast = toastHandler().showToast
 
-const recentMovies = computed(() => moviesStore.movies.slice(0, 10))
-const watchlistPreview = computed(() => watchlistStore.items.slice(0, 10))
+const recentMovies = computed(() => moviesStore.movies?.slice(0, 10))
+const watchlistPreview = computed(() => watchlistStore.items?.slice(0, 10))
 
 onMounted(async () => {
   if (mainStore.backend.url) {
     try {
       await Promise.all([
-        moviesStore.movies.length ? Promise.resolve() : moviesStore.fetchMovies({ sort: 'recent' }),
-        watchlistStore.items.length ? Promise.resolve() : watchlistStore.fetchWatchlist(),
-        languagesStore.languages.length ? Promise.resolve() : languagesStore.fetchLanguages(),
-        genresStore.genres.length ? Promise.resolve() : genresStore.fetchGenres(),
+        moviesStore.movies?.length
+          ? Promise.resolve()
+          : moviesStore.fetchMovies({ sort: 'recent' }),
+        watchlistStore.items?.length ? Promise.resolve() : watchlistStore.fetchWatchlist(),
+        languagesStore.languages?.length ? Promise.resolve() : languagesStore.fetchLanguages(),
+        genresStore.genres?.length ? Promise.resolve() : genresStore.fetchGenres(),
       ])
     } catch (err) {
       console.error('Error loading home data:', err)

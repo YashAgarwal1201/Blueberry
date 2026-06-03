@@ -1,42 +1,17 @@
 // src/routes/genres.ts
 import express, { Request, Response, Router } from "express";
 import db from "../db";
-import { Genre, Movie, Language } from "../types.ts";
+import type {
+  Genre,
+  Movie,
+  MovieCard,
+  Language,
+  PaginationQuery,
+} from "../types.ts";
 
 const router: Router = express.Router();
 
-// ── Prepared statements ──────────────────────────────────────────────────────
-
-const selectAllGenresStmt = db.prepare(`
-  SELECT id, name, slug, description, created_at
-  FROM genres ORDER BY name ASC
-`);
-
-const selectGenreByIdStmt = db.prepare(`
-  SELECT id, name, slug, description, created_at FROM genres WHERE id = ?
-`);
-
-const selectGenreBySlugStmt = db.prepare(`
-  SELECT id, name, slug, description, created_at FROM genres WHERE slug = ?
-`);
-
-const insertGenreStmt = db.prepare(`
-  INSERT INTO genres (name, slug, description) VALUES (?, ?, ?)
-`);
-
-const updateGenreStmt = db.prepare(`
-  UPDATE genres SET name = ?, slug = ?, description = ? WHERE id = ?
-`);
-
-const deleteGenreStmt = db.prepare(`
-  DELETE FROM genres WHERE id = ?
-`);
-
-const checkGenreUsageStmt = db.prepare(`
-  SELECT COUNT(*) as count FROM movie_genres WHERE genre_id = ?
-`);
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function toSlug(name: string): string {
   return name
@@ -46,68 +21,126 @@ function toSlug(name: string): string {
     .replace(/[^a-z0-9-]/g, "");
 }
 
-function attachDataToMovies(movies: Movie[]) {
+function parsePage(query: PaginationQuery) {
+  const page = Math.max(1, parseInt(query.page as string) || 1);
+  const limit = Math.min(
+    100,
+    Math.max(1, parseInt(query.limit as string) || 20),
+  );
+  return { page, limit, offset: (page - 1) * limit };
+}
+
+function toMovieCards(movies: Movie[]): MovieCard[] {
   if (movies.length === 0) return [];
   const ids = movies.map((m) => m.id);
   const ph = ids.map(() => "?").join(",");
 
-  const langs = db
+  const allLangs = db
     .prepare(
-      `
-    SELECT ml.movie_id, l.id, l.name, l.code
-    FROM languages l
-    INNER JOIN movie_languages ml ON l.id = ml.language_id
-    WHERE ml.movie_id IN (${ph})
-  `,
+      `SELECT ml.movie_id, l.id, l.name, l.code
+       FROM languages l
+       JOIN movie_languages ml ON l.id = ml.language_id
+       WHERE ml.movie_id IN (${ph})`,
     )
-    .all(...ids) as Array<Language & { movie_id: number }>;
+    .all(...ids) as Array<{
+    movie_id: number;
+    id: number;
+    name: string;
+    code: string;
+  }>;
 
-  const genres = db
+  const allGenres = db
     .prepare(
-      `
-    SELECT mg.movie_id, g.id, g.name, g.slug, g.description, g.created_at
-    FROM genres g
-    INNER JOIN movie_genres mg ON g.id = mg.genre_id
-    WHERE mg.movie_id IN (${ph})
-  `,
+      `SELECT mg.movie_id, g.id, g.name, g.slug
+       FROM genres g
+       JOIN movie_genres mg ON g.id = mg.genre_id
+       WHERE mg.movie_id IN (${ph})`,
     )
-    .all(...ids) as Array<Genre & { movie_id: number }>;
+    .all(...ids) as Array<{
+    movie_id: number;
+    id: number;
+    name: string;
+    slug: string;
+  }>;
 
-  const langMap = new Map<number, Language[]>();
-  langs.forEach(({ movie_id, ...l }) => {
+  const langMap = new Map<
+    number,
+    { id: number; name: string; code: string }[]
+  >();
+  const genreMap = new Map<
+    number,
+    { id: number; name: string; slug: string }[]
+  >();
+
+  allLangs.forEach(({ movie_id, ...l }) => {
     if (!langMap.has(movie_id)) langMap.set(movie_id, []);
     langMap.get(movie_id)!.push(l);
   });
-
-  const genreMap = new Map<number, Genre[]>();
-  genres.forEach(({ movie_id, ...g }) => {
+  allGenres.forEach(({ movie_id, ...g }) => {
     if (!genreMap.has(movie_id)) genreMap.set(movie_id, []);
     genreMap.get(movie_id)!.push(g);
   });
 
+  const watchlist = new Set(
+    (
+      db.prepare(`SELECT movie_id FROM watchlist`).all() as {
+        movie_id: number;
+      }[]
+    ).map((r) => r.movie_id),
+  );
+
   return movies.map((m) => ({
-    ...m,
-    languages: langMap.get(m.id) || [],
-    genres: genreMap.get(m.id) || [],
+    id: m.id,
+    title: m.title,
+    poster_url: m.poster_url,
+    backdrop_url: m.backdrop_url,
+    release_year: m.release_year,
+    runtime: m.runtime,
+    rating_imdb: m.rating_imdb,
+    age_rating: m.age_rating,
+    status: m.status ?? "released",
+    in_watchlist: watchlist.has(m.id),
+    languages: langMap.get(m.id) ?? [],
+    genres: genreMap.get(m.id) ?? [],
   }));
 }
 
-// ── Routes ───────────────────────────────────────────────────────────────────
+// ── Prepared statements ───────────────────────────────────────────────────────
 
-// GET /genres
+const selectAllGenresStmt = db.prepare(
+  `SELECT g.id, g.name, g.slug, g.description, g.created_at,
+          COUNT(mg.movie_id) as movie_count
+   FROM genres g
+   LEFT JOIN movie_genres mg ON g.id = mg.genre_id
+   GROUP BY g.id
+   ORDER BY g.name ASC`,
+);
+
+const selectGenreBySlugStmt = db.prepare(
+  `SELECT id, name, slug, description, created_at FROM genres WHERE slug = ?`,
+);
+
+const selectGenreByIdStmt = db.prepare(
+  `SELECT id, name, slug, description, created_at FROM genres WHERE id = ?`,
+);
+
+const insertGenreStmt = db.prepare(
+  `INSERT INTO genres (name, slug, description) VALUES (?, ?, ?)`,
+);
+
+const deleteGenreStmt = db.prepare(`DELETE FROM genres WHERE id = ?`);
+
+const checkGenreUsageStmt = db.prepare(
+  `SELECT COUNT(*) as count FROM movie_genres WHERE genre_id = ?`,
+);
+
+// ── GET /genres ───────────────────────────────────────────────────────────────
 router.get("/", (_req: Request, res: Response) => {
   try {
-    const genres = selectAllGenresStmt.all() as Genre[];
-    // Attach movie count to each genre for display
-    const withCounts = genres.map((g) => {
-      const { count } = db
-        .prepare(
-          `SELECT COUNT(*) as count FROM movie_genres WHERE genre_id = ?`,
-        )
-        .get(g.id) as { count: number };
-      return { ...g, movie_count: count };
-    });
-    res.json({ success: true, count: genres.length, genres: withCounts });
+    const genres = selectAllGenresStmt.all() as Array<
+      Genre & { movie_count: number }
+    >;
+    res.json({ success: true, data: genres });
   } catch (err: any) {
     res
       .status(500)
@@ -119,61 +152,72 @@ router.get("/", (_req: Request, res: Response) => {
   }
 });
 
-// GET /genres/:slug
-router.get("/:slug", (req: Request, res: Response) => {
+// ── GET /genres/:slug/movies ──────────────────────────────────────────────────
+// IMPORTANT: must be declared BEFORE /:slug to avoid being swallowed by it
+router.get("/:slug/movies", (req: Request, res: Response) => {
   try {
     const genre = selectGenreBySlugStmt.get(req.params.slug) as
       | Genre
       | undefined;
     if (!genre)
       return res.status(404).json({ success: false, error: "Genre not found" });
-    res.json({ success: true, genre });
-  } catch (err: any) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to fetch genre",
-        message: err.message,
-      });
-  }
-});
 
-// GET /genres/:slug/movies — movies for a genre with filters
-router.get("/:slug/movies", (req: Request, res: Response) => {
-  try {
-    const { slug } = req.params;
-    const { year, sort = "recent" } = req.query;
+    const { sort = "recent", year } = req.query;
+    const { page, limit, offset } = parsePage(req.query as PaginationQuery);
 
-    const genre = selectGenreBySlugStmt.get(slug) as Genre | undefined;
-    if (!genre)
-      return res.status(404).json({ success: false, error: "Genre not found" });
+    const conditions = [`mg.genre_id = ?`];
+    const params: (string | number)[] = [genre.id];
 
-    let movies = db
-      .prepare(
-        `
-      SELECT m.id, m.title, m.description, m.release_year, m.director,
-             m.poster_url, m.runtime, m.created_at, m.updated_at
-      FROM movies m
-      INNER JOIN movie_genres mg ON m.id = mg.movie_id
-      WHERE mg.genre_id = ?
-      ORDER BY m.created_at DESC
-    `,
-      )
-      .all(genre.id) as Movie[];
-
-    if (year && typeof year === "string") {
-      const y = parseInt(year);
-      if (!isNaN(y)) movies = movies.filter((m) => m.release_year === y);
+    if (year) {
+      conditions.push("m.release_year = ?");
+      params.push(parseInt(year as string));
     }
 
-    let result = attachDataToMovies(movies);
+    const where = conditions.join(" AND ");
 
-    if (sort === "title") result.sort((a, b) => a.title.localeCompare(b.title));
-    else if (sort === "year")
-      result.sort((a, b) => (b.release_year || 0) - (a.release_year || 0));
+    const orderMap: Record<string, string> = {
+      recent: "m.created_at DESC",
+      title: "m.title ASC",
+      year: "m.release_year DESC",
+      rating: "m.rating_imdb DESC",
+    };
+    const orderBy = orderMap[sort as string] ?? "m.created_at DESC";
 
-    res.json({ success: true, genre, count: result.length, movies: result });
+    const { count: total } = db
+      .prepare(
+        `SELECT COUNT(*) as count
+         FROM movies m
+         JOIN movie_genres mg ON m.id = mg.movie_id
+         WHERE ${where}`,
+      )
+      .get(...params) as { count: number };
+
+    const movies = db
+      .prepare(
+        `SELECT m.*
+         FROM movies m
+         JOIN movie_genres mg ON m.id = mg.movie_id
+         WHERE ${where}
+         ORDER BY ${orderBy}
+         LIMIT ? OFFSET ?`,
+      )
+      .all(...params, limit, offset) as Movie[];
+
+    const cards = toMovieCards(movies);
+    const totalPages = Math.ceil(total / limit);
+
+    res.json({
+      success: true,
+      data: { genre, movies: cards },
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    });
   } catch (err: any) {
     res
       .status(500)
@@ -185,36 +229,57 @@ router.get("/:slug/movies", (req: Request, res: Response) => {
   }
 });
 
-// POST /genres
+// ── GET /genres/:slug ─────────────────────────────────────────────────────────
+router.get("/:slug", (req: Request, res: Response) => {
+  try {
+    const genre = selectGenreBySlugStmt.get(req.params.slug) as
+      | Genre
+      | undefined;
+    if (!genre)
+      return res.status(404).json({ success: false, error: "Genre not found" });
+    res.json({ success: true, data: genre });
+  } catch (err: any) {
+    res
+      .status(500)
+      .json({
+        success: false,
+        error: "Failed to fetch genre",
+        message: err.message,
+      });
+  }
+});
+
+// ── POST /genres ──────────────────────────────────────────────────────────────
 router.post("/", (req: Request, res: Response) => {
   try {
     const { name, slug: providedSlug, description = "" } = req.body;
-    if (!name?.trim()) {
+    if (!name?.trim())
       return res
         .status(400)
         .json({ success: false, error: "Name is required" });
-    }
 
     const slug = providedSlug?.trim() ? providedSlug.trim() : toSlug(name);
 
     const existing = selectGenreBySlugStmt.get(slug) as Genre | undefined;
-    if (existing) {
+    if (existing)
       return res
         .status(409)
         .json({ success: false, error: "Genre slug already exists", existing });
-    }
 
     const info = insertGenreStmt.run(name.trim(), slug, description.trim());
     const genre = selectGenreByIdStmt.get(info.lastInsertRowid) as Genre;
     res
       .status(201)
-      .json({ success: true, message: "Genre created successfully", genre });
+      .json({
+        success: true,
+        message: "Genre created successfully",
+        data: genre,
+      });
   } catch (err: any) {
-    if (err.message.includes("UNIQUE constraint failed")) {
+    if (err.message.includes("UNIQUE constraint failed"))
       return res
         .status(409)
         .json({ success: false, error: "Genre name or slug already exists" });
-    }
     res
       .status(500)
       .json({
@@ -225,7 +290,7 @@ router.post("/", (req: Request, res: Response) => {
   }
 });
 
-// PUT /genres/:slug
+// ── PUT /genres/:slug ─────────────────────────────────────────────────────────
 router.put("/:slug", (req: Request, res: Response) => {
   try {
     const existing = selectGenreBySlugStmt.get(req.params.slug) as
@@ -244,15 +309,21 @@ router.put("/:slug", (req: Request, res: Response) => {
         .status(400)
         .json({ success: false, error: "Name cannot be empty" });
 
-    updateGenreStmt.run(updatedName, updatedSlug, updatedDesc, existing.id);
+    db.prepare(
+      `UPDATE genres SET name = ?, slug = ?, description = ? WHERE id = ?`,
+    ).run(updatedName, updatedSlug, updatedDesc, existing.id);
+
     const genre = selectGenreByIdStmt.get(existing.id) as Genre;
-    res.json({ success: true, message: "Genre updated successfully", genre });
+    res.json({
+      success: true,
+      message: "Genre updated successfully",
+      data: genre,
+    });
   } catch (err: any) {
-    if (err.message.includes("UNIQUE constraint failed")) {
+    if (err.message.includes("UNIQUE constraint failed"))
       return res
         .status(409)
         .json({ success: false, error: "Genre name or slug already exists" });
-    }
     res
       .status(500)
       .json({
@@ -263,7 +334,7 @@ router.put("/:slug", (req: Request, res: Response) => {
   }
 });
 
-// DELETE /genres/:slug
+// ── DELETE /genres/:slug ──────────────────────────────────────────────────────
 router.delete("/:slug", (req: Request, res: Response) => {
   try {
     const genre = selectGenreBySlugStmt.get(req.params.slug) as
@@ -273,19 +344,18 @@ router.delete("/:slug", (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: "Genre not found" });
 
     const { count } = checkGenreUsageStmt.get(genre.id) as { count: number };
-    if (count > 0) {
+    if (count > 0)
       return res.status(409).json({
         success: false,
         error: "Cannot delete a genre that is assigned to movies",
         usedBy: count,
       });
-    }
 
     deleteGenreStmt.run(genre.id);
     res.json({
       success: true,
       message: "Genre deleted successfully",
-      deletedGenre: { id: genre.id, name: genre.name },
+      data: { id: genre.id, name: genre.name },
     });
   } catch (err: any) {
     res
