@@ -286,7 +286,6 @@
           <h2 class="font-heading text-lg text-text">Cast</h2>
           <p class="text-sm text-text-muted">Add actors, directors, writers and other crew.</p>
         </div>
-        <!-- <CastEditor v-model="form.cast" /> -->
         <CastEditor :model-value="form.cast ?? []" @update:model-value="form.cast = $event" />
       </div>
 
@@ -419,7 +418,10 @@ function resetForm() {
 
 async function loadData() {
   try {
-    await Promise.all([languagesStore.fetchLanguages(), genresStore.fetchGenres()])
+    await Promise.all([
+      languagesStore.languages.length ? Promise.resolve() : languagesStore.fetchLanguages(),
+      genresStore.genres.length ? Promise.resolve() : genresStore.fetchGenres(),
+    ])
 
     if (isEditMode.value && movieId.value) {
       loading.value = true
@@ -427,7 +429,6 @@ async function loadData() {
       applyMovieToForm(movie)
     }
   } catch (err: unknown) {
-    // showToast('error', 'Error', err.message || 'Failed to load data')
     showToast('error', 'Error', getErrorMessage(err, 'Failed to load data'))
   } finally {
     loading.value = false
@@ -452,7 +453,6 @@ async function submitForm() {
       router.push(`/movies/${created.id}`)
     }
   } catch (err: unknown) {
-    // showToast('error', 'Error', err.message || 'Failed to save movie')
     showToast('error', 'Error', getErrorMessage(err, 'Failed to save movie'))
   } finally {
     saving.value = false

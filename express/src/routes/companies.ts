@@ -1,7 +1,7 @@
 // src/routes/companies.ts
 import express, { Request, Response, Router } from "express";
 import db from "../db";
-import type { Company, CreateCompanyRequest } from "../types.ts";
+import type { Company, CreateCompanyRequest, IdParam } from "../types.ts";
 
 const router: Router = express.Router();
 
@@ -29,18 +29,16 @@ router.get("/", (req: Request, res: Response) => {
 
     res.json({ success: true, count: companies.length, companies });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to fetch companies",
-        message: err.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch companies",
+      message: err.message,
+    });
   }
 });
 
 // GET /companies/:id
-router.get("/:id", (req: Request, res: Response) => {
+router.get("/:id", (req: Request<IdParam>, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id))
@@ -68,13 +66,11 @@ router.get("/:id", (req: Request, res: Response) => {
 
     res.json({ success: true, company: { ...company, movies } });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to fetch company",
-        message: err.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch company",
+      message: err.message,
+    });
   }
 });
 
@@ -119,26 +115,22 @@ router.post("/", (req: Request, res: Response) => {
     const company = db
       .prepare(`SELECT * FROM companies WHERE id = ?`)
       .get(info.lastInsertRowid) as Company;
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: "Company created successfully",
-        company,
-      });
+    res.status(201).json({
+      success: true,
+      message: "Company created successfully",
+      company,
+    });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to create company",
-        message: err.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to create company",
+      message: err.message,
+    });
   }
 });
 
 // PUT /companies/:id
-router.put("/:id", (req: Request, res: Response) => {
+router.put("/:id", (req: Request<IdParam>, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id))
@@ -177,18 +169,16 @@ router.put("/:id", (req: Request, res: Response) => {
       company: updated,
     });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to update company",
-        message: err.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to update company",
+      message: err.message,
+    });
   }
 });
 
 // DELETE /companies/:id
-router.delete("/:id", (req: Request, res: Response) => {
+router.delete("/:id", (req: Request<IdParam>, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id))
@@ -222,13 +212,11 @@ router.delete("/:id", (req: Request, res: Response) => {
       deletedCompany: company,
     });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to delete company",
-        message: err.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to delete company",
+      message: err.message,
+    });
   }
 });
 

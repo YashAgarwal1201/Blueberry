@@ -12,6 +12,7 @@ import type {
   UpdateMovieRequest,
   CastMemberRequest,
   CompanyRequest,
+  IdParam,
 } from "../types.ts";
 
 const router: Router = express.Router();
@@ -268,7 +269,7 @@ router.get("/", (req: Request, res: Response) => {
 });
 
 // ── GET /movies/:id ───────────────────────────────────────────────────────────
-router.get("/:id", (req: Request, res: Response) => {
+router.get("/:id", (req: Request<IdParam>, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id))
@@ -398,7 +399,7 @@ router.post("/", (req: Request, res: Response) => {
 });
 
 // ── PUT /movies/:id ───────────────────────────────────────────────────────────
-router.put("/:id", (req: Request, res: Response) => {
+router.put("/:id", (req: Request<IdParam>, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id))
@@ -520,7 +521,7 @@ router.put("/:id", (req: Request, res: Response) => {
 });
 
 // ── DELETE /movies/:id ────────────────────────────────────────────────────────
-router.delete("/:id", (req: Request, res: Response) => {
+router.delete("/:id", (req: Request<IdParam>, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id))

@@ -171,7 +171,6 @@
   </div>
 </template>
 
-<!-- script unchanged -->
 <script setup lang="ts">
 import toastHandler from '@/composables/toastHandeler'
 import { useGenresStore } from '@/stores/genresStore'
@@ -197,9 +196,10 @@ onMounted(async () => {
   if (mainStore.backend.url) {
     try {
       await Promise.all([
-        moviesStore.fetchMovies({ sort: 'recent' }),
-        watchlistStore.fetchWatchlist(),
-        languagesStore.fetchLanguages(),
+        moviesStore.movies.length ? Promise.resolve() : moviesStore.fetchMovies({ sort: 'recent' }),
+        watchlistStore.items.length ? Promise.resolve() : watchlistStore.fetchWatchlist(),
+        languagesStore.languages.length ? Promise.resolve() : languagesStore.fetchLanguages(),
+        genresStore.genres.length ? Promise.resolve() : genresStore.fetchGenres(),
       ])
     } catch (err) {
       console.error('Error loading home data:', err)
