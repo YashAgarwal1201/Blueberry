@@ -1,7 +1,7 @@
 // src/routes/people.ts
 import express, { Request, Response, Router } from "express";
 import db from "../db";
-import type { Person, CreatePersonRequest } from "../types.ts";
+import type { Person, CreatePersonRequest, IdParam } from "../types.ts";
 
 const router: Router = express.Router();
 
@@ -27,18 +27,16 @@ router.get("/", (req: Request, res: Response) => {
 
     res.json({ success: true, count: people.length, people });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to fetch people",
-        message: err.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch people",
+      message: err.message,
+    });
   }
 });
 
 // GET /people/:id
-router.get("/:id", (req: Request, res: Response) => {
+router.get("/:id", (req: Request<IdParam>, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id))
@@ -67,13 +65,11 @@ router.get("/:id", (req: Request, res: Response) => {
 
     res.json({ success: true, person: { ...person, filmography } });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to fetch person",
-        message: err.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch person",
+      message: err.message,
+    });
   }
 });
 
@@ -126,18 +122,16 @@ router.post("/", (req: Request, res: Response) => {
       .status(201)
       .json({ success: true, message: "Person created successfully", person });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to create person",
-        message: err.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to create person",
+      message: err.message,
+    });
   }
 });
 
 // PUT /people/:id
-router.put("/:id", (req: Request, res: Response) => {
+router.put("/:id", (req: Request<IdParam>, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id))
@@ -181,18 +175,16 @@ router.put("/:id", (req: Request, res: Response) => {
       person: updated,
     });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to update person",
-        message: err.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to update person",
+      message: err.message,
+    });
   }
 });
 
 // DELETE /people/:id
-router.delete("/:id", (req: Request, res: Response) => {
+router.delete("/:id", (req: Request<IdParam>, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id))
@@ -225,13 +217,11 @@ router.delete("/:id", (req: Request, res: Response) => {
       deletedPerson: person,
     });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to delete person",
-        message: err.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to delete person",
+      message: err.message,
+    });
   }
 });
 

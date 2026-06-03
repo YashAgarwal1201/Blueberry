@@ -78,6 +78,7 @@
         </div>
       </div>
     </div>
+
     <!-- Add Genre Dialog -->
     <div
       v-if="showAddDialog"
@@ -149,9 +150,14 @@ const populatedGenres = computed(() =>
 
 onMounted(async () => {
   if (!mainStore.backend.url) return
-  await genresStore.fetchGenres()
-  // Fire all genre movie fetches in parallel after genres list loads
-  await Promise.all(genresStore.genres.map((g) => genresStore.fetchMoviesByGenre(g.slug)))
+  // Only fetch genres list if not already loaded
+  if (!genresStore.genres.length) await genresStore.fetchGenres()
+  // Only fetch movies for genres that haven't been fetched yet
+  await Promise.all(
+    genresStore.genres
+      .filter((g) => !genresStore.moviesByGenre.has(g.slug))
+      .map((g) => genresStore.fetchMoviesByGenre(g.slug)),
+  )
 })
 
 async function addGenre() {
@@ -167,7 +173,6 @@ async function addGenre() {
     const added = genresStore.genres[genresStore.genres.length - 1]
     if (added) await genresStore.fetchMoviesByGenre(added.slug)
   } catch (err: unknown) {
-    // alert(err.message || 'Failed to add genre')
     showToast('error', 'Error', getErrorMessage(err, 'Failed to add genre'))
   }
 }

@@ -17,7 +17,6 @@
     </div>
 
     <!-- Skeleton -->
-
     <div v-if="languagesStore.loading || !allLoaded" class="flex flex-col gap-10">
       <div v-for="n in 4" :key="n" class="flex flex-col gap-3">
         <div class="h-5 w-28 rounded-lg bg-surface-3 animate-pulse"></div>
@@ -157,16 +156,18 @@ const populatedLanguages = computed(() =>
 
 onMounted(async () => {
   if (!mainStore.backend.url) return
-  await languagesStore.fetchLanguages()
-  // Fire all language movie fetches in parallel
+  // Only fetch languages list if not already loaded
+  if (!languagesStore.languages.length) await languagesStore.fetchLanguages()
+  // Only fetch movies for languages that haven't been fetched yet
   await Promise.all(
-    languagesStore.languages.map((l) => languagesStore.fetchMoviesByLanguage(l.code)),
+    languagesStore.languages
+      .filter((l) => !languagesStore.moviesByLanguage.has(l.code))
+      .map((l) => languagesStore.fetchMoviesByLanguage(l.code)),
   )
 })
 
 async function addLanguage() {
   if (!newLanguage.value.name || !newLanguage.value.code) {
-    // alert('Please fill all fields')
     showToast('warn', 'Warning', 'Please fill all fields')
     return
   }
@@ -178,7 +179,6 @@ async function addLanguage() {
     const added = languagesStore.languages[languagesStore.languages.length - 1]
     if (added) await languagesStore.fetchMoviesByLanguage(added.code)
   } catch (err: unknown) {
-    // alert(err.message || 'Failed to add language')
     showToast('error', 'Error', getErrorMessage(err, 'Failed to add language'))
   }
 }

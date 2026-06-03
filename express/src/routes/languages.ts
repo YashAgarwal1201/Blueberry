@@ -2,9 +2,13 @@
 
 import express, { Request, Response, Router } from "express";
 import db from "../db";
-import { Language } from "../types.ts";
+import { CodeParam, Language } from "../types.ts";
 
 const router: Router = express.Router();
+
+interface IdParam {
+  id: string;
+}
 
 // Prepared statements
 const selectAllLanguagesStmt = db.prepare(`
@@ -105,7 +109,7 @@ router.get("/", (req: Request, res: Response) => {
 });
 
 // GET /languages/:id - Get a single language
-router.get("/:id", (req: Request, res: Response) => {
+router.get("/:id", (req: Request<IdParam>, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -205,7 +209,7 @@ router.post("/", (req: Request, res: Response) => {
 });
 
 // PUT /languages/:id - Update a language
-router.put("/:id", (req: Request, res: Response) => {
+router.put("/:id", (req: Request<IdParam>, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -269,7 +273,7 @@ router.put("/:id", (req: Request, res: Response) => {
 });
 
 // DELETE /languages/:id - Delete a language
-router.delete("/:id", (req: Request, res: Response) => {
+router.delete("/:id", (req: Request<IdParam>, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -326,12 +330,12 @@ router.delete("/:id", (req: Request, res: Response) => {
 });
 
 // GET /languages/:code/movies
-router.get("/:code/movies", (req: Request, res: Response) => {
+router.get("/:code/movies", (req: Request<CodeParam>, res: Response) => {
   try {
     const { code } = req.params;
     const { year, sort = "recent" } = req.query;
 
-    const language = selectLanguageByCodeStmt.get(code.toLowerCase()) as
+    const language = selectLanguageByCodeStmt.get(code?.toLowerCase()) as
       | Language
       | undefined;
     if (!language) {
@@ -393,13 +397,11 @@ router.get("/:code/movies", (req: Request, res: Response) => {
     res.json({ success: true, language, count: result.length, movies: result });
   } catch (err: any) {
     console.error("Error fetching movies by language:", err);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to fetch movies for language",
-        message: err.message,
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch movies for language",
+      message: err.message,
+    });
   }
 });
 

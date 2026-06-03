@@ -1,5 +1,16 @@
 // src/types.ts/index.ts
 
+// Route param interfaces
+export interface IdParam {
+  id: string;
+}
+export interface MovieIdParam {
+  movieId: string;
+}
+export interface CodeParam {
+  code: string;
+}
+
 // ── Enums / literals ────────────────────────────────────────────────────────
 export type WatchlistStatus = "want_to_watch" | "watching" | "watched";
 export type CastRole =

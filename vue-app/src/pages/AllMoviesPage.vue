@@ -271,7 +271,6 @@ const languageLabel = computed(() => {
 const sortLabel = computed(() => ({ recent: 'Recent', title: 'A→Z', year: 'Year' })[sortBy.value])
 
 // ── Client-side display list ──────────────────────────────────────────────────
-// Search is always client-side (instant). Language/year/sort hit the API.
 const displayedMovies = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
   if (!q) return moviesStore.movies
@@ -285,12 +284,9 @@ const displayedMovies = computed(() => {
   )
 })
 
-// ── Search debounce — no API call, just filters displayedMovies computed ──────
-// (API calls only happen for language / year / sort changes)
 const searchTimer: ReturnType<typeof setTimeout> | null = null
 watch(searchQuery, () => {
   if (searchTimer) clearTimeout(searchTimer)
-  // Intentionally no API call here — searchLocal is enough
 })
 
 // ── API filter application (language / year / sort) ──────────────────────────
@@ -313,9 +309,9 @@ function clearFilters() {
 onMounted(async () => {
   if (!mainStore.backend.url) return
   await Promise.all([
-    moviesStore.fetchMovies({ sort: 'recent' }),
-    languagesStore.fetchLanguages(),
-    watchlistStore.fetchWatchlist(),
+    moviesStore.movies.length ? Promise.resolve() : moviesStore.fetchMovies({ sort: 'recent' }),
+    languagesStore.languages.length ? Promise.resolve() : languagesStore.fetchLanguages(),
+    watchlistStore.items.length ? Promise.resolve() : watchlistStore.fetchWatchlist(),
   ])
 })
 </script>

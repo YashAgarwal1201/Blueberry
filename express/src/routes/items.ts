@@ -3,6 +3,10 @@ import db from "../db";
 
 const router: Router = express.Router();
 
+type IdParams = {
+  id: string;
+};
+
 interface Item {
   id: number;
   title: string;
@@ -16,19 +20,19 @@ interface ItemRequestBody {
 
 // Prepared statements
 const insertStmt = db.prepare(
-  "INSERT INTO items (title, description) VALUES (?, ?)"
+  "INSERT INTO items (title, description) VALUES (?, ?)",
 );
 
 const selectAllStmt = db.prepare(
-  "SELECT id, title, description FROM items ORDER BY id"
+  "SELECT id, title, description FROM items ORDER BY id",
 );
 
 const selectByIdStmt = db.prepare(
-  "SELECT id, title, description FROM items WHERE id = ?"
+  "SELECT id, title, description FROM items WHERE id = ?",
 );
 
 const updateStmt = db.prepare(
-  "UPDATE items SET title = ?, description = ? WHERE id = ?"
+  "UPDATE items SET title = ?, description = ? WHERE id = ?",
 );
 
 const deleteStmt = db.prepare("DELETE FROM items WHERE id = ?");
@@ -40,7 +44,7 @@ router.get("/", (req: Request, res: Response): void => {
 });
 
 // GET /items/:id - Get single item
-router.get("/:id", (req: Request, res: Response): void => {
+router.get("/:id", (req: Request<IdParams>, res: Response): void => {
   const id = parseInt(req.params.id);
   const item = selectByIdStmt.get(id);
 
@@ -68,12 +72,12 @@ router.post(
       (description && description.length > 0
         ? description
         : "Description not available."
-      )?.trim()
+      )?.trim(),
     );
 
     const created = selectByIdStmt.get(info.lastInsertRowid);
     res.status(201).json(created);
-  }
+  },
 );
 
 // PATCH /items/:id - Update item
@@ -81,7 +85,7 @@ router.patch(
   "/:id",
   (
     req: Request<{ id: string }, Item | string, ItemRequestBody>,
-    res: Response
+    res: Response,
   ): void => {
     const id = Number(req.params.id);
     if (Number.isNaN(id)) {
@@ -101,7 +105,7 @@ router.patch(
     const newDesc =
       description !== undefined
         ? description.trim()
-        : existing.description ?? "";
+        : (existing.description ?? "");
 
     if (!newTitle) {
       res.status(400).json({ error: "Title cannot be empty" });
@@ -111,7 +115,7 @@ router.patch(
     updateStmt.run(newTitle, newDesc, id);
     const updated = selectByIdStmt.get(id);
     res.json(updated);
-  }
+  },
 );
 
 // DELETE /items/:id - Delete item

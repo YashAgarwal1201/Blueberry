@@ -10,6 +10,8 @@ import {
   Genre,
   AddToWatchlistRequest,
   UpdateWatchlistRequest,
+  IdParam,
+  MovieIdParam,
 } from "../types.ts";
 
 const router: Router = express.Router();
@@ -242,7 +244,7 @@ router.get("/", (req: Request, res: Response) => {
 });
 
 // GET /watchlist/:id - Get a single watchlist item
-router.get("/:id", (req: Request, res: Response) => {
+router.get("/:id", (req: Request<IdParam>, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -341,7 +343,7 @@ router.post("/", (req: Request, res: Response) => {
 });
 
 // PATCH /watchlist/:id - Update watchlist item status
-router.patch("/:id", (req: Request, res: Response) => {
+router.patch("/:id", (req: Request<IdParam>, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -401,7 +403,7 @@ router.patch("/:id", (req: Request, res: Response) => {
 });
 
 // DELETE /watchlist/:id - Remove item from watchlist
-router.delete("/:id", (req: Request, res: Response) => {
+router.delete("/:id", (req: Request<IdParam>, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -446,7 +448,7 @@ router.delete("/:id", (req: Request, res: Response) => {
 });
 
 // GET /watchlist/movie/:movieId - Check if a movie is in watchlist
-router.get("/movie/:movieId", (req: Request, res: Response) => {
+router.get("/movie/:movieId", (req: Request<MovieIdParam>, res: Response) => {
   try {
     const movieId = parseInt(req.params.movieId);
     if (isNaN(movieId)) {
