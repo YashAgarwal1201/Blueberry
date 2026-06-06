@@ -9,23 +9,26 @@ const router: Router = express.Router();
 router.get("/", (req: Request, res: Response) => {
   try {
     const { search, type } = req.query;
-    let companies: Company[];
+
+    const conditions: string[] = [];
+    const params: string[] = [];
 
     if (search && typeof search === "string" && search.trim().length > 0) {
-      companies = db
-        .prepare(
-          `SELECT * FROM companies WHERE name LIKE ? ORDER BY name ASC LIMIT 50`,
-        )
-        .all(`%${search.trim()}%`) as Company[];
-    } else {
-      companies = db
-        .prepare(`SELECT * FROM companies ORDER BY name ASC`)
-        .all() as Company[];
+      conditions.push("name LIKE ?");
+      params.push(`%${search.trim()}%`);
     }
 
     if (type && typeof type === "string") {
-      companies = companies.filter((c) => c.type === type);
+      conditions.push("type = ?");
+      params.push(type);
     }
+
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const limit = search ? "LIMIT 50" : "LIMIT 100";
+
+    const companies = db
+      .prepare(`SELECT * FROM companies ${where} ORDER BY name ASC ${limit}`)
+      .all(...params) as Company[];
 
     res.json({ success: true, count: companies.length, companies });
   } catch (err: any) {
@@ -40,7 +43,7 @@ router.get("/", (req: Request, res: Response) => {
 // GET /companies/:id
 router.get("/:id", (req: Request<IdParam>, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id as string);
     if (isNaN(id))
       return res.status(400).json({ success: false, error: "Invalid ID" });
 
@@ -54,13 +57,11 @@ router.get("/:id", (req: Request<IdParam>, res: Response) => {
 
     const movies = db
       .prepare(
-        `
-      SELECT m.id, m.title, m.release_year, m.poster_url, mco.role
-      FROM movies m
-      JOIN movie_companies mco ON m.id = mco.movie_id
-      WHERE mco.company_id = ?
-      ORDER BY m.release_year DESC NULLS LAST
-    `,
+        `SELECT m.id, m.title, m.release_year, m.poster_url, mco.role
+         FROM movies m
+         JOIN movie_companies mco ON m.id = mco.movie_id
+         WHERE mco.company_id = ?
+         ORDER BY m.release_year DESC NULLS LAST`,
       )
       .all(id);
 
@@ -79,11 +80,10 @@ router.post("/", (req: Request, res: Response) => {
   try {
     const body = req.body as CreateCompanyRequest;
 
-    if (!body.name?.trim()) {
+    if (!body.name?.trim())
       return res
         .status(400)
         .json({ success: false, error: "Name is required" });
-    }
 
     const existing = db
       .prepare(`SELECT id FROM companies WHERE name = ? COLLATE NOCASE`)
@@ -99,10 +99,8 @@ router.post("/", (req: Request, res: Response) => {
 
     const info = db
       .prepare(
-        `
-      INSERT INTO companies (name, type, logo_url, country, tmdb_id)
-      VALUES (?, ?, ?, ?, ?)
-    `,
+        `INSERT INTO companies (name, type, logo_url, country, tmdb_id)
+         VALUES (?, ?, ?, ?, ?)`,
       )
       .run(
         body.name.trim(),
@@ -115,11 +113,13 @@ router.post("/", (req: Request, res: Response) => {
     const company = db
       .prepare(`SELECT * FROM companies WHERE id = ?`)
       .get(info.lastInsertRowid) as Company;
-    res.status(201).json({
-      success: true,
-      message: "Company created successfully",
-      company,
-    });
+    res
+      .status(201)
+      .json({
+        success: true,
+        message: "Company created successfully",
+        company,
+      });
   } catch (err: any) {
     res.status(500).json({
       success: false,
@@ -132,7 +132,7 @@ router.post("/", (req: Request, res: Response) => {
 // PUT /companies/:id
 router.put("/:id", (req: Request<IdParam>, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id as string);
     if (isNaN(id))
       return res.status(400).json({ success: false, error: "Invalid ID" });
 
@@ -147,10 +147,8 @@ router.put("/:id", (req: Request<IdParam>, res: Response) => {
     const body = req.body as Partial<CreateCompanyRequest>;
 
     db.prepare(
-      `
-      UPDATE companies SET name = ?, type = ?, logo_url = ?, country = ?, tmdb_id = ?
-      WHERE id = ?
-    `,
+      `UPDATE companies SET name = ?, type = ?, logo_url = ?, country = ?, tmdb_id = ?
+       WHERE id = ?`,
     ).run(
       body.name?.trim() ?? existing.name,
       body.type ?? existing.type,
@@ -180,7 +178,7 @@ router.put("/:id", (req: Request<IdParam>, res: Response) => {
 // DELETE /companies/:id
 router.delete("/:id", (req: Request<IdParam>, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id as string);
     if (isNaN(id))
       return res.status(400).json({ success: false, error: "Invalid ID" });
 

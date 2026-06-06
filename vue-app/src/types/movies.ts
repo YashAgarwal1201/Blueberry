@@ -261,6 +261,21 @@ export interface Movie {
   updated_at: string
 }
 
+export interface MovieCard {
+  id: number
+  title: string
+  poster_url?: string
+  backdrop_url?: string
+  release_year?: number
+  runtime?: number
+  rating_imdb?: number
+  age_rating?: string
+  status: MovieStatus
+  in_watchlist: boolean
+  languages: Pick<Language, 'id' | 'name' | 'code'>[]
+  genres: Pick<Genre, 'id' | 'name' | 'slug'>[]
+}
+
 export interface MovieWithDetails extends Movie {
   languages: Language[]
   genres: Genre[]
@@ -282,7 +297,8 @@ export interface WatchlistItem {
 }
 
 export interface WatchlistItemWithMovie extends WatchlistItem {
-  movie: MovieWithDetails
+  // movie: MovieWithDetails
+  movie: MovieCard
 }
 
 // ── Request bodies ────────────────────────────────────────────────────────────

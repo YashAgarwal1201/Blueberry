@@ -9,6 +9,7 @@ import watchlistRouter from "./routes/watchlist";
 import genresRouter from "./routes/genres";
 import peopleRouter from "./routes/people";
 import companiesRouter from "./routes/companies";
+import collectionsRouter from "./routes/collections";
 
 const app: Application = express();
 const PORT = process.env.PORT || 8100;
@@ -55,16 +56,21 @@ app.use("/watchlist", watchlistRouter);
 app.use("/genres", genresRouter);
 app.use("/people", peopleRouter);
 app.use("/companies", companiesRouter);
+app.use("/collections", collectionsRouter);
 
 // Root endpoint
 app.get("/", (req: Request, res: Response) => {
   res.json({
-    message: "Movie Database API",
-    version: "1.0.0",
+    message: "Blueberry API",
+    version: "2.0.0",
     endpoints: {
       movies: "/movies",
       languages: "/languages",
       watchlist: "/watchlist",
+      genres: "/genres",
+      people: "/people",
+      companies: "/companies",
+      collections: "/collections",
       health: "/health",
     },
   });

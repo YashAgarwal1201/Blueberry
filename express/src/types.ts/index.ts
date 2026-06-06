@@ -1,6 +1,6 @@
 // src/types.ts/index.ts
 
-// Route param interfaces
+// ── Route param interfaces ────────────────────────────────────────────────────
 export interface IdParam {
   id: string;
 }
@@ -10,8 +10,11 @@ export interface MovieIdParam {
 export interface CodeParam {
   code: string;
 }
+export interface SlugParam {
+  slug: string;
+}
 
-// ── Enums / literals ────────────────────────────────────────────────────────
+// ── Enums / literals ─────────────────────────────────────────────────────────
 export type WatchlistStatus = "want_to_watch" | "watching" | "watched";
 export type CastRole =
   | "actor"
@@ -28,7 +31,7 @@ export type MovieStatus =
   | "in_production"
   | "cancelled";
 
-// ── Base entities ────────────────────────────────────────────────────────────
+// ── Base entities ─────────────────────────────────────────────────────────────
 export interface Language {
   id: number;
   name: string;
@@ -59,7 +62,7 @@ export interface Person {
 
 export interface CastMember extends Person {
   role: CastRole;
-  character?: string; // for actors
+  character?: string;
   display_order: number;
 }
 
@@ -74,10 +77,33 @@ export interface Company {
 }
 
 export interface MovieCompany extends Company {
-  role: CompanyType; // role in this specific movie
+  role: CompanyType;
 }
 
-// ── Movie ────────────────────────────────────────────────────────────────────
+// ── Movie shapes ──────────────────────────────────────────────────────────────
+
+/**
+ * Lightweight shape — used in all list/grid views.
+ * Never includes cast or companies.
+ */
+export interface MovieCard {
+  id: number;
+  title: string;
+  poster_url?: string;
+  backdrop_url?: string;
+  release_year?: number;
+  runtime?: number;
+  rating_imdb?: number;
+  age_rating?: string;
+  status: MovieStatus;
+  in_watchlist: boolean;
+  languages: Pick<Language, "id" | "name" | "code">[];
+  genres: Pick<Genre, "id" | "name" | "slug">[];
+}
+
+/**
+ * Full shape — used only on the single movie detail page.
+ */
 export interface Movie {
   id: number;
   title: string;
@@ -85,61 +111,119 @@ export interface Movie {
   description?: string;
   status: MovieStatus;
   release_year?: number;
-  runtime?: number; // minutes
-  origin_country?: string; // ISO 3166-1 alpha-2, e.g. "US"
-  original_language?: string; // ISO 639-1, e.g. "en"
-  age_rating?: string; // "U" | "UA" | "A" | "PG" | "PG-13" | "R" | "NC-17"
-
-  // Key crew (denormalised for quick display)
+  runtime?: number;
+  origin_country?: string;
+  original_language?: string;
+  age_rating?: string;
   director?: string;
-
-  // External IDs
   imdb_id?: string;
   tmdb_id?: number;
-
-  // Media
   poster_url?: string;
   backdrop_url?: string;
-  trailer_url?: string; // YouTube full URL or embed URL
-
-  // Financials (stored in USD)
+  trailer_url?: string;
   budget?: number;
   box_office?: number;
-
-  // Ratings
-  rating_imdb?: number; // 0.0 – 10.0
-  rating_rt?: number; // 0 – 100 (Tomatometer %)
-  rating_metacritic?: number; // 0 – 100
-
+  rating_imdb?: number;
+  rating_rt?: number;
+  rating_metacritic?: number;
   created_at: string;
   updated_at: string;
 }
 
 export interface MovieWithDetails extends Movie {
+  in_watchlist: boolean;
   languages: Language[];
   genres: Genre[];
   cast: CastMember[];
   companies: MovieCompany[];
 }
 
-// ── Watchlist ────────────────────────────────────────────────────────────────
+// ── Pagination ────────────────────────────────────────────────────────────────
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  success: true;
+  data: T[];
+  pagination: PaginationMeta;
+}
+
+// ── Watchlist ─────────────────────────────────────────────────────────────────
 export interface WatchlistItem {
   id: number;
   movie_id: number;
   status: WatchlistStatus;
   added_at: string;
+  updated_at: string;
   watched_at?: string;
   notes?: string;
 }
 
 export interface WatchlistItemWithMovie extends WatchlistItem {
-  movie: MovieWithDetails;
+  movie: MovieCard;
+}
+
+export interface WatchlistStats {
+  total: number;
+  want_to_watch: number;
+  watching: number;
+  watched: number;
+  total_runtime_watched: number; // sum of runtime for all 'watched' movies, in minutes
+}
+
+// ── Genre with movies (for /genres/browse) ────────────────────────────────────
+export interface GenreWithMovies extends Genre {
+  movie_count: number;
+  movies: MovieCard[];
+}
+
+// ── Language with movies (for /languages/browse) ──────────────────────────────
+export interface LanguageWithMovies extends Language {
+  movie_count: number;
+  movies: MovieCard[];
+}
+
+// ── Person detail (for /people/:id) ──────────────────────────────────────────
+export interface PersonDetail extends Person {
+  movie_count: number;
+  roles: { role: CastRole; count: number }[];
+}
+
+// ── Collections ───────────────────────────────────────────────────────────────
+export interface Collection {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  poster_url?: string;
+  movie_count: number;
+  created_at: string;
+}
+
+export interface CollectionDetail extends Collection {
+  movies: MovieCard[];
+}
+
+// ── Home payload (for /home) ──────────────────────────────────────────────────
+export interface HomePayload {
+  recent: MovieCard[];
+  top_rated: MovieCard[];
+  hot: MovieCard[];
+  watchlist_preview: WatchlistItemWithMovie[];
+  genres: Pick<Genre, "id" | "name" | "slug">[];
+  languages: Pick<Language, "id" | "name" | "code">[];
 }
 
 // ── Request bodies ────────────────────────────────────────────────────────────
 export interface CastMemberRequest {
-  person_id?: number; // if person already exists
-  name: string; // used to create person if person_id not given
+  person_id?: number;
+  name: string;
   profile_url?: string;
   tmdb_id?: number;
   imdb_id?: string;
@@ -149,7 +233,7 @@ export interface CastMemberRequest {
 }
 
 export interface CompanyRequest {
-  company_id?: number; // if company already exists
+  company_id?: number;
   name: string;
   type?: CompanyType;
   logo_url?: string;
@@ -158,10 +242,7 @@ export interface CompanyRequest {
 }
 
 export interface CreateMovieRequest {
-  // Required
   title: string;
-
-  // Basic info
   tagline?: string;
   description?: string;
   status?: MovieStatus;
@@ -170,29 +251,17 @@ export interface CreateMovieRequest {
   origin_country?: string;
   original_language?: string;
   age_rating?: string;
-
-  // Crew (denormalised)
   director?: string;
-
-  // External IDs
   imdb_id?: string;
   tmdb_id?: number;
-
-  // Media
   poster_url?: string;
   backdrop_url?: string;
   trailer_url?: string;
-
-  // Financials
   budget?: number;
   box_office?: number;
-
-  // Ratings
   rating_imdb?: number;
   rating_rt?: number;
   rating_metacritic?: number;
-
-  // Relations
   language_ids?: number[];
   genre_ids?: number[];
   cast?: CastMemberRequest[];
@@ -230,4 +299,39 @@ export interface CreateCompanyRequest {
   logo_url?: string;
   country?: string;
   tmdb_id?: number;
+}
+
+export interface CreateGenreRequest {
+  name: string;
+  slug: string;
+  description?: string;
+}
+
+export interface CreateCollectionRequest {
+  name: string;
+  slug: string;
+  description?: string;
+  poster_url?: string;
+}
+
+export type UpdateCollectionRequest = Partial<CreateCollectionRequest>;
+
+// ── Query param helpers ───────────────────────────────────────────────────────
+export interface MovieListQuery {
+  page?: string;
+  limit?: string;
+  sort?: "recent" | "title" | "year" | "rating";
+  language?: string; // language code, e.g. "hi"
+  genre?: string; // genre slug, e.g. "action"
+  year?: string;
+  status?: MovieStatus;
+}
+
+export interface PaginationQuery {
+  page?: string;
+  limit?: string;
+}
+
+export interface PeopleMoviesQuery extends PaginationQuery {
+  role?: CastRole;
 }
