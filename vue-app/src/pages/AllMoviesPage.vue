@@ -133,7 +133,7 @@
         class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
       >
         <div v-for="n in 10" :key="n" class="flex flex-col gap-2">
-          <div class="w-full aspect-[2/3] rounded-xl bg-surface-3 animate-pulse" />
+          <div class="w-full aspect-2/3 rounded-xl bg-surface-3 animate-pulse" />
           <div class="h-3 rounded bg-surface-3 animate-pulse w-3/4" />
           <div class="h-3 rounded bg-surface-3 animate-pulse w-1/2" />
         </div>
@@ -175,7 +175,7 @@
           <!-- Poster -->
           <div
             v-if="movie.poster_url"
-            class="w-full aspect-[2/3] rounded-xl bg-surface-3 group-hover:ring-2 group-hover:ring-primary transition-all"
+            class="w-full aspect-2/3 rounded-xl bg-surface-3 group-hover:ring-2 group-hover:ring-primary transition-all"
             :style="{
               backgroundImage: `url(${movie.poster_url})`,
               backgroundSize: 'cover',
@@ -184,7 +184,7 @@
           />
           <div
             v-else
-            class="w-full aspect-[2/3] rounded-xl bg-surface-3 flex items-center justify-center text-text-muted text-xs group-hover:ring-2 group-hover:ring-primary transition-all"
+            class="w-full aspect-2/3 rounded-xl bg-surface-3 flex items-center justify-center text-text-muted text-xs group-hover:ring-2 group-hover:ring-primary transition-all"
           >
             No Poster
           </div>
@@ -277,10 +277,10 @@ const displayedMovies = computed(() => {
   return moviesStore.movies.filter(
     (m) =>
       m.title.toLowerCase().includes(q) ||
-      m.director?.toLowerCase().includes(q) ||
+      // m.director?.toLowerCase().includes(q) ||
       m.description?.toLowerCase().includes(q) ||
-      m.genres.some((g) => g.name.toLowerCase().includes(q)) ||
-      m.cast.some((c) => c.name.toLowerCase().includes(q)),
+      m.genres.some((g) => g.name.toLowerCase().includes(q)),
+    // m.cast.some((c) => c.name.toLowerCase().includes(q)),
   )
 })
 

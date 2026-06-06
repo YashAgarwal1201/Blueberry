@@ -30,7 +30,7 @@ export const useGenresStore = defineStore('genresStore', () => {
     error.value = null
     try {
       const response = await apiClient.get('/genres')
-      genres.value = response.data.genres || []
+      genres.value = response.data.data || [] //.genres || []
       return genres.value
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Error fetching genres')

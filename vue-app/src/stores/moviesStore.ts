@@ -210,8 +210,8 @@ export const useMoviesStore = defineStore('moviesStore', () => {
       if (params?.sort) queryParams.append('sort', params.sort)
       const url = `movies${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
       const response = await apiClient.get(url)
-      movies.value = response.data.movies as MovieWithDetails[]
-      return response.data.movies as MovieWithDetails[]
+      movies.value = response.data.data as MovieWithDetails[]
+      return response.data.data as MovieWithDetails[]
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Error fetching movies')
       console.error('Error fetching movies:', err)
