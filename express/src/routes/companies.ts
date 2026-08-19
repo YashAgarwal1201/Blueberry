@@ -1,7 +1,7 @@
 // src/routes/companies.ts
 import express, { Request, Response, Router } from "express";
 import db from "../db";
-import type { Company, CreateCompanyRequest, IdParam } from "../types.ts";
+import type { Company, CreateCompanyRequest, IdParam } from "shared-types";
 
 const router: Router = express.Router();
 
@@ -30,7 +30,7 @@ router.get("/", (req: Request, res: Response) => {
       .prepare(`SELECT * FROM companies ${where} ORDER BY name ASC ${limit}`)
       .all(...params) as Company[];
 
-    res.json({ success: true, count: companies.length, companies });
+    res.json({ success: true, data: companies });
   } catch (err: any) {
     res.status(500).json({
       success: false,
@@ -65,7 +65,7 @@ router.get("/:id", (req: Request<IdParam>, res: Response) => {
       )
       .all(id);
 
-    res.json({ success: true, company: { ...company, movies } });
+    res.json({ success: true, data: { ...company, movies } });
   } catch (err: any) {
     res.status(500).json({
       success: false,
@@ -118,7 +118,7 @@ router.post("/", (req: Request, res: Response) => {
       .json({
         success: true,
         message: "Company created successfully",
-        company,
+        data: company,
       });
   } catch (err: any) {
     res.status(500).json({
@@ -164,7 +164,7 @@ router.put("/:id", (req: Request<IdParam>, res: Response) => {
     res.json({
       success: true,
       message: "Company updated successfully",
-      company: updated,
+      data: updated,
     });
   } catch (err: any) {
     res.status(500).json({
@@ -207,7 +207,7 @@ router.delete("/:id", (req: Request<IdParam>, res: Response) => {
     res.json({
       success: true,
       message: "Company deleted successfully",
-      deletedCompany: company,
+      data: company,
     });
   } catch (err: any) {
     res.status(500).json({

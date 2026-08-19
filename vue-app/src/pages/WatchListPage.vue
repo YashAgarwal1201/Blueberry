@@ -184,7 +184,7 @@
 <script lang="ts" setup>
 import { onMounted } from 'vue'
 import { useMainStore } from '@/stores/mainStore'
-import type { WatchlistStatus } from '@/types/movies'
+import type { WatchlistStatus } from "shared-types"
 import { useWatchlistStore } from '@/stores/watchListStore'
 import { Panel } from 'primevue'
 

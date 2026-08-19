@@ -104,7 +104,7 @@ import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 import ConfirmDialog from 'primevue/confirmdialog'
 import { useConfirm } from 'primevue/useconfirm'
-import type { Movie } from '@/types/movies'
+import type { Movie } from "shared-types"
 
 const moviesStore = useMoviesStore()
 const confirm = useConfirm()

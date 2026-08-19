@@ -17,7 +17,7 @@ import type {
   MovieListQuery,
   PaginationQuery,
   PaginationMeta,
-} from "../types.ts";
+} from "shared-types";
 
 const router: Router = express.Router();
 

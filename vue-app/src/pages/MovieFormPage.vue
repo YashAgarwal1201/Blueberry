@@ -316,7 +316,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useMoviesStore } from '@/stores/moviesStore'
 import { useLanguagesStore } from '@/stores/languagesStore'
 import { useGenresStore } from '@/stores/genresStore'
-import type { CreateMovieRequest, MovieWithDetails } from '@/types/movies'
+import type { CreateMovieRequest, MovieWithDetails } from "shared-types"
 import toastHandler from '@/composables/toastHandeler'
 import CastEditor from '@/components/CastEditor.vue'
 import { getErrorMessage } from '@/services/errorUtils'

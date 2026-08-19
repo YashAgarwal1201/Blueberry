@@ -142,12 +142,12 @@ import MultiSelect from 'primevue/multiselect'
 import Button from 'primevue/button'
 import { useMoviesStore } from '@/stores/moviesStore'
 import { useLanguagesStore } from '@/stores/languagesStore'
-import type { CreateMovieRequest, UpdateMovieRequest, MovieWithLanguages } from '@/types/movies'
+import type { CreateMovieRequest, UpdateMovieRequest, MovieWithDetails } from "shared-types"
 import { getErrorMessage } from '@/services/errorUtils'
 
 interface Props {
   visible: boolean
-  movie?: MovieWithLanguages | null
+  movie?: MovieWithDetails | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -157,8 +157,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   'update:visible': [value: boolean]
-  'movie-added': [movie: MovieWithLanguages]
-  'movie-updated': [movie: MovieWithLanguages]
+  'movie-added': [movie: MovieWithDetails]
+  'movie-updated': [movie: MovieWithDetails]
 }>()
 
 const moviesStore = useMoviesStore()
@@ -196,7 +196,7 @@ watch(
         director: movie.director || '',
         poster_url: movie.poster_url || '',
         runtime: movie.runtime,
-        language_ids: movie.languages.map((l) => l.id),
+        language_ids: movie.languages.map((l: any) => l.id),
       }
     } else {
       resetForm()

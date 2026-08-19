@@ -176,7 +176,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Drawer, Button, Tag, Skeleton } from 'primevue'
 import { Calendar, Film, MapPin, User } from 'lucide-vue-next'
-import type { Person } from '@/types/movies'
+import type { Person } from "shared-types"
 
 type FilmographyEntry = {
   id: number

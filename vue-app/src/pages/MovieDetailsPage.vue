@@ -264,7 +264,7 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useMoviesStore } from '@/stores/moviesStore'
 import { useWatchlistStore } from '@/stores/watchListStore'
-import type { MovieWithDetails, WatchlistItemWithMovie, WatchlistStatus } from '@/types/movies'
+import type { MovieWithDetails, WatchlistItemWithMovie, WatchlistStatus } from "shared-types"
 import toastHandler from '@/composables/toastHandeler'
 import { getErrorMessage } from '@/services/errorUtils'
 

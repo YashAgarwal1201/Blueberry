@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 // import { useMainStore } from './mainStore'
 import apiClient from '@/services/apiInterceptors'
-import type { WatchlistItemWithMovie, WatchlistStatus, AddToWatchlistRequest } from '@/types/movies'
+import type { WatchlistItemWithMovie, WatchlistStatus, AddToWatchlistRequest } from "shared-types"
 import { getErrorMessage } from '@/services/errorUtils'
 
 export const useWatchlistStore = defineStore('watchlistStore', () => {
@@ -49,8 +49,8 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
       const url = status ? `/watchlist?status=${status}` : '/watchlist'
       const response = await apiClient.get(url)
       const data = response.data
-      items.value = data.items || []
-      return data.items
+      items.value = data.data.items || []
+      return data.data.items
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Error fetching watchlist')
       console.error('Error fetching watchlist:', err)
@@ -70,8 +70,8 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
         status,
       } as AddToWatchlistRequest)
       const data = response.data
-      items.value.unshift(data.item)
-      return data.item
+      items.value.unshift(data.data)
+      return data.data
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Error adding to watchlist')
       console.error('Error adding to watchlist:', err)
@@ -88,7 +88,7 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
     try {
       const response = await apiClient.patch(`/watchlist/${itemId}`, { status })
       const data = response.data
-      const updatedItem = data.item as WatchlistItemWithMovie
+      const updatedItem = data.data as WatchlistItemWithMovie
       const idx = items.value.findIndex((i) => i.id === itemId)
       if (idx !== -1) {
         items.value[idx] = updatedItem
@@ -126,8 +126,8 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
       const response = await apiClient.get(`/watchlist/movie/${movieId}`)
       const data = response.data
       return {
-        inWatchlist: data.inWatchlist,
-        item: data.item as WatchlistItemWithMovie | null,
+        inWatchlist: data.data?.item != null,
+        item: data.data as WatchlistItemWithMovie | null,
       }
     } catch (err: unknown) {
       console.error('Error checking watchlist status:', err)

@@ -160,7 +160,7 @@ import { usePeopleStore } from '@/stores/peopleStore'
 import { useMainStore } from '@/stores/mainStore'
 import apiClient from '@/services/apiInterceptors'
 import toastHandler from '@/composables/toastHandeler'
-import type { CreatePersonRequest, Person } from '@/types/movies'
+import type { CreatePersonRequest, Person } from "shared-types"
 import { getErrorMessage, getErrorStatus } from '@/services/errorUtils'
 
 const route = useRoute()

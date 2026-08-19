@@ -7,7 +7,7 @@ import type {
   MovieCard,
   Language,
   PaginationQuery,
-} from "../types.ts";
+} from "shared-types";
 
 const router: Router = express.Router();
 

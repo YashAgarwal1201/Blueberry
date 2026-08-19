@@ -14,7 +14,7 @@ import type {
   UpdateWatchlistRequest,
   IdParam,
   MovieIdParam,
-} from "../types.ts";
+} from "shared-types";
 
 const router: Router = express.Router();
 
@@ -165,10 +165,10 @@ router.get("/movie/:movieId", (req: Request<MovieIdParam>, res: Response) => {
       | WatchlistItem
       | undefined;
     if (!item)
-      return res.json({ success: true, inWatchlist: false, item: null });
+      return res.json({ success: true, data: null });
 
     const [itemWithMovie] = attachMoviesToWatchlistItems([item]);
-    res.json({ success: true, inWatchlist: true, item: itemWithMovie });
+    res.json({ success: true, data: itemWithMovie });
   } catch (err: any) {
     console.error("Error checking watchlist:", err);
     res
@@ -214,9 +214,7 @@ router.get("/", (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      count: itemsWithMovies.length,
-      items: itemsWithMovies,
-      grouped,
+      data: { items: itemsWithMovies, grouped },
     });
   } catch (err: any) {
     console.error("Error fetching watchlist:", err);
@@ -247,7 +245,7 @@ router.get("/:id", (req: Request<IdParam>, res: Response) => {
         .json({ success: false, error: "Watchlist item not found" });
 
     const [itemWithMovie] = attachMoviesToWatchlistItems([item]);
-    res.json({ success: true, item: itemWithMovie });
+    res.json({ success: true, data: itemWithMovie });
   } catch (err: any) {
     console.error("Error fetching watchlist item:", err);
     res
@@ -311,7 +309,7 @@ router.post("/", (req: Request, res: Response) => {
       .json({
         success: true,
         message: "Movie added to watchlist",
-        item: itemWithMovie,
+        data: itemWithMovie,
       });
   } catch (err: any) {
     console.error("Error adding to watchlist:", err);
@@ -380,7 +378,7 @@ router.patch("/:id", (req: Request<IdParam>, res: Response) => {
     res.json({
       success: true,
       message: "Watchlist item updated",
-      item: itemWithMovie,
+      data: itemWithMovie,
     });
   } catch (err: any) {
     console.error("Error updating watchlist:", err);
@@ -414,7 +412,7 @@ router.delete("/:id", (req: Request<IdParam>, res: Response) => {
     res.json({
       success: true,
       message: "Removed from watchlist",
-      deletedItem: { id: item.id, movie_id: item.movie_id },
+      data: { id: item.id, movie_id: item.movie_id },
     });
   } catch (err: any) {
     console.error("Error deleting from watchlist:", err);

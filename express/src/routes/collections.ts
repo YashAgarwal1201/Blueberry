@@ -9,7 +9,7 @@ import type {
   Genre,
   CreateCollectionRequest,
   UpdateCollectionRequest,
-} from "../types.ts";
+} from "shared-types";
 
 const router: Router = express.Router();
 
@@ -132,7 +132,7 @@ router.get("/", (req: Request, res: Response) => {
       .all() as Omit<Collection, "movie_count">[];
 
     if (rows.length === 0) {
-      return res.json({ success: true, count: 0, collections: [] });
+      return res.json({ success: true, data: [] });
     }
 
     const ids = rows.map((c) => c.id);
@@ -154,7 +154,7 @@ router.get("/", (req: Request, res: Response) => {
       movie_count: countMap.get(c.id) ?? 0,
     }));
 
-    res.json({ success: true, count: collections.length, collections });
+    res.json({ success: true, data: collections });
   } catch (err: any) {
     res
       .status(500)
@@ -182,7 +182,7 @@ router.get("/:id", (req: Request, res: Response) => {
         .status(404)
         .json({ success: false, error: "Collection not found" });
 
-    res.json({ success: true, collection });
+    res.json({ success: true, data: collection });
   } catch (err: any) {
     res
       .status(500)
@@ -238,7 +238,7 @@ router.post("/", (req: Request, res: Response) => {
       .json({
         success: true,
         message: "Collection created successfully",
-        collection,
+        data: collection,
       });
   } catch (err: any) {
     res
@@ -302,7 +302,7 @@ router.put("/:id", (req: Request, res: Response) => {
     res.json({
       success: true,
       message: "Collection updated successfully",
-      collection,
+      data: collection,
     });
   } catch (err: any) {
     res
@@ -337,7 +337,7 @@ router.delete("/:id", (req: Request, res: Response) => {
     res.json({
       success: true,
       message: "Collection deleted successfully",
-      deletedCollection: collection,
+      data: collection,
     });
   } catch (err: any) {
     res

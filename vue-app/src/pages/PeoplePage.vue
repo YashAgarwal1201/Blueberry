@@ -221,7 +221,7 @@ import apiClient from '@/services/apiInterceptors'
 import toastHandler from '@/composables/toastHandeler'
 import PersonProfileDrawer from '@/components/people/PersonProfileDrawer.vue'
 import PersonAddDialog from '@/components/people/PersonAddDialog.vue'
-import type { CreatePersonRequest, Person, CastRole } from '@/types/movies'
+import type { CreatePersonRequest, Person, CastRole } from "shared-types"
 import router from '@/router'
 import { getErrorMessage, getErrorStatus } from '@/services/errorUtils'
 

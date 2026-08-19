@@ -3,19 +3,19 @@
 // import { defineStore } from 'pinia'
 // // import { useMainStore } from './mainStore'
 // import apiClient from '@/services/apiInterceptors'
-// import type { MovieWithLanguages, CreateMovieRequest, UpdateMovieRequest } from '@/types/movies'
+// import type { MovieWithDetails, CreateMovieRequest, UpdateMovieRequest } from "shared-types"
 
 // export const useMoviesStore = defineStore('moviesStore', () => {
 //   // const mainStore = useMainStore()
 
-//   const movies = ref<MovieWithLanguages[]>([])
+//   const movies = ref<MovieWithDetails[]>([])
 //   const loading = ref(false)
 //   const error = ref<string | null>(null)
 
 //   const movieCount = computed(() => movies.value.length)
 
 //   const moviesByYear = computed(() => {
-//     const grouped = new Map<number, MovieWithLanguages[]>()
+//     const grouped = new Map<number, MovieWithDetails[]>()
 //     movies.value.forEach((movie) => {
 //       const year = movie.release_year || 0
 //       if (!grouped.has(year)) {
@@ -30,7 +30,7 @@
 //     return [...movies.value].slice(0, 10)
 //   })
 
-//   const findMovieById = (id: number): MovieWithLanguages | undefined => {
+//   const findMovieById = (id: number): MovieWithDetails | undefined => {
 //     return movies.value.find((m) => m.id === id)
 //   }
 
@@ -70,7 +70,7 @@
 //     try {
 //       const response = await apiClient.get(`/movies/${id}`)
 //       const data = response.data
-//       return data.movie as MovieWithLanguages
+//       return data.movie as MovieWithDetails
 //     } catch (err: any) {
 //       console.error('Error fetching movie:', err)
 //       error.value = err.message
@@ -86,7 +86,7 @@
 //     try {
 //       const response = await apiClient.post('/movies', movieData)
 //       const data = response.data
-//       const newMovie = data.movie as MovieWithLanguages
+//       const newMovie = data.movie as MovieWithDetails
 //       movies.value.unshift(newMovie)
 //       return newMovie
 //     } catch (err: any) {
@@ -104,7 +104,7 @@
 //     try {
 //       const response = await apiClient.put(`/movies/${id}`, updates)
 //       const data = response.data
-//       const updatedMovie = data.movie as MovieWithLanguages
+//       const updatedMovie = data.movie as MovieWithDetails
 //       const idx = movies.value.findIndex((m) => m.id === id)
 //       if (idx !== -1) {
 //         movies.value[idx] = updatedMovie
@@ -168,7 +168,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import apiClient from '@/services/apiInterceptors'
-import type { MovieWithDetails, CreateMovieRequest, UpdateMovieRequest } from '@/types/movies'
+import type { MovieWithDetails, CreateMovieRequest, UpdateMovieRequest } from "shared-types"
 import { getErrorMessage } from '@/services/errorUtils'
 
 export const useMoviesStore = defineStore('moviesStore', () => {
@@ -227,7 +227,7 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     error.value = null
     try {
       const response = await apiClient.get(`movies/${id}`)
-      return response.data.movie as MovieWithDetails
+      return response.data.data as MovieWithDetails
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Error fetching movie')
       console.error('Error fetching movie:', err)
@@ -243,7 +243,7 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     error.value = null
     try {
       const response = await apiClient.post('movies', movieData)
-      const newMovie = response.data.movie as MovieWithDetails
+      const newMovie = response.data.data as MovieWithDetails
       movies.value.unshift(newMovie)
       return newMovie
     } catch (err: unknown) {
@@ -261,7 +261,7 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     error.value = null
     try {
       const response = await apiClient.put(`movies/${id}`, updates)
-      const updatedMovie = response.data.movie as MovieWithDetails
+      const updatedMovie = response.data.data as MovieWithDetails
       const idx = movies.value.findIndex((m) => m.id === id)
       if (idx !== -1) movies.value[idx] = updatedMovie
       return updatedMovie

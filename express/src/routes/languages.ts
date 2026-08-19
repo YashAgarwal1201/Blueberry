@@ -2,7 +2,7 @@
 
 import express, { Request, Response, Router } from "express";
 import db from "../db";
-import { CodeParam, Language, Genre } from "../types.ts";
+import { CodeParam, Language, Genre } from "shared-types";
 
 const router: Router = express.Router();
 
@@ -128,9 +128,7 @@ router.get("/", (req: Request, res: Response) => {
       if (cached) {
         return res.json({
           success: true,
-          count: cached.length,
-          languages: cached,
-          cached: true,
+          data: cached,
         });
       }
     }
@@ -140,9 +138,7 @@ router.get("/", (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      count: languages.length,
-      languages,
-      cached: false,
+      data: languages,
     });
   } catch (err: any) {
     console.error("Error fetching languages:", err);
@@ -204,7 +200,7 @@ router.get("/:code/movies", (req: Request<CodeParam>, res: Response) => {
 
     const result = attachDataToMovies(movies);
 
-    res.json({ success: true, language, count: result.length, movies: result });
+    res.json({ success: true, data: { language, movies: result } });
   } catch (err: any) {
     console.error("Error fetching movies by language:", err);
     res
@@ -233,7 +229,7 @@ router.get("/:id", (req: Request<IdParam>, res: Response) => {
         .status(404)
         .json({ success: false, error: "Language not found" });
 
-    res.json({ success: true, language });
+    res.json({ success: true, data: language });
   } catch (err: any) {
     console.error("Error fetching language:", err);
     res
@@ -293,7 +289,7 @@ router.post("/", (req: Request, res: Response) => {
       .json({
         success: true,
         message: "Language added successfully",
-        language,
+        data: language,
       });
   } catch (err: any) {
     console.error("Error adding language:", err);
@@ -356,7 +352,7 @@ router.put("/:id", (req: Request<IdParam>, res: Response) => {
     res.json({
       success: true,
       message: "Language updated successfully",
-      language,
+      data: language,
     });
   } catch (err: any) {
     console.error("Error updating language:", err);
@@ -409,7 +405,7 @@ router.delete("/:id", (req: Request<IdParam>, res: Response) => {
     res.json({
       success: true,
       message: "Language deleted successfully",
-      deletedLanguage: { id: language.id, name: language.name },
+      data: { id: language.id, name: language.name },
     });
   } catch (err: any) {
     console.error("Error deleting language:", err);

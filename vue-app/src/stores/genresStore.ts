@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import apiClient from '@/services/apiInterceptors'
-import type { Genre, MovieWithLanguages } from '@/types/movies'
+import type { Genre, MovieWithDetails } from "shared-types"
 import { getErrorMessage } from '@/services/errorUtils'
 
 export const useGenresStore = defineStore('genresStore', () => {
@@ -10,7 +10,7 @@ export const useGenresStore = defineStore('genresStore', () => {
   const error = ref<string | null>(null)
 
   // Map keyed by slug — holds movies for multiple genres simultaneously
-  const moviesByGenre = ref<Map<string, MovieWithLanguages[]>>(new Map())
+  const moviesByGenre = ref<Map<string, MovieWithDetails[]>>(new Map())
   const moviesLoadingMap = ref<Map<string, boolean>>(new Map())
 
   const genreMap = computed(() => {
@@ -30,7 +30,7 @@ export const useGenresStore = defineStore('genresStore', () => {
     error.value = null
     try {
       const response = await apiClient.get('/genres')
-      genres.value = response.data.data || [] //.genres || []
+      genres.value = response.data.data || []
       return genres.value
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Error fetching genres')
@@ -48,7 +48,7 @@ export const useGenresStore = defineStore('genresStore', () => {
     try {
       const response = await apiClient.post('/genres', { name, description })
       genres.value.push(response.data.genre)
-      return response.data.genre as Genre
+      return response.data.data as Genre
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Error adding genre')
       console.error('Error adding genre:', err)
@@ -63,7 +63,7 @@ export const useGenresStore = defineStore('genresStore', () => {
     moviesLoadingMap.value.set(slug, true)
     try {
       const response = await apiClient.get(`/genres/${slug}/movies?sort=recent`)
-      const movies: MovieWithLanguages[] = response.data.movies || []
+      const movies: MovieWithDetails[] = response.data.data.movies || []
       moviesByGenre.value.set(slug, movies)
       return movies
     } catch (err: unknown) {

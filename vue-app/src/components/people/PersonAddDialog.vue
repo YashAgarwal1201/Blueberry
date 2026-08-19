@@ -134,7 +134,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { Dialog, InputText, Textarea, InputNumber, Button } from 'primevue'
-import type { CreatePersonRequest } from '@/types/movies'
+import type { CreatePersonRequest } from "shared-types"
 
 const props = defineProps<{
   visible: boolean

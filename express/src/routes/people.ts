@@ -1,7 +1,7 @@
 // src/routes/people.ts
 import express, { Request, Response, Router } from "express";
 import db from "../db";
-import type { Person, CreatePersonRequest, IdParam } from "../types.ts";
+import type { Person, CreatePersonRequest, IdParam } from "shared-types";
 
 const router: Router = express.Router();
 
@@ -25,7 +25,7 @@ router.get("/", (req: Request, res: Response) => {
         .all() as Person[];
     }
 
-    res.json({ success: true, count: people.length, people });
+    res.json({ success: true, data: people });
   } catch (err: any) {
     res.status(500).json({
       success: false,
@@ -61,7 +61,7 @@ router.get("/:id", (req: Request<IdParam>, res: Response) => {
       )
       .all(id);
 
-    res.json({ success: true, person: { ...person, filmography } });
+    res.json({ success: true, data: { ...person, filmography } });
   } catch (err: any) {
     res.status(500).json({
       success: false,
@@ -115,7 +115,7 @@ router.post("/", (req: Request, res: Response) => {
       .get(info.lastInsertRowid) as Person;
     res
       .status(201)
-      .json({ success: true, message: "Person created successfully", person });
+      .json({ success: true, message: "Person created successfully", data: person });
   } catch (err: any) {
     res.status(500).json({
       success: false,
@@ -165,7 +165,7 @@ router.put("/:id", (req: Request<IdParam>, res: Response) => {
     res.json({
       success: true,
       message: "Person updated successfully",
-      person: updated,
+      data: updated,
     });
   } catch (err: any) {
     res.status(500).json({
@@ -207,7 +207,7 @@ router.delete("/:id", (req: Request<IdParam>, res: Response) => {
     res.json({
       success: true,
       message: "Person deleted successfully",
-      deletedPerson: person,
+      data: person,
     });
   } catch (err: any) {
     res.status(500).json({
