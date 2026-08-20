@@ -1,6 +1,6 @@
 <template>
   <Drawer :visible="visible" position="bottom"
-    class="h-auto! max-h-[90vh]! rounded-t-3xl bg-surface-1 text-text overflow-hidden" :pt="{
+    class="w-full sm:w-3/4! h-auto! max-h-[90vh]! rounded-t-3xl bg-surface-1 text-text overflow-hidden" :pt="{
       header: { class: 'hidden' }, // Hide default header, we'll build our own inside
       content: { class: 'p-0 flex flex-col' }
     }" @update:visible="(val: boolean) => $emit('update:visible', val)">
@@ -13,7 +13,7 @@
 
         <!-- Close button overlaid -->
         <button @click="$emit('update:visible', false)"
-          class="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white backdrop-blur-md hover:bg-black/70 transition-colors">
+          class="sticky top-4 right-4 p-2 rounded-full bg-black/50 text-white backdrop-blur-md hover:bg-black/70 transition-colors">
           <X :size="24" />
         </button>
       </div>
@@ -25,10 +25,10 @@
           <div class="flex items-center gap-3 text-sm text-text-muted mt-1 font-content">
             <span v-if="media.release_year">{{ media.release_year }}</span>
             <span v-if="media.age_rating" class="px-1.5 py-0.5 border border-border rounded text-xs">{{ media.age_rating
-              }}</span>
+            }}</span>
             <span v-if="media.runtime">{{ media.runtime }} min</span>
             <span class="px-1.5 py-0.5 bg-primary/20 text-primary rounded-md text-xs uppercase font-bold">{{ media.type
-              }}</span>
+            }}</span>
           </div>
         </div>
 

@@ -173,7 +173,12 @@ import { getErrorMessage } from '@/services/errorUtils'
 
 export const useMoviesStore = defineStore('moviesStore', () => {
   const movies = ref<MovieWithDetails[]>([])
+  const topRatedMovies = ref<MovieWithDetails[]>([])
+  const hotMovies = ref<MovieWithDetails[]>([])
+  
   const loading = ref(false)
+  const loadingTopRated = ref(false)
+  const loadingHot = ref(false)
   const error = ref<string | null>(null)
 
   const movieCount = computed(() => movies.value.length)
@@ -219,6 +224,34 @@ export const useMoviesStore = defineStore('moviesStore', () => {
       throw err
     } finally {
       loading.value = false
+    }
+  }
+
+  const fetchTopRatedMovies = async () => {
+    loadingTopRated.value = true
+    try {
+      const response = await apiClient.get('movies/top-rated')
+      topRatedMovies.value = response.data.data as MovieWithDetails[]
+      return topRatedMovies.value
+    } catch (err: unknown) {
+      console.error('Error fetching top rated movies:', err)
+      throw err
+    } finally {
+      loadingTopRated.value = false
+    }
+  }
+
+  const fetchHotMovies = async () => {
+    loadingHot.value = true
+    try {
+      const response = await apiClient.get('movies/hot')
+      hotMovies.value = response.data.data as MovieWithDetails[]
+      return hotMovies.value
+    } catch (err: unknown) {
+      console.error('Error fetching hot movies:', err)
+      throw err
+    } finally {
+      loadingHot.value = false
     }
   }
 
@@ -308,12 +341,18 @@ export const useMoviesStore = defineStore('moviesStore', () => {
 
   return {
     movies,
+    topRatedMovies,
+    hotMovies,
     loading,
+    loadingTopRated,
+    loadingHot,
     error,
     movieCount,
     moviesByYear,
     recentMovies,
     fetchMovies,
+    fetchTopRatedMovies,
+    fetchHotMovies,
     fetchMovieById,
     addMovie,
     updateMovie,

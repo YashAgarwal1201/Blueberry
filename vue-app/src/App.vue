@@ -15,7 +15,11 @@ const route = useRoute()
     </div>
 
     <div class="h-full grow overflow-y-auto flex justify-center items-center" :class="route.meta.hideSidebar ? '' : 'p-2 sm:p-3'">
-      <RouterView />
+      <RouterView v-slot="{ Component }">
+        <transition name="page-fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </RouterView>
     </div>
 
     <SideMenu v-if="!route.meta.hideSidebar" />

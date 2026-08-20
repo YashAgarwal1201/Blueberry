@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { authClient } from '@/lib/auth-client'
 import { Loader2, Check, X } from 'lucide-vue-next'
+import GoBackButton from '@/components/GoBackButton.vue'
 
 const router = useRouter()
 const email = ref('')
@@ -65,7 +66,11 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="w-full min-h-dvh flex bg-surface-0">
+  <div class="w-full min-h-dvh flex bg-surface-0 relative">
+    <div class="absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
+      <GoBackButton to="/profile" />
+    </div>
+
     <!-- Left Panel: Branding / Hero -->
     <div class="hidden lg:flex w-1/2 bg-surface-1 relative items-center justify-center overflow-hidden">
       <div class="absolute inset-0 bg-linear-to-br from-primary/20 to-purple-600/20 z-0"></div>

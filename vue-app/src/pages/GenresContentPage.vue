@@ -1,6 +1,5 @@
 <template>
-  <div
-    class="w-full h-full p-2 sm:p-3 flex flex-col gap-y-6 md:gap-y-8 border border-border rounded-xl overflow-y-auto">
+  <div class="w-full h-full flex flex-col gap-y-6 md:gap-y-8 overflow-y-auto">
     <!-- Header Hero -->
     <div
       class="relative w-full h-40 sm:h-56 rounded-xl overflow-hidden bg-surface-2 shadow-inner flex items-center justify-center">
@@ -16,7 +15,7 @@
       </div>
 
       <div class="absolute top-4 left-4 z-20">
-        <GoBackButton to="/" class="text-white! hover:bg-white/20! bg-black/20!" />
+        <GoBackButton class="text-white! hover:bg-white/20! bg-black/20!" />
       </div>
     </div>
 

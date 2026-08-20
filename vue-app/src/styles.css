@@ -77,3 +77,14 @@
 * {
   box-sizing: border-box;
 }
+
+/* Page Transitions */
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 0.2s ease-in-out;
+}
+.page-fade-enter-from,
+.page-fade-leave-to {
+  opacity: 0;
+}
+

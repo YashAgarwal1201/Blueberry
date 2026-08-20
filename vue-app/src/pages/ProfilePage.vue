@@ -7,7 +7,7 @@
 
     <!-- If not logged in -->
     <div v-if="!authStore.isAuthenticated"
-      class="grow flex flex-col items-center justify-center p-8 text-center bg-surface-1 rounded-xl border border-surface-200 dark:border-surface-700">
+      class="grow flex flex-col items-center justify-center p-8 text-center bg-surface-1 rounded-xl border border-border">
       <UserCircle :size="48" class="text-text-muted mb-4" />
       <h2 class="text-xl font-semibold mb-2">Not Logged In</h2>
       <p class="text-text-muted mb-6">Sign in to sync your watchlist and manage your profile across devices.</p>

@@ -1,6 +1,5 @@
 <template>
-  <div
-    class="w-full h-full p-2 sm:p-3 flex flex-col gap-y-6 md:gap-y-8 border border-border rounded-xl overflow-y-auto">
+  <div class="w-full h-full flex flex-col gap-y-6 md:gap-y-8 overflow-y-auto">
     <!-- Header Hero -->
     <div
       class="relative w-full h-40 sm:h-56 rounded-xl overflow-hidden bg-surface-2 shadow-inner flex items-center justify-center">

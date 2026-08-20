@@ -6,11 +6,22 @@
       :items="moviesStore.movies.slice(0, 5)" :auto-play-interval="4000" @clickItem="openDrawer" />
 
     <!-- Trending Movies -->
-    <div class="flex flex-col gap-y-4">
+    <div v-if="moviesStore.loadingHot || moviesStore.hotMovies?.length" class="flex flex-col gap-y-4">
+      <div class="flex items-center justify-between gap-3 px-2">
+        <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Trending Movies</h2>
+      </div>
+      <div v-if="moviesStore.loadingHot" class="px-2 text-text-muted">Loading trending movies...</div>
+      <MediaCarousel v-else>
+        <MediaCard v-for="movie in moviesStore.hotMovies" :key="movie.uuid" :title="movie.title" :poster-url="movie.poster_url"
+          :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+      </MediaCarousel>
+    </div>
+
+    <!-- Recent Movies -->
+    <div v-if="moviesStore.loading || recentMovies?.length" class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <RouterLink :to="'/movies'">
-          <h2 class="text-xl sm:text-2xl font-heading font-bold text-text hover:text-primary transition-colors">Recent
-            Movies</h2>
+          <h2 class="text-xl sm:text-2xl font-heading font-bold text-text hover:text-primary transition-colors">Recent Movies</h2>
         </RouterLink>
         <RouterLink :to="'/movies'" class="flex items-center gap-x-1 text-primary text-sm font-medium hover:underline">
           <span>See all</span>
@@ -19,31 +30,52 @@
       </div>
 
       <div v-if="moviesStore.loading" class="px-2 text-text-muted">Loading movies...</div>
-      <div v-else-if="recentMovies?.length === 0" class="px-2 text-text-muted">No movies found</div>
-
       <MediaCarousel v-else>
         <MediaCard v-for="movie in recentMovies" :key="movie.uuid" :title="movie.title" :poster-url="movie.poster_url"
           :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
       </MediaCarousel>
     </div>
 
+    <!-- Top Rated Movies -->
+    <div v-if="moviesStore.loadingTopRated || moviesStore.topRatedMovies?.length" class="flex flex-col gap-y-4">
+      <div class="flex items-center justify-between gap-3 px-2">
+        <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Top Rated Movies</h2>
+      </div>
+      <div v-if="moviesStore.loadingTopRated" class="px-2 text-text-muted">Loading top rated movies...</div>
+      <MediaCarousel v-else>
+        <MediaCard v-for="movie in moviesStore.topRatedMovies" :key="movie.uuid" :title="movie.title" :poster-url="movie.poster_url"
+          :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+      </MediaCarousel>
+    </div>
+
     <!-- Top Rated TV Shows -->
-    <div class="flex flex-col gap-y-4">
+    <div v-if="tvStore.loading || tvStore.topRatedShows?.length" class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Top Rated TV Shows</h2>
       </div>
 
       <div v-if="tvStore.loading" class="px-2 text-text-muted">Loading tv shows...</div>
-      <div v-else-if="tvStore.topRatedShows?.length === 0" class="px-2 text-text-muted">No tv shows found</div>
-
       <MediaCarousel v-else>
         <MediaCard v-for="show in tvStore.topRatedShows" :key="show.uuid" :title="show.title"
           :poster-url="show.poster_url" :year="show.release_year" :type="show.type" @click="openDrawer(show)" />
       </MediaCarousel>
     </div>
 
+    <!-- Recent TV Shows -->
+    <div v-if="tvStore.loading || tvStore.recentShows?.length" class="flex flex-col gap-y-4">
+      <div class="flex items-center justify-between gap-3 px-2">
+        <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Recent TV Shows</h2>
+      </div>
+
+      <div v-if="tvStore.loading" class="px-2 text-text-muted">Loading tv shows...</div>
+      <MediaCarousel v-else>
+        <MediaCard v-for="show in tvStore.recentShows" :key="show.uuid" :title="show.title"
+          :poster-url="show.poster_url" :year="show.release_year" :type="show.type" @click="openDrawer(show)" />
+      </MediaCarousel>
+    </div>
+
     <!-- Watchlist Preview -->
-    <div v-if="authStore.isAuthenticated" class="flex flex-col gap-y-4">
+    <div v-if="authStore.isAuthenticated && (watchlistStore.loading || watchlistPreview?.length)" class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <RouterLink :to="'/watchlist'">
           <h2 class="text-xl sm:text-2xl font-heading font-bold text-text hover:text-primary transition-colors">Your
@@ -57,10 +89,6 @@
       </div>
 
       <div v-if="watchlistStore.loading" class="px-2 text-text-muted">Loading watchlist...</div>
-      <div v-else-if="watchlistPreview?.length === 0" class="px-2 text-text-muted">
-        Your watchlist is empty
-      </div>
-
       <MediaCarousel v-else>
         <MediaCard v-for="item in watchlistPreview" :key="item.id" :title="item.movie.title"
           :poster-url="item.movie.poster_url" :year="item.movie.release_year" :type="item.movie.type"
@@ -82,7 +110,7 @@
     </div>
 
     <!-- Genres -->
-    <div class="flex flex-col gap-y-4">
+    <div v-if="genresStore.loading || genresStore.genres?.length" class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Genres</h2>
         <RouterLink to="/genres" class="flex items-center gap-x-1 text-primary text-sm font-medium hover:underline">
@@ -91,9 +119,6 @@
         </RouterLink>
       </div>
       <div v-if="genresStore.loading" class="px-2 text-text-muted">Loading genres...</div>
-      <div v-else-if="genresStore.genres?.length === 0" class="px-2 text-text-muted">
-        No genres available
-      </div>
       <div v-else class="flex flex-nowrap items-center gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-4">
         <RouterLink v-for="(genre, index) in genresStore.genres?.slice(0, 10)" :key="genre.id"
           :to="`/genres/${genre.slug}`"
@@ -105,7 +130,7 @@
     </div>
 
     <!-- Languages -->
-    <div class="flex flex-col gap-y-4">
+    <div v-if="languagesStore.loading || languagesStore.languages?.length" class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Languages</h2>
         <RouterLink to="/languages" class="flex items-center gap-x-1 text-primary text-sm font-medium hover:underline">
@@ -114,9 +139,6 @@
         </RouterLink>
       </div>
       <div v-if="languagesStore.loading" class="px-2 text-text-muted">Loading languages...</div>
-      <div v-else-if="languagesStore.languages?.length === 0" class="px-2 text-text-muted">
-        No languages available
-      </div>
       <div v-else class="flex flex-nowrap items-center gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-4">
         <RouterLink v-for="(lang, index) in languagesStore.languages?.slice(0, 10)" :key="lang.id"
           :to="`/languages/${lang.code}`"
@@ -204,28 +226,21 @@ function getGradientClass(index: number) {
   return gradients[index % gradients.length]
 }
 
-onMounted(async () => {
-  try {
-    await Promise.all([
-      moviesStore.movies?.length
-        ? Promise.resolve()
-        : moviesStore.fetchMovies({ sort: 'recent' }),
-      tvStore.topRatedShows?.length
-        ? Promise.resolve()
-        : tvStore.fetchTopRatedShows(),
-      genresStore.genres?.length
-        ? Promise.resolve()
-        : genresStore.fetchGenres(),
-      languagesStore.languages?.length
-        ? Promise.resolve()
-        : languagesStore.fetchLanguages(),
-      authStore.isAuthenticated && !watchlistStore.items?.length
-        ? watchlistStore.fetchWatchlist()
-        : Promise.resolve(),
-    ])
-  } catch (err) {
-    console.error('Error loading home data:', err)
-    showToast('error', 'Error', 'Failed to load data. Please check if backend is running.')
+onMounted(() => {
+  // Graceful unblocked loading to keep UI snappy
+  
+  if (!moviesStore.movies?.length) moviesStore.fetchMovies({ sort: 'recent' }).catch(console.error)
+  if (!moviesStore.hotMovies?.length) moviesStore.fetchHotMovies().catch(console.error)
+  if (!moviesStore.topRatedMovies?.length) moviesStore.fetchTopRatedMovies().catch(console.error)
+  
+  if (!tvStore.topRatedShows?.length) tvStore.fetchTopRatedShows().catch(console.error)
+  if (!tvStore.recentShows?.length) tvStore.fetchRecentShows().catch(console.error)
+  
+  if (!genresStore.genres?.length) genresStore.fetchGenres().catch(console.error)
+  if (!languagesStore.languages?.length) languagesStore.fetchLanguages().catch(console.error)
+  
+  if (authStore.isAuthenticated && !watchlistStore.items?.length) {
+    watchlistStore.fetchWatchlist().catch(console.error)
   }
 })
 </script>
