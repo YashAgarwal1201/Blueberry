@@ -1,22 +1,24 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import { Toast } from 'primevue'
 import SideMenu from './components/SideMenu.vue'
+
+const route = useRoute()
 </script>
 
 <template>
   <div class="w-dvw h-dvh flex flex-col-reverse md:flex-row bg-surface-0 text-text font-content">
     <Toast />
-    <div class="w-full md:w-16 h-16 md:h-full shrink-0">
+    <div v-if="!route.meta.hideSidebar" class="w-full md:w-16 h-16 md:h-full shrink-0">
       <NavBar />
     </div>
 
-    <div class="h-full grow overflow-y-auto flex justify-center items-center p-2 sm:p-3">
+    <div class="h-full grow overflow-y-auto flex justify-center items-center" :class="route.meta.hideSidebar ? '' : 'p-2 sm:p-3'">
       <RouterView />
     </div>
 
-    <SideMenu />
+    <SideMenu v-if="!route.meta.hideSidebar" />
   </div>
 </template>
 

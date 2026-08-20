@@ -24,10 +24,9 @@ apiClient.interceptors.response.use(
     } else if (error.response.status === 401) {
       // If unauthorized, we could emit an event or redirect to login.
       // We will let the router guard handle strict protections, 
-      // but for API calls that fail with 401, we might want to trigger a logout flow.
-      if (window.location.pathname !== '/auth') {
-         window.location.href = '/auth';
-      }
+      // but for API calls that fail with 401, we DO NOT want to globally redirect
+      // because it ruins the experience for logged-out users browsing public pages.
+      console.warn('API returned 401 Unauthorized', error);
     }
     return Promise.reject(error)
   },

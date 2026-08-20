@@ -16,9 +16,28 @@ const router = createRouter({
       component: () => import('../pages/ProfilePage.vue'),
     },
     {
-      path: '/auth',
-      name: 'Auth',
-      component: () => import('../pages/Auth.vue'),
+      path: '/login',
+      name: 'Login',
+      component: () => import('../pages/LoginPage.vue'),
+      meta: { hideSidebar: true }
+    },
+    {
+      path: '/register',
+      name: 'Register',
+      component: () => import('../pages/RegisterPage.vue'),
+      meta: { hideSidebar: true }
+    },
+    {
+      path: '/forgot-password',
+      name: 'ForgotPassword',
+      component: () => import('../pages/ForgotPasswordPage.vue'),
+      meta: { hideSidebar: true },
+    },
+    {
+      path: '/reset-password',
+      name: 'ResetPassword',
+      component: () => import('../pages/ResetPasswordPage.vue'),
+      meta: { hideSidebar: true },
     },
     // {
     //   path: '/settings',
@@ -116,8 +135,8 @@ router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next({ name: 'Auth' })
-  } else if (to.name === 'Auth' && authStore.isAuthenticated) {
+    next({ name: 'Login' })
+  } else if ((to.name === 'Login' || to.name === 'Register') && authStore.isAuthenticated) {
     next({ name: 'Home' })
   } else {
     next()

@@ -28,7 +28,6 @@ const mainStore = useMainStore()
 
 const navLinks = [
   { to: '/', icon: Home },
-  { to: '/watchlist', icon: List },
   { to: '/genres', icon: Blocks },
   { to: '/people', icon: UserSquare },
   { to: '/profile', icon: UserCircle },

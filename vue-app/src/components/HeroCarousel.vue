@@ -97,8 +97,6 @@ function stopAutoPlay() {
   if (timer) clearInterval(timer)
 }
 
-console.log('aaa', props.items)
-
 onMounted(() => {
   nextTick(() => {
     startAutoPlay()

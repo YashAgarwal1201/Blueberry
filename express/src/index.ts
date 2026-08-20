@@ -1,6 +1,7 @@
 // src/index.ts
 import express, { Request, Response, Application } from "express";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
 import { loggerMiddleware } from "./middleware/logger-middleware";
 import itemsRouter from "./routes/items";
 import moviesRouter from "./routes/movies";
@@ -27,8 +28,17 @@ app.use(
 
 app.use(loggerMiddleware);
 
+// Rate limiter for authentication routes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15, // limit each IP to 15 requests per windowMs for auth routes
+  message: "Too many authentication attempts from this IP, please try again after 15 minutes.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Better Auth requires raw request parsing (without express.json) for its own routes
-app.use("/api/auth", toNodeHandler(auth));
+app.use("/api/auth", authLimiter, toNodeHandler(auth));
 
 // Middleware
 // app.use(cors());

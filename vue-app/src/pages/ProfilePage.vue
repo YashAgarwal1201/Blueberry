@@ -11,7 +11,7 @@
       <UserCircle :size="48" class="text-text-muted mb-4" />
       <h2 class="text-xl font-semibold mb-2">Not Logged In</h2>
       <p class="text-text-muted mb-6">Sign in to sync your watchlist and manage your profile across devices.</p>
-      <RouterLink to="/auth"
+      <RouterLink to="/login"
         class="px-6 py-2.5 bg-primary text-on-primary rounded-full font-medium transition-colors hover:bg-primary-hover">
         Sign In / Register
       </RouterLink>
@@ -63,6 +63,6 @@ const userInitials = computed(() => {
 
 const handleSignOut = async () => {
   await authClient.signOut()
-  router.push('/auth')
+  router.push('/')
 }
 </script>

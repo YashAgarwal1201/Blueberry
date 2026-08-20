@@ -78,7 +78,7 @@
               <LogOut :size="16" class="text-text-muted" />
               <span>Sign Out ({{ authStore.user?.name || authStore.user?.email }})</span>
             </button>
-            <RouterLink v-else :class="buttonStyles" to="/auth" @click="mainStore.showSideMenu = false">
+            <RouterLink v-else :class="buttonStyles" to="/login" @click="mainStore.showSideMenu = false">
               <LogIn :size="16" class="text-text-muted" />
               <span>Sign In</span>
             </RouterLink>
@@ -109,7 +109,7 @@ const { theme, updateTheme } = useTheme()
 const handleSignOut = async () => {
   mainStore.showSideMenu = false
   await authClient.signOut()
-  router.push('/auth')
+  router.push('/')
 }
 
 const buttonStyles =
