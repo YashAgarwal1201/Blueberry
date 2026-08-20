@@ -149,7 +149,6 @@ const populatedGenres = computed(() =>
 )
 
 onMounted(async () => {
-  if (!mainStore.backend.url) return
   // Only fetch genres list if not already loaded
   if (!genresStore.genres.length) await genresStore.fetchGenres()
   // Only fetch movies for genres that haven't been fetched yet

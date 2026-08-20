@@ -4,12 +4,16 @@ import cors from "cors";
 import { loggerMiddleware } from "./middleware/logger-middleware";
 import itemsRouter from "./routes/items";
 import moviesRouter from "./routes/movies";
+import tvRouter from "./routes/tv";
 import languagesRouter from "./routes/languages";
 import watchlistRouter from "./routes/watchlist";
 import genresRouter from "./routes/genres";
 import peopleRouter from "./routes/people";
 import companiesRouter from "./routes/companies";
 import collectionsRouter from "./routes/collections";
+import { auth } from "./auth";
+import { toNodeHandler } from "better-auth/node";
+import { requireAuth } from "./middleware/authMiddleware";
 
 const app: Application = express();
 const PORT = process.env.PORT || 8100;
@@ -22,6 +26,9 @@ app.use(
 );
 
 app.use(loggerMiddleware);
+
+// Better Auth requires raw request parsing (without express.json) for its own routes
+app.use("/api/auth", toNodeHandler(auth));
 
 // Middleware
 // app.use(cors());
@@ -51,8 +58,9 @@ app.get("/health", (req: Request, res: Response): void => {
 // Routes
 app.use("/items", itemsRouter); // Keeping old routes
 app.use("/movies", moviesRouter);
+app.use("/tv", tvRouter);
 app.use("/languages", languagesRouter);
-app.use("/watchlist", watchlistRouter);
+app.use("/watchlist", requireAuth, watchlistRouter);
 app.use("/genres", genresRouter);
 app.use("/people", peopleRouter);
 app.use("/companies", companiesRouter);

@@ -332,8 +332,7 @@ const loading = ref(false)
 const saving = ref(false)
 
 const movieId = computed(() => {
-  const id = Number(route.params.id)
-  return Number.isNaN(id) ? null : id
+  return route.params.uuid as string | undefined
 })
 
 const isEditMode = computed(() => movieId.value != null)
@@ -446,11 +445,11 @@ async function submitForm() {
     if (isEditMode.value && movieId.value) {
       const updated = await moviesStore.updateMovie(movieId.value, form.value)
       showToast('success', 'Updated', 'Movie updated successfully')
-      router.push(`/movies/${updated.id}`)
+      router.push(`/movies/${updated.uuid}`)
     } else {
       const created = await moviesStore.addMovie(form.value)
       showToast('success', 'Created', 'Movie created successfully')
-      router.push(`/movies/${created.id}`)
+      router.push(`/movies/${created.uuid}`)
     }
   } catch (err: unknown) {
     showToast('error', 'Error', getErrorMessage(err, 'Failed to save movie'))

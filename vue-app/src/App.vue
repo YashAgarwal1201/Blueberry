@@ -8,11 +8,11 @@ import SideMenu from './components/SideMenu.vue'
 <template>
   <div class="w-dvw h-dvh flex flex-col-reverse md:flex-row bg-surface-0 text-text font-content">
     <Toast />
-    <div class="w-full md:w-16 h-16 md:h-full flex-shrink-0">
+    <div class="w-full md:w-16 h-16 md:h-full shrink-0">
       <NavBar />
     </div>
 
-    <div class="h-full flex-grow overflow-y-auto flex justify-center items-center p-2 sm:p-3">
+    <div class="h-full grow overflow-y-auto flex justify-center items-center p-2 sm:p-3">
       <RouterView />
     </div>
 

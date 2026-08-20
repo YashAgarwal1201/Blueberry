@@ -63,90 +63,68 @@ function attachMoviesToWatchlistItems(
 ): WatchlistItemWithMovie[] {
   if (items.length === 0) return [];
 
-  const movieIds = items.map((i) => i.movie_id);
+  const movieIds = items.map((i) => i.movie_id!).filter(Boolean);
+  if (movieIds.length === 0) return [];
   const ph = movieIds.map(() => "?").join(",");
 
   const movies = db
     .prepare(`SELECT * FROM movies WHERE id IN (${ph})`)
-    .all(...movieIds) as MovieWithDetails[];
+    .all(...movieIds) as any[];
 
   const allLanguages = db
     .prepare(
-      `SELECT ml.movie_id, l.id, l.name, l.code, l.native_script
+      `SELECT ml.movie_id, l.id, l.name, l.code
        FROM languages l
        INNER JOIN movie_languages ml ON l.id = ml.language_id
        WHERE ml.movie_id IN (${ph})`,
     )
-    .all(...movieIds) as Array<Language & { movie_id: number }>;
+    .all(...movieIds) as Array<{ movie_id: number; id: number; name: string; code: string }>;
 
   const allGenres = db
     .prepare(
-      `SELECT mg.movie_id, g.id, g.name, g.slug, g.description, g.created_at
+      `SELECT mg.movie_id, g.id, g.name, g.slug
        FROM genres g
        INNER JOIN movie_genres mg ON g.id = mg.genre_id
        WHERE mg.movie_id IN (${ph})`,
     )
-    .all(...movieIds) as Array<Genre & { movie_id: number }>;
+    .all(...movieIds) as Array<{ movie_id: number; id: number; name: string; slug: string }>;
 
-  const allCast = db
-    .prepare(
-      `SELECT mc.movie_id, p.id, p.name, p.also_known_as, p.bio, p.birth_date,
-              p.birth_place, p.profile_url, p.tmdb_id, p.imdb_id, p.created_at,
-              mc.role, mc.character, mc.display_order
-       FROM people p
-       INNER JOIN movie_cast mc ON p.id = mc.person_id
-       WHERE mc.movie_id IN (${ph})
-       ORDER BY mc.display_order ASC`,
-    )
-    .all(...movieIds) as Array<CastMember & { movie_id: number }>;
-
-  const allCompanies = db
-    .prepare(
-      `SELECT mco.movie_id, c.id, c.name, c.type, c.logo_url, c.country, c.tmdb_id,
-              c.created_at, mco.role
-       FROM companies c
-       INNER JOIN movie_companies mco ON c.id = mco.company_id
-       WHERE mco.movie_id IN (${ph})`,
-    )
-    .all(...movieIds) as Array<MovieCompany & { movie_id: number }>;
-
-  const movieMap = new Map<number, MovieWithDetails>();
+  const movieMap = new Map<number, any>();
   movies.forEach((m) => movieMap.set(m.id, m));
 
-  const languageMap = new Map<number, Language[]>();
+  const languageMap = new Map<number, { id: number; name: string; code: string }[]>();
   allLanguages.forEach(({ movie_id, ...lang }) => {
     if (!languageMap.has(movie_id)) languageMap.set(movie_id, []);
     languageMap.get(movie_id)!.push(lang);
   });
 
-  const genreMap = new Map<number, Genre[]>();
+  const genreMap = new Map<number, { id: number; name: string; slug: string }[]>();
   allGenres.forEach(({ movie_id, ...genre }) => {
     if (!genreMap.has(movie_id)) genreMap.set(movie_id, []);
     genreMap.get(movie_id)!.push(genre);
   });
 
-  const castMap = new Map<number, CastMember[]>();
-  allCast.forEach(({ movie_id, ...member }) => {
-    if (!castMap.has(movie_id)) castMap.set(movie_id, []);
-    castMap.get(movie_id)!.push(member);
-  });
-
-  const companyMap = new Map<number, MovieCompany[]>();
-  allCompanies.forEach(({ movie_id, ...company }) => {
-    if (!companyMap.has(movie_id)) companyMap.set(movie_id, []);
-    companyMap.get(movie_id)!.push(company);
-  });
-
   return items.map((item) => {
-    const movie = movieMap.get(item.movie_id)!;
-    const enrichedMovie: MovieWithDetails = {
-      ...movie,
-      languages: languageMap.get(item.movie_id) ?? [],
-      genres: genreMap.get(item.movie_id) ?? [],
-      cast: castMap.get(item.movie_id) ?? [],
-      companies: companyMap.get(item.movie_id) ?? [],
-    };
-    return { ...item, movie: enrichedMovie };
+    const m = movieMap.get(item.movie_id!)!;
+    return {
+      ...item,
+      movie: {
+        id: m.id,
+        uuid: m.uuid,
+        type: 'movie',
+        title: m.title,
+        poster_url: m.poster_url,
+        backdrop_url: m.backdrop_url,
+        release_year: m.release_year,
+        runtime: m.runtime,
+        rating_imdb: m.rating_imdb,
+        age_rating: m.age_rating,
+        status: m.status ?? "released",
+        in_watchlist: true, // it is in watchlist!
+        languages: languageMap.get(m.id) ?? [],
+        genres: genreMap.get(m.id) ?? [],
+      }
+    } as unknown as WatchlistItemWithMovie;
   });
 }
 

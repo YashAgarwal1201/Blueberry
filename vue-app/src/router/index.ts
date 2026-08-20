@@ -1,5 +1,6 @@
 import HomePage from '@/pages/HomePage.vue'
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -14,6 +15,11 @@ const router = createRouter({
       name: 'Profile',
       component: () => import('../pages/ProfilePage.vue'),
     },
+    {
+      path: '/auth',
+      name: 'Auth',
+      component: () => import('../pages/Auth.vue'),
+    },
     // {
     //   path: '/settings',
     //   name: 'Settings',
@@ -25,12 +31,7 @@ const router = createRouter({
       children: [
         {
           path: '',
-          redirect: '/settings/backend',
-        },
-        {
-          path: 'backend',
-          name: 'settings-backend',
-          component: () => import('../pages/settings/BackendSettingsPage.vue'),
+          redirect: '/settings/customise-homepage',
         },
         {
           path: 'movies-added',
@@ -70,6 +71,7 @@ const router = createRouter({
       path: '/watchlist',
       name: 'Watchlist',
       component: () => import('./../pages/WatchListPage.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path: '/people',
@@ -82,7 +84,7 @@ const router = createRouter({
       component: () => import('@/pages/PersonFormPage.vue'),
     },
     {
-      path: '/people/:id/edit',
+      path: '/people/:uuid/edit',
       name: 'edit-person',
       component: () => import('@/pages/PersonFormPage.vue'),
     },
@@ -93,7 +95,7 @@ const router = createRouter({
       component: () => import('@/pages/AllMoviesPage.vue'),
     },
     {
-      path: '/movies/:id',
+      path: '/movies/:uuid',
       name: 'movie-detail',
       component: () => import('@/pages/MovieDetailsPage.vue'),
     },
@@ -103,11 +105,23 @@ const router = createRouter({
       component: () => import('@/pages/MovieFormPage.vue'),
     },
     {
-      path: '/movies/:id/edit',
+      path: '/movies/:uuid/edit',
       name: 'edit-movie',
       component: () => import('@/pages/MovieFormPage.vue'),
     },
   ],
+})
+
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore()
+  
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    next({ name: 'Auth' })
+  } else if (to.name === 'Auth' && authStore.isAuthenticated) {
+    next({ name: 'Home' })
+  } else {
+    next()
+  }
 })
 
 export default router

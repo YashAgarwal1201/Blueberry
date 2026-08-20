@@ -141,7 +141,7 @@ function confirmDelete(id: string) {
     acceptClass: '!text-white border !border-red-500 !bg-red-500 h-9',
     rejectClass: '!text-text !bg-transparent border !border-border h-9',
     accept: async () => {
-      await moviesStore.deleteMovie(parseInt(id))
+      await moviesStore.deleteMovie(id as string)
       showToast('success', 'Deleted', 'Movie deleted successfully.')
     },
   })

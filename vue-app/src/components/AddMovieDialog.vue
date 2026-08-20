@@ -1,92 +1,54 @@
 <template>
-  <Dialog
-    v-model:visible="isVisible"
-    modal
-    :header="isEditMode ? 'Edit Movie' : 'Add New Movie'"
-    :style="{ width: '50rem' }"
-    :breakpoints="{ '1199px': '75vw', '575px': '90vw' }"
-    class="!bg-surface-1 !text-text"
-  >
+  <Dialog v-model:visible="isVisible" modal :header="isEditMode ? 'Edit Movie' : 'Add New Movie'"
+    :style="{ width: '50rem' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }" class="!bg-surface-1 !text-text">
     <div class="flex flex-col gap-4">
       <!-- Title -->
       <div>
         <label class="block text-sm font-medium mb-2 text-text">
           Title <span class="text-red-500">*</span>
         </label>
-        <InputText
-          v-model="form.title"
-          placeholder="Enter movie title"
-          class="w-full !bg-surface-2 !border-border"
-          :class="{ '!border-red-500': errors.title }"
-        />
+        <InputText v-model="form.title" placeholder="Enter movie title" class="w-full !bg-surface-2 !border-border"
+          :class="{ '!border-red-500': errors.title }" />
         <small v-if="errors.title" class="text-red-500">{{ errors.title }}</small>
       </div>
 
       <!-- Description -->
       <div>
         <label class="block text-sm font-medium mb-2 text-text"> Description </label>
-        <Textarea
-          v-model="form.description"
-          rows="3"
-          placeholder="Enter movie description"
-          class="w-full !bg-surface-2 !border-border"
-        />
+        <Textarea v-model="form.description" rows="3" placeholder="Enter movie description"
+          class="w-full !bg-surface-2 !border-border" />
       </div>
 
       <!-- Year & Runtime -->
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium mb-2 text-text"> Release Year </label>
-          <InputNumber
-            v-model="form.release_year"
-            placeholder="2024"
-            :useGrouping="false"
-            :min="1800"
-            :max="new Date().getFullYear() + 10"
-            input-class="w-full !bg-surface-2 !border-border"
-            class="w-full"
-          />
+          <InputNumber v-model="form.release_year" placeholder="2024" :useGrouping="false" :min="1800"
+            :max="new Date().getFullYear() + 10" input-class="w-full !bg-surface-2 !border-border" class="w-full" />
         </div>
         <div>
           <label class="block text-sm font-medium mb-2 text-text"> Runtime (minutes) </label>
-          <InputNumber
-            v-model="form.runtime"
-            placeholder="120"
-            :useGrouping="false"
-            :min="1"
-            input-class="w-full !bg-surface-2 !border-border"
-            class="w-full"
-          />
+          <InputNumber v-model="form.runtime" placeholder="120" :useGrouping="false" :min="1"
+            input-class="w-full !bg-surface-2 !border-border" class="w-full" />
         </div>
       </div>
 
       <!-- Director -->
       <div>
         <label class="block text-sm font-medium mb-2 text-text"> Director </label>
-        <InputText
-          v-model="form.director"
-          placeholder="Enter director name"
-          class="w-full !bg-surface-2 !border-border"
-        />
+        <InputText v-model="form.director" placeholder="Enter director name"
+          class="w-full !bg-surface-2 !border-border" />
       </div>
 
       <!-- Poster URL -->
       <div>
         <label class="block text-sm font-medium mb-2 text-text"> Poster URL </label>
-        <InputText
-          v-model="form.poster_url"
-          placeholder="https://example.com/poster.jpg"
-          class="w-full !bg-surface-2 !border-border"
-        />
+        <InputText v-model="form.poster_url" placeholder="https://example.com/poster.jpg"
+          class="w-full !bg-surface-2 !border-border" />
         <!-- Poster Preview -->
         <div v-if="form.poster_url" class="mt-2">
-          <img
-            loading="lazy"
-            :src="form.poster_url"
-            alt="Poster preview"
-            class="w-32 h-48 object-cover rounded-lg"
-            @error="posterError = true"
-          />
+          <img loading="lazy" :src="form.poster_url" alt="Poster preview" class="w-32 h-48 object-cover rounded-lg"
+            @error="posterError = true" />
           <small v-if="posterError" class="text-orange-500">
             Failed to load image. Check the URL.
           </small>
@@ -96,36 +58,19 @@
       <!-- Languages -->
       <div>
         <label class="block text-sm font-medium mb-2 text-text"> Languages </label>
-        <MultiSelect
-          v-model="form.language_ids"
-          :options="languagesStore.languages"
-          optionLabel="name"
-          optionValue="id"
-          placeholder="Select languages"
-          display="chip"
-          class="w-full !bg-surface-2 !border-border"
-          :loading="languagesStore.loading"
-        />
+        <MultiSelect v-model="form.language_ids" :options="languagesStore.languages" optionLabel="name" optionValue="id"
+          placeholder="Select languages" display="chip" class="w-full !bg-surface-2 !border-border"
+          :loading="languagesStore.loading" />
         <small class="text-text-muted">Select one or more languages</small>
       </div>
     </div>
 
     <template #footer>
       <div class="flex gap-3">
-        <Button
-          label="Cancel"
-          icon="pi pi-times"
-          severity="secondary"
-          @click="closeDialog"
-          class="flex-1 !bg-transparent !border-border !text-text"
-        />
-        <Button
-          :label="isEditMode ? 'Update' : 'Add Movie'"
-          icon="pi pi-check"
-          @click="handleSubmit"
-          :loading="submitting"
-          class="flex-1 !bg-primary !text-on-primary !border-primary"
-        />
+        <Button label="Cancel" icon="pi pi-times" severity="secondary" @click="closeDialog"
+          class="flex-1 !bg-transparent !border-border !text-text" />
+        <Button :label="isEditMode ? 'Update' : 'Add Movie'" icon="pi pi-check" @click="handleSubmit"
+          :loading="submitting" class="flex-1 bg-primary! text-on-primary! border-primary!" />
       </div>
     </template>
   </Dialog>
@@ -241,7 +186,7 @@ async function handleSubmit() {
   submitting.value = true
   try {
     if (isEditMode.value && props.movie) {
-      const updated = await moviesStore.updateMovie(props.movie.id, form.value)
+      const updated = await moviesStore.updateMovie(props.movie.uuid, form.value)
       emit('movie-updated', updated)
     } else {
       const newMovie = await moviesStore.addMovie(form.value as CreateMovieRequest)

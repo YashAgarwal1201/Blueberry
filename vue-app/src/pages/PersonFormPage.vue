@@ -1,7 +1,6 @@
 <template>
   <div
-    class="w-full h-full p-2 sm:p-3 flex flex-col gap-y-6 md:gap-y-8 border border-border rounded-xl overflow-y-auto"
-  >
+    class="w-full h-full p-2 sm:p-3 flex flex-col gap-y-6 md:gap-y-8 border border-border rounded-xl overflow-y-auto">
     <!-- Header -->
     <div class="flex items-start justify-between gap-3">
       <div>
@@ -12,10 +11,8 @@
           {{ isEditMode ? "Update this person's details." : 'Add a new cast or crew member.' }}
         </p>
       </div>
-      <RouterLink
-        :to="isEditMode && personId ? `/people` : '/people'"
-        class="px-4 py-2 rounded-lg border border-border text-text text-sm shrink-0"
-      >
+      <RouterLink :to="isEditMode && personId ? `/people` : '/people'"
+        class="px-4 py-2 rounded-lg border border-border text-text text-sm shrink-0">
         Cancel
       </RouterLink>
     </div>
@@ -34,76 +31,48 @@
             <label class="block text-sm font-medium text-text mb-1">
               Name <span class="text-red-500">*</span>
             </label>
-            <input
-              v-model="form.name"
-              type="text"
-              placeholder="Full name"
+            <input v-model="form.name" type="text" placeholder="Full name"
               class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text"
-              :class="{ '!border-red-500': errors.name }"
-            />
+              :class="{ 'border-red-500!': errors.name }" />
             <small v-if="errors.name" class="text-red-500">{{ errors.name }}</small>
           </div>
 
           <div>
             <label class="block text-sm font-medium text-text mb-1">Also Known As</label>
-            <input
-              v-model="form.also_known_as"
-              type="text"
-              placeholder="Stage name, alias..."
-              class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text"
-            />
+            <input v-model="form.also_known_as" type="text" placeholder="Stage name, alias..."
+              class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text" />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-text mb-1">Bio</label>
-            <textarea
-              v-model="form.bio"
-              rows="5"
-              placeholder="Short biography"
-              class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text"
-            />
+            <textarea v-model="form.bio" rows="5" placeholder="Short biography"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text" />
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-sm font-medium text-text mb-1">Birth Date</label>
-              <input
-                v-model="form.birth_date"
-                type="text"
-                placeholder="YYYY-MM-DD"
-                class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text"
-              />
+              <input v-model="form.birth_date" type="text" placeholder="YYYY-MM-DD"
+                class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text" />
               <small class="text-text-muted text-xs">Format: YYYY-MM-DD</small>
             </div>
             <div>
               <label class="block text-sm font-medium text-text mb-1">Birth Place</label>
-              <input
-                v-model="form.birth_place"
-                type="text"
-                placeholder="City, Country"
-                class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text"
-              />
+              <input v-model="form.birth_place" type="text" placeholder="City, Country"
+                class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text" />
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-sm font-medium text-text mb-1">IMDb ID</label>
-              <input
-                v-model="form.imdb_id"
-                type="text"
-                placeholder="nm0000093"
-                class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text"
-              />
+              <input v-model="form.imdb_id" type="text" placeholder="nm0000093"
+                class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text" />
             </div>
             <div>
               <label class="block text-sm font-medium text-text mb-1">TMDB ID</label>
-              <input
-                v-model.number="form.tmdb_id"
-                type="number"
-                placeholder="12345"
-                class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text"
-              />
+              <input v-model.number="form.tmdb_id" type="number" placeholder="12345"
+                class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text" />
             </div>
           </div>
         </div>
@@ -112,20 +81,13 @@
         <div class="flex flex-col gap-4">
           <div>
             <label class="block text-sm font-medium text-text mb-1">Profile Photo URL</label>
-            <input
-              v-model="form.profile_url"
-              type="text"
-              placeholder="https://example.com/photo.jpg"
-              class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text"
-            />
+            <input v-model="form.profile_url" type="text" placeholder="https://example.com/photo.jpg"
+              class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text" />
             <!-- Live preview -->
             <div v-if="form.profile_url" class="mt-3 flex items-center gap-3">
-              <img
-                :src="form.profile_url"
-                alt="Profile preview"
+              <img :src="form.profile_url" alt="Profile preview"
                 class="w-20 h-20 rounded-full object-cover ring-1 ring-border"
-                @error="($event.target as HTMLImageElement).style.display = 'none'"
-              />
+                @error="($event.target as HTMLImageElement).style.display = 'none'" />
               <span class="text-xs text-text-muted">Preview</span>
             </div>
           </div>
@@ -134,18 +96,11 @@
 
       <!-- Action buttons — matches MovieFormPage exactly -->
       <div class="flex gap-3">
-        <button
-          type="button"
-          @click="resetForm"
-          class="px-4 py-2 rounded-lg border border-border text-text"
-        >
+        <button type="button" @click="resetForm" class="px-4 py-2 rounded-lg border border-border text-text">
           Reset
         </button>
-        <button
-          type="submit"
-          :disabled="saving"
-          class="px-4 py-2 rounded-lg bg-primary text-on-primary disabled:opacity-60"
-        >
+        <button type="submit" :disabled="saving"
+          class="px-4 py-2 rounded-lg bg-primary text-on-primary disabled:opacity-60">
           {{ saving ? 'Saving...' : isEditMode ? 'Update Person' : 'Add Person' }}
         </button>
       </div>
@@ -157,7 +112,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { usePeopleStore } from '@/stores/peopleStore'
-import { useMainStore } from '@/stores/mainStore'
+
 import apiClient from '@/services/apiInterceptors'
 import toastHandler from '@/composables/toastHandeler'
 import type { CreatePersonRequest, Person } from "shared-types"
@@ -166,7 +121,7 @@ import { getErrorMessage, getErrorStatus } from '@/services/errorUtils'
 const route = useRoute()
 const router = useRouter()
 const peopleStore = usePeopleStore()
-const mainStore = useMainStore()
+
 const { showToast } = toastHandler()
 
 const loading = ref(false)
@@ -258,10 +213,6 @@ async function submitForm() {
 }
 
 onMounted(() => {
-  if (!mainStore.backend.url) {
-    router.push('/settings')
-    return
-  }
   loadData()
 })
 </script>

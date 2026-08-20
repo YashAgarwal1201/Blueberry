@@ -9,62 +9,39 @@
         </p>
       </div>
       <!-- Header button: was @click="showAddDialog = true" -->
-      <RouterLink
-        to="/people/add"
-        class="px-3 py-2 rounded-lg bg-primary text-on-primary text-sm flex items-center gap-1.5 shrink-0"
-      >
+      <RouterLink to="/people/add"
+        class="px-3 py-2 rounded-lg bg-primary text-on-primary text-sm flex items-center gap-1.5 shrink-0">
         <Plus :size="15" />
         <span>Add Person</span>
       </RouterLink>
     </div>
 
     <!-- ── Sticky filter bar ── -->
-    <div
-      class="sticky top-0 z-10 bg-surface-0 border-b border-border px-2 sm:px-3 py-2 flex flex-col gap-2 shrink-0"
-    >
+    <div class="sticky top-0 z-10 bg-surface-0 border-b border-border px-2 sm:px-3 py-2 flex flex-col gap-2 shrink-0">
       <!-- Search row -->
       <div class="relative">
-        <Search
-          :size="15"
-          class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
-        />
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search by name or alias..."
-          class="w-full pl-9 pr-8 py-2 rounded-lg border border-border bg-surface-1 text-text text-sm placeholder:text-text-muted"
-        />
-        <button
-          v-if="searchQuery"
-          class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"
-          @click="searchQuery = ''"
-        >
+        <Search :size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+        <input v-model="searchQuery" type="text" placeholder="Search by name or alias..."
+          class="w-full pl-9 pr-8 py-2 rounded-lg border border-border bg-surface-1 text-text text-sm placeholder:text-text-muted" />
+        <button v-if="searchQuery" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"
+          @click="searchQuery = ''">
           <X :size="14" />
         </button>
       </div>
 
       <!-- Role filter chips row -->
       <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
-        <button
-          v-for="role in roleOptions"
-          :key="role.value"
-          class="shrink-0 px-2.5 py-1 rounded-full text-xs border transition-colors"
-          :class="
-            selectedRole === role.value
+        <button v-for="role in roleOptions" :key="role.value"
+          class="shrink-0 px-2.5 py-1 rounded-full text-xs border transition-colors" :class="selectedRole === role.value
               ? 'bg-primary text-on-primary border-primary'
               : 'bg-surface-1 text-text-muted border-border hover:border-primary/50'
-          "
-          @click="selectedRole = role.value"
-        >
+            " @click="selectedRole = role.value">
           {{ role.label }}
         </button>
 
         <!-- Clear — only when role or search is active -->
-        <button
-          v-if="hasActiveFilters"
-          class="shrink-0 ml-auto text-xs text-primary underline whitespace-nowrap"
-          @click="clearFilters"
-        >
+        <button v-if="hasActiveFilters" class="shrink-0 ml-auto text-xs text-primary underline whitespace-nowrap"
+          @click="clearFilters">
           Clear
         </button>
       </div>
@@ -80,11 +57,8 @@
 
       <!-- Skeletons -->
       <div v-if="peopleStore.loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <div
-          v-for="n in 6"
-          :key="n"
-          class="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-1 border border-border"
-        >
+        <div v-for="n in 6" :key="n"
+          class="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-1 border border-border">
           <div class="w-11 h-11 rounded-full bg-surface-3 animate-pulse shrink-0" />
           <div class="flex flex-col gap-2 flex-1">
             <div class="h-3 rounded bg-surface-3 animate-pulse w-2/3" />
@@ -93,23 +67,11 @@
         </div>
       </div>
 
-      <!-- No backend -->
-      <div
-        v-else-if="!mainStore.backend.url"
-        class="flex flex-col items-center justify-center gap-3 py-16 text-center"
-      >
-        <span class="text-4xl">🔌</span>
-        <p class="text-text font-medium">No backend selected.</p>
-        <RouterLink to="/settings" class="text-sm text-primary underline"
-          >Go to Settings</RouterLink
-        >
-      </div>
+
 
       <!-- Empty -->
-      <div
-        v-else-if="filteredPeople.length === 0"
-        class="flex flex-col items-center justify-center gap-3 py-16 text-center"
-      >
+      <div v-else-if="filteredPeople.length === 0"
+        class="flex flex-col items-center justify-center gap-3 py-16 text-center">
         <span class="text-4xl">🎭</span>
         <p class="text-text font-medium">
           {{ hasActiveFilters ? 'No people match your filters.' : 'No people added yet.' }}
@@ -121,35 +83,21 @@
               : 'Add cast and crew members to get started.'
           }}
         </p>
-        <button
-          v-if="hasActiveFilters"
-          class="text-sm text-primary underline"
-          @click="clearFilters"
-        >
+        <button v-if="hasActiveFilters" class="text-sm text-primary underline" @click="clearFilters">
           Clear filters
         </button>
       </div>
 
       <!-- Grid -->
       <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <button
-          v-for="person in filteredPeople"
-          :key="person.id"
-          type="button"
+        <button v-for="person in filteredPeople" :key="person.id" type="button"
           class="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-1 border border-border hover:border-primary/50 hover:bg-surface-2 transition-colors text-left group w-full"
-          @click="openProfile(person)"
-        >
+          @click="openProfile(person)">
           <!-- Avatar -->
-          <img
-            v-if="person.profile_url"
-            :src="person.profile_url"
-            :alt="person.name"
-            class="w-11 h-11 rounded-full object-cover shrink-0 ring-1 ring-border"
-          />
-          <div
-            v-else
-            class="w-11 h-11 rounded-full bg-surface-3 flex items-center justify-center shrink-0 ring-1 ring-border"
-          >
+          <img v-if="person.profile_url" :src="person.profile_url" :alt="person.name"
+            class="w-11 h-11 rounded-full object-cover shrink-0 ring-1 ring-border" />
+          <div v-else
+            class="w-11 h-11 rounded-full bg-surface-3 flex items-center justify-center shrink-0 ring-1 ring-border">
             <User :size="18" class="text-text-muted" />
           </div>
 
@@ -169,43 +117,26 @@
           </div>
 
           <!-- Role badge — shown when a role filter is active -->
-          <span
-            v-if="selectedRole"
-            class="shrink-0 px-2 py-0.5 rounded-full bg-primary-subtle text-primary text-xs capitalize"
-          >
+          <span v-if="selectedRole"
+            class="shrink-0 px-2 py-0.5 rounded-full bg-primary-subtle text-primary text-xs capitalize">
             {{ selectedRole }}
           </span>
 
-          <ChevronRight
-            :size="15"
-            class="text-text-muted shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-          />
+          <ChevronRight :size="15"
+            class="text-text-muted shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
         </button>
       </div>
     </div>
   </div>
 
   <!-- Profile Drawer -->
-  <PersonProfileDrawer
-    v-model:visible="showProfile"
-    :person="selectedPerson"
-    :filmography="filmography"
-    :filmography-loading="filmographyLoading"
-    :filmography-loaded="filmographyLoaded"
-    :saving="saving"
-    :deleting="deleting"
-    @load-filmography="loadFilmography"
-    @save="saveEdit"
-    @delete="confirmDelete"
-    @edit="onEditPerson"
-  />
+  <PersonProfileDrawer v-model:visible="showProfile" :person="selectedPerson" :filmography="filmography"
+    :filmography-loading="filmographyLoading" :filmography-loaded="filmographyLoaded" :saving="saving"
+    :deleting="deleting" @load-filmography="loadFilmography" @save="saveEdit" @delete="confirmDelete"
+    @edit="onEditPerson" />
 
   <!-- Add Dialog -->
-  <PersonAddDialog
-    v-model:visible="showAddDialog"
-    :loading="peopleStore.creating"
-    @submit="submitAdd"
-  />
+  <PersonAddDialog v-model:visible="showAddDialog" :loading="peopleStore.creating" @submit="submitAdd" />
 </template>
 
 <script setup lang="ts">
@@ -216,7 +147,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { ChevronRight, Search, User, X } from 'lucide-vue-next'
 import { usePeopleStore } from '@/stores/peopleStore'
 import { useMoviesStore } from '@/stores/moviesStore'
-import { useMainStore } from '@/stores/mainStore'
+
 import apiClient from '@/services/apiInterceptors'
 import toastHandler from '@/composables/toastHandeler'
 import PersonProfileDrawer from '@/components/people/PersonProfileDrawer.vue'
@@ -227,7 +158,7 @@ import { getErrorMessage, getErrorStatus } from '@/services/errorUtils'
 
 const peopleStore = usePeopleStore()
 const moviesStore = useMoviesStore()
-const mainStore = useMainStore()
+
 const { showToast } = toastHandler()
 const confirm = useConfirm()
 
@@ -423,7 +354,6 @@ async function submitAdd(personForm: CreatePersonRequest) {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 onMounted(async () => {
-  if (!mainStore.backend.url) return
   // Fetch people + ensure movies are loaded (needed for role map + credit counts)
   await Promise.all([
     peopleStore.fetchPeople(),

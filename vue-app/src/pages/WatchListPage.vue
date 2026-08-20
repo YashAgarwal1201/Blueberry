@@ -192,7 +192,7 @@ const watchlistStore = useWatchlistStore()
 const mainStore = useMainStore()
 
 onMounted(async () => {
-  if (mainStore.backend.url) await watchlistStore.fetchWatchlist()
+  await watchlistStore.fetchWatchlist()
 })
 
 async function updateStatus(itemId: number, status: WatchlistStatus) {

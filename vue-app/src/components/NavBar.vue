@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { useMainStore } from '@/stores/mainStore'
-import { Blocks, Home, List, Menu, UserSquare } from 'lucide-vue-next'
+import { Blocks, Home, List, Menu, UserSquare, UserCircle } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
 
 const mainStore = useMainStore()
@@ -31,5 +31,6 @@ const navLinks = [
   { to: '/watchlist', icon: List },
   { to: '/genres', icon: Blocks },
   { to: '/people', icon: UserSquare },
+  { to: '/profile', icon: UserCircle },
 ]
 </script>

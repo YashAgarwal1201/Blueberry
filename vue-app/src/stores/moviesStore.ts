@@ -190,8 +190,8 @@ export const useMoviesStore = defineStore('moviesStore', () => {
 
   const recentMovies = computed(() => [...movies.value].slice(0, 10))
 
-  const findMovieById = (id: number): MovieWithDetails | undefined => {
-    return movies.value.find((m) => m.id === id)
+  const findMovieById = (uuid: string): MovieWithDetails | undefined => {
+    return movies.value.find((m) => m.uuid === uuid)
   }
 
   const fetchMovies = async (params?: {
@@ -222,11 +222,11 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     }
   }
 
-  const fetchMovieById = async (id: number) => {
+  const fetchMovieById = async (uuid: string) => {
     loading.value = true
     error.value = null
     try {
-      const response = await apiClient.get(`movies/${id}`)
+      const response = await apiClient.get(`movies/${uuid}`)
       return response.data.data as MovieWithDetails
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Error fetching movie')
@@ -256,13 +256,13 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     }
   }
 
-  const updateMovie = async (id: number, updates: UpdateMovieRequest) => {
+  const updateMovie = async (uuid: string, updates: UpdateMovieRequest) => {
     loading.value = true
     error.value = null
     try {
-      const response = await apiClient.put(`movies/${id}`, updates)
+      const response = await apiClient.put(`movies/${uuid}`, updates)
       const updatedMovie = response.data.data as MovieWithDetails
-      const idx = movies.value.findIndex((m) => m.id === id)
+      const idx = movies.value.findIndex((m) => m.uuid === uuid)
       if (idx !== -1) movies.value[idx] = updatedMovie
       return updatedMovie
     } catch (err: unknown) {
@@ -275,12 +275,12 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     }
   }
 
-  const deleteMovie = async (id: number) => {
+  const deleteMovie = async (uuid: string) => {
     loading.value = true
     error.value = null
     try {
-      await apiClient.delete(`movies/${id}`)
-      movies.value = movies.value.filter((m) => m.id !== id)
+      await apiClient.delete(`movies/${uuid}`)
+      movies.value = movies.value.filter((m) => m.uuid !== uuid)
       return true
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Error deleting movie')

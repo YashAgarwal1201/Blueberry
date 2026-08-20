@@ -3,4 +3,11 @@ dist/
 .env
 *.log
 
+# Database
+data/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+
 blueberry-api-architecture.md

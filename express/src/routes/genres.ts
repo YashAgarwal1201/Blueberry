@@ -91,6 +91,8 @@ function toMovieCards(movies: Movie[]): MovieCard[] {
 
   return movies.map((m) => ({
     id: m.id,
+    uuid: m.uuid,
+    type: 'movie',
     title: m.title,
     poster_url: m.poster_url,
     backdrop_url: m.backdrop_url,

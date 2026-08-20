@@ -307,7 +307,6 @@ function clearFilters() {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 onMounted(async () => {
-  if (!mainStore.backend.url) return
   await Promise.all([
     moviesStore.movies.length ? Promise.resolve() : moviesStore.fetchMovies({ sort: 'recent' }),
     languagesStore.languages.length ? Promise.resolve() : languagesStore.fetchLanguages(),

@@ -4,6 +4,9 @@
 export interface IdParam {
   id: string;
 }
+export interface UuidParam {
+  uuid: string;
+}
 export interface MovieIdParam {
   movieId: string;
 }
@@ -30,6 +33,14 @@ export type MovieStatus =
   | "upcoming"
   | "in_production"
   | "cancelled";
+export type TVStatus = 
+  | "returning_series"
+  | "planned"
+  | "in_production"
+  | "ended"
+  | "canceled"
+  | "pilot";
+export type MediaType = 'movie' | 'tv';
 
 // ── Base entities ─────────────────────────────────────────────────────────────
 export interface Language {
@@ -49,6 +60,7 @@ export interface Genre {
 
 export interface Person {
   id: number;
+  uuid: string;
   name: string;
   also_known_as?: string;
   bio?: string;
@@ -80,32 +92,50 @@ export interface MovieCompany extends Company {
   role: CompanyType;
 }
 
-// ── Movie shapes ──────────────────────────────────────────────────────────────
+// ── Media Unified Shapes ──────────────────────────────────────────────────────
 
 /**
- * Lightweight shape — used in all list/grid views.
- * Never includes cast or companies.
+ * Universal media card used in lists (Home, Search, Trending).
  */
-export interface MovieCard {
+export interface MediaCard {
   id: number;
+  uuid: string;
+  type: MediaType;
   title: string;
   poster_url?: string;
   backdrop_url?: string;
   release_year?: number;
+  age_rating?: string;
+  runtime?: number;
+  status: string;
+  tmdb_id?: number;
+  in_watchlist: boolean;
+  genres?: Pick<Genre, "id" | "name" | "slug">[];
+}
+
+/**
+ * Specifically typed cards if needed
+ */
+export interface MovieCard extends MediaCard {
+  type: 'movie';
   runtime?: number;
   rating_imdb?: number;
   age_rating?: string;
-  status: MovieStatus;
-  in_watchlist: boolean;
   languages: Pick<Language, "id" | "name" | "code">[];
   genres: Pick<Genre, "id" | "name" | "slug">[];
 }
 
-/**
- * Full shape — used only on the single movie detail page.
- */
+export interface TVShowCard extends MediaCard {
+  type: 'tv';
+  genres: Pick<Genre, "id" | "name" | "slug">[];
+}
+
+// ── Movie shapes ──────────────────────────────────────────────────────────────
+
 export interface Movie {
   id: number;
+  uuid: string;
+  type: 'movie';
   title: string;
   tagline?: string;
   description?: string;
@@ -118,6 +148,7 @@ export interface Movie {
   director?: string;
   imdb_id?: string;
   tmdb_id?: number;
+  letterboxd_id?: string;
   poster_url?: string;
   backdrop_url?: string;
   trailer_url?: string;
@@ -138,6 +169,62 @@ export interface MovieWithDetails extends Movie {
   companies: MovieCompany[];
 }
 
+// ── TV Show shapes ─────────────────────────────────────────────────────────────
+
+export interface TVShow {
+  id: number;
+  uuid: string;
+  type: 'tv';
+  title: string;
+  description?: string;
+  status: TVStatus;
+  first_air_date?: string;
+  last_air_date?: string;
+  poster_url?: string;
+  backdrop_url?: string;
+  tmdb_id?: number;
+  imdb_id?: string;
+  letterboxd_id?: string;
+  network?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TVSeason {
+  id: number;
+  uuid: string;
+  show_id: number;
+  season_number: number;
+  title: string;
+  overview?: string;
+  poster_url?: string;
+  episode_count: number;
+  air_date?: string;
+  tmdb_id?: number;
+}
+
+export interface TVEpisode {
+  id: number;
+  uuid: string;
+  season_id: number;
+  show_id: number;
+  episode_number: number;
+  title: string;
+  overview?: string;
+  air_date?: string;
+  runtime?: number;
+  still_url?: string;
+  tmdb_id?: number;
+  imdb_id?: string;
+}
+
+export interface TVShowWithDetails extends TVShow {
+  in_watchlist: boolean;
+  seasons: TVSeason[];
+  cast: CastMember[];
+}
+
+
 // ── Pagination ────────────────────────────────────────────────────────────────
 export interface PaginationMeta {
   page: number;
@@ -157,7 +244,8 @@ export interface PaginatedResponse<T> {
 // ── Watchlist ─────────────────────────────────────────────────────────────────
 export interface WatchlistItem {
   id: number;
-  movie_id: number;
+  movie_id?: number;
+  show_id?: number;
   status: WatchlistStatus;
   added_at: string;
   updated_at: string;
@@ -174,7 +262,7 @@ export interface WatchlistStats {
   want_to_watch: number;
   watching: number;
   watched: number;
-  total_runtime_watched: number; // sum of runtime for all 'watched' movies, in minutes
+  total_runtime_watched: number;
 }
 
 // ── Genre with movies (for /genres/browse) ────────────────────────────────────
@@ -212,10 +300,10 @@ export interface CollectionDetail extends Collection {
 
 // ── Home payload (for /home) ──────────────────────────────────────────────────
 export interface HomePayload {
-  recent: MovieCard[];
-  top_rated: MovieCard[];
-  hot: MovieCard[];
-  watchlist_preview: WatchlistItemWithMovie[];
+  recent: MediaCard[];
+  top_rated: MediaCard[];
+  hot: MediaCard[];
+  watchlist_preview: WatchlistItemWithMovie[]; // We might need to make this generic later if TV shows are in watchlist
   genres: Pick<Genre, "id" | "name" | "slug">[];
   languages: Pick<Language, "id" | "name" | "code">[];
 }
@@ -254,6 +342,7 @@ export interface CreateMovieRequest {
   director?: string;
   imdb_id?: string;
   tmdb_id?: number;
+  letterboxd_id?: string;
   poster_url?: string;
   backdrop_url?: string;
   trailer_url?: string;
@@ -271,7 +360,8 @@ export interface CreateMovieRequest {
 export type UpdateMovieRequest = Partial<CreateMovieRequest>;
 
 export interface AddToWatchlistRequest {
-  movie_id: number;
+  movie_id?: number;
+  show_id?: number;
   status: WatchlistStatus;
   notes?: string;
 }
@@ -321,8 +411,8 @@ export interface MovieListQuery {
   page?: string;
   limit?: string;
   sort?: "recent" | "title" | "year" | "rating";
-  language?: string; // language code, e.g. "hi"
-  genre?: string; // genre slug, e.g. "action"
+  language?: string;
+  genre?: string;
   year?: string;
   status?: MovieStatus;
 }

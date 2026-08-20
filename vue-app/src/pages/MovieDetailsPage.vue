@@ -7,32 +7,23 @@
     </div>
 
     <div v-else-if="movie" class="flex flex-col">
-      <div
-        class="relative h-56 sm:h-72 md:h-80 bg-surface-2"
-        :style="
-          movie.backdrop_url
-            ? {
-                backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.72), rgba(0,0,0,0.2)), url(${movie.backdrop_url})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }
-            : {}
-        "
-      >
+      <div class="relative h-56 sm:h-72 md:h-80 bg-surface-2" :style="movie.backdrop_url
+          ? {
+            backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.72), rgba(0,0,0,0.2)), url(${movie.backdrop_url})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }
+          : {}
+        ">
         <div class="absolute inset-x-0 bottom-0 p-4 sm:p-6 flex gap-4 items-end">
-          <div
-            v-if="movie.poster_url"
-            class="w-24 sm:w-32 aspect-[2/3] rounded-xl bg-surface-3 border border-border shrink-0"
-            :style="{
+          <div v-if="movie.poster_url"
+            class="w-24 sm:w-32 aspect-2/3 rounded-xl bg-surface-3 border border-border shrink-0" :style="{
               backgroundImage: `url(${movie.poster_url})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-            }"
-          ></div>
-          <div
-            v-else
-            class="w-24 sm:w-32 aspect-[2/3] rounded-xl bg-surface-3 border border-border shrink-0 flex items-center justify-center text-text-muted text-xs"
-          >
+            }"></div>
+          <div v-else
+            class="w-24 sm:w-32 aspect-2/3 rounded-xl bg-surface-3 border border-border shrink-0 flex items-center justify-center text-text-muted text-xs">
             No Poster
           </div>
 
@@ -53,13 +44,10 @@
         </div>
       </div>
 
-      <div class="p-4 sm:p-6 flex flex-col gap-6">
+      <div v-if="authStore.isAuthenticated" class="p-4 sm:p-6 flex flex-col gap-6">
         <div class="flex flex-wrap gap-2">
-          <button
-            v-if="!isInWatchlist"
-            @click="addToWatchlist"
-            class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm"
-          >
+          <button v-if="!isInWatchlist" @click="addToWatchlist"
+            class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm">
             Add to Watchlist
           </button>
 
@@ -68,39 +56,30 @@
               In Watchlist
             </span>
 
-            <select
-              :value="watchlistItem.status"
-              @change="onStatusChange"
-              class="px-3 py-2 rounded-lg border border-border bg-surface-1 text-text text-sm"
-            >
+            <select :value="watchlistItem.status" @change="onStatusChange"
+              class="px-3 py-2 rounded-lg border border-border bg-surface-1 text-text text-sm">
               <option value="want_to_watch">Want to watch</option>
               <option value="watching">Watching</option>
               <option value="watched">Watched</option>
             </select>
 
-            <button
-              @click="removeFromWatchlist"
-              class="px-4 py-2 rounded-lg border border-border text-text text-sm"
-            >
+            <button @click="removeFromWatchlist" class="px-4 py-2 rounded-lg border border-border text-text text-sm">
               Remove
             </button>
           </div>
 
-          <RouterLink
-            :to="`/movies/${movie.id}/edit`"
-            class="px-4 py-2 rounded-lg border border-border text-text text-sm"
-          >
+          <RouterLink :to="`/movies/${movie.id}/edit`"
+            class="px-4 py-2 rounded-lg border border-border text-text text-sm">
             Edit
           </RouterLink>
 
-          <button
-            @click="confirmDelete"
-            class="px-4 py-2 rounded-lg border border-red-500 text-red-500 text-sm"
-          >
+          <button @click="confirmDelete" class="px-4 py-2 rounded-lg border border-red-500 text-red-500 text-sm">
             Delete
           </button>
         </div>
+      </div>
 
+      <div class="p-4 sm:p-6 pt-0 flex flex-col gap-6">
         <div v-if="movie.description" class="flex flex-col gap-2">
           <h2 class="font-heading text-lg text-text">Overview</h2>
           <p class="text-sm sm:text-base text-text-muted leading-relaxed">
@@ -113,11 +92,8 @@
             <div v-if="movie.genres.length">
               <h3 class="font-heading text-base text-text mb-2">Genres</h3>
               <div class="flex flex-wrap gap-2">
-                <span
-                  v-for="genre in movie.genres"
-                  :key="genre.id"
-                  class="px-3 py-1 rounded-full bg-primary-subtle text-primary text-xs"
-                >
+                <span v-for="genre in movie.genres" :key="genre.id"
+                  class="px-3 py-1 rounded-full bg-primary-subtle text-primary text-xs">
                   {{ genre.name }}
                 </span>
               </div>
@@ -126,12 +102,8 @@
             <div v-if="movie.languages.length">
               <h3 class="font-heading text-base text-text mb-2">Languages</h3>
               <div class="flex flex-wrap gap-2">
-                <RouterLink
-                  v-for="lang in movie.languages"
-                  :to="'/languages/' + lang.code"
-                  :key="lang.id"
-                  class="px-3 py-1 rounded-full bg-surface-2 text-text text-xs"
-                >
+                <RouterLink v-for="lang in movie.languages" :to="'/languages/' + lang.code" :key="lang.id"
+                  class="px-3 py-1 rounded-full bg-surface-2 text-text text-xs">
                   {{ lang.name }}<span v-if="lang.code"> ({{ lang.code }})</span>
                 </RouterLink>
               </div>
@@ -165,12 +137,8 @@
 
               <div v-if="movie.trailer_url" class="rounded-xl bg-surface-2 p-3">
                 <div class="text-xs text-text-muted mb-1">Trailer</div>
-                <a
-                  :href="movie.trailer_url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-sm text-primary underline break-all"
-                >
+                <a :href="movie.trailer_url" target="_blank" rel="noopener noreferrer"
+                  class="text-sm text-primary underline break-all">
                   Open trailer
                 </a>
               </div>
@@ -181,10 +149,7 @@
             <div v-if="hasRatings">
               <h3 class="font-heading text-base text-text mb-2">Ratings</h3>
               <div class="grid grid-cols-3 gap-3">
-                <div
-                  v-if="movie.rating_imdb != null"
-                  class="rounded-xl bg-surface-2 p-3 text-center"
-                >
+                <div v-if="movie.rating_imdb != null" class="rounded-xl bg-surface-2 p-3 text-center">
                   <div class="text-xs text-text-muted mb-1">IMDb</div>
                   <div class="text-lg font-heading text-text">{{ movie.rating_imdb }}</div>
                 </div>
@@ -192,10 +157,7 @@
                   <div class="text-xs text-text-muted mb-1">RT</div>
                   <div class="text-lg font-heading text-text">{{ movie.rating_rt }}%</div>
                 </div>
-                <div
-                  v-if="movie.rating_metacritic != null"
-                  class="rounded-xl bg-surface-2 p-3 text-center"
-                >
+                <div v-if="movie.rating_metacritic != null" class="rounded-xl bg-surface-2 p-3 text-center">
                   <div class="text-xs text-text-muted mb-1">Metacritic</div>
                   <div class="text-lg font-heading text-text">{{ movie.rating_metacritic }}</div>
                 </div>
@@ -219,11 +181,8 @@
             <div v-if="movie.cast.length">
               <h3 class="font-heading text-base text-text mb-2">Cast & Crew</h3>
               <div class="flex flex-col gap-2">
-                <div
-                  v-for="member in sortedCast"
-                  :key="`${member.id}-${member.role}-${member.display_order}`"
-                  class="rounded-xl bg-surface-2 p-3"
-                >
+                <div v-for="member in sortedCast" :key="`${member.id}-${member.role}-${member.display_order}`"
+                  class="rounded-xl bg-surface-2 p-3">
                   <div class="text-sm text-text">{{ member.name }}</div>
                   <div class="text-xs text-text-muted">
                     {{ member.role }}<span v-if="member.character"> • {{ member.character }}</span>
@@ -235,11 +194,8 @@
             <div v-if="movie.companies.length">
               <h3 class="font-heading text-base text-text mb-2">Companies</h3>
               <div class="flex flex-col gap-2">
-                <div
-                  v-for="company in movie.companies"
-                  :key="`${company.id}-${company.role}`"
-                  class="rounded-xl bg-surface-2 p-3"
-                >
+                <div v-for="company in movie.companies" :key="`${company.id}-${company.role}`"
+                  class="rounded-xl bg-surface-2 p-3">
                   <div class="text-sm text-text">{{ company.name }}</div>
                   <div class="text-xs text-text-muted">
                     {{ company.role }}<span v-if="company.country"> • {{ company.country }}</span>
@@ -267,11 +223,13 @@ import { useWatchlistStore } from '@/stores/watchListStore'
 import type { MovieWithDetails, WatchlistItemWithMovie, WatchlistStatus } from "shared-types"
 import toastHandler from '@/composables/toastHandeler'
 import { getErrorMessage } from '@/services/errorUtils'
+import { useAuthStore } from '@/stores/authStore'
 
 const route = useRoute()
 const router = useRouter()
 const moviesStore = useMoviesStore()
 const watchlistStore = useWatchlistStore()
+const authStore = useAuthStore()
 const showToast = toastHandler().showToast
 
 const movie = ref<MovieWithDetails | null>(null)
@@ -315,11 +273,13 @@ async function loadMovie() {
   loading.value = true
   error.value = null
   try {
-    const id = Number(route.params.id)
-    if (!id) throw new Error('Invalid movie ID')
-    movie.value = await moviesStore.fetchMovieById(id)
-    // Only fetch watchlist if it hasn't been loaded yet
-    if (!watchlistStore.items.length) await watchlistStore.fetchWatchlist()
+    const uuid = route.params.uuid as string
+    if (!uuid) throw new Error('Invalid movie ID')
+    movie.value = await moviesStore.fetchMovieById(uuid)
+    // Only fetch watchlist if it hasn't been loaded yet and user is authenticated
+    if (authStore.isAuthenticated && !watchlistStore.items.length) {
+      await watchlistStore.fetchWatchlist()
+    }
   } catch (err: unknown) {
     const message = getErrorMessage(err, 'Failed to load movie')
     error.value = message
@@ -365,7 +325,7 @@ async function confirmDelete() {
   const ok = window.confirm(`Delete "${movie.value.title}"?`)
   if (!ok) return
   try {
-    await moviesStore.deleteMovie(movie.value.id)
+    await moviesStore.deleteMovie(movie.value.uuid)
     showToast('success', 'Deleted', 'Movie deleted successfully')
     router.push('/movies')
   } catch (err: unknown) {

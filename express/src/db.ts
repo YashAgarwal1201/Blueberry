@@ -21,8 +21,15 @@ function addColumnIfMissing(table: string, column: string, definition: string) {
 
 // ── Core tables ─────────────────────────────────────────────────────────────
 db.exec(`
+  -- ── Better Auth ───────────────────────────────────────────────────────────
+  CREATE TABLE IF NOT EXISTS "user" ("id" text not null primary key, "name" text not null, "email" text not null unique, "emailVerified" integer not null, "image" text, "createdAt" date not null, "updatedAt" date not null, "role" text, "banned" integer, "banReason" text, "banExpires" date);
+  CREATE TABLE IF NOT EXISTS "session" ("id" text not null primary key, "expiresAt" date not null, "token" text not null unique, "createdAt" date not null, "updatedAt" date not null, "ipAddress" text, "userAgent" text, "userId" text not null references "user" ("id") on delete cascade, "impersonatedBy" text);
+  CREATE TABLE IF NOT EXISTS "account" ("id" text not null primary key, "accountId" text not null, "providerId" text not null, "userId" text not null references "user" ("id") on delete cascade, "accessToken" text, "refreshToken" text, "idToken" text, "accessTokenExpiresAt" date, "refreshTokenExpiresAt" date, "scope" text, "password" text, "createdAt" date not null, "updatedAt" date not null);
+  CREATE TABLE IF NOT EXISTS "verification" ("id" text not null primary key, "identifier" text not null, "value" text not null, "expiresAt" date not null, "createdAt" date not null, "updatedAt" date not null);
+
   CREATE TABLE IF NOT EXISTS movies (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    uuid         TEXT UNIQUE,
     title        TEXT    NOT NULL,
     description  TEXT    DEFAULT '',
     release_year INTEGER,
@@ -82,6 +89,7 @@ db.exec(`
   -- ── People (cast & crew) ──────────────────────────────────────────────────
   CREATE TABLE IF NOT EXISTS people (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    uuid          TEXT UNIQUE,
     name          TEXT NOT NULL,
     also_known_as TEXT,
     bio           TEXT,
@@ -149,6 +157,56 @@ db.exec(`
     UNIQUE(collection_id, movie_id)
   );
 
+  -- ── TV Shows ─────────────────────────────────────────────────────────────
+  CREATE TABLE IF NOT EXISTS tv_shows (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    uuid             TEXT UNIQUE,
+    title            TEXT NOT NULL,
+    description      TEXT DEFAULT '',
+    status           TEXT DEFAULT 'returning_series'
+                     CHECK(status IN ('returning_series','planned','in_production','ended','canceled','pilot')),
+    first_air_date   TEXT,
+    last_air_date    TEXT,
+    poster_url       TEXT,
+    backdrop_url     TEXT,
+    tmdb_id          INTEGER UNIQUE,
+    imdb_id          TEXT UNIQUE,
+    letterboxd_id    TEXT UNIQUE,
+    network          TEXT,
+    created_at       TEXT DEFAULT (datetime('now')),
+    updated_at       TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS tv_seasons (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    uuid             TEXT UNIQUE,
+    show_id          INTEGER NOT NULL REFERENCES tv_shows(id) ON DELETE CASCADE,
+    season_number    INTEGER NOT NULL,
+    title            TEXT NOT NULL,
+    overview         TEXT,
+    poster_url       TEXT,
+    episode_count    INTEGER DEFAULT 0,
+    air_date         TEXT,
+    tmdb_id          INTEGER UNIQUE,
+    UNIQUE(show_id, season_number)
+  );
+
+  CREATE TABLE IF NOT EXISTS tv_episodes (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    uuid             TEXT UNIQUE,
+    season_id        INTEGER NOT NULL REFERENCES tv_seasons(id) ON DELETE CASCADE,
+    show_id          INTEGER NOT NULL REFERENCES tv_shows(id) ON DELETE CASCADE,
+    episode_number   INTEGER NOT NULL,
+    title            TEXT NOT NULL,
+    overview         TEXT,
+    air_date         TEXT,
+    runtime          INTEGER,
+    still_url        TEXT,
+    tmdb_id          INTEGER UNIQUE,
+    imdb_id          TEXT UNIQUE,
+    UNIQUE(season_id, episode_number)
+  );
+
 
   -- ── Indexes ───────────────────────────────────────────────────────────────
   CREATE INDEX IF NOT EXISTS idx_movie_languages_movie        ON movie_languages(movie_id);
@@ -162,6 +220,10 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_movie_companies_movie        ON movie_companies(movie_id);
   CREATE INDEX IF NOT EXISTS idx_collection_movies_collection ON collection_movies(collection_id);
   CREATE INDEX IF NOT EXISTS idx_collection_movies_movie      ON collection_movies(movie_id);
+
+  CREATE INDEX IF NOT EXISTS "session_userId_idx" on "session" ("userId");
+  CREATE INDEX IF NOT EXISTS "account_userId_idx" on "account" ("userId");
+  CREATE INDEX IF NOT EXISTS "verification_identifier_idx" on "verification" ("identifier");
 
 
   -- ── Default seed data ─────────────────────────────────────────────────────
@@ -210,6 +272,13 @@ addColumnIfMissing("movies", "rating_rt", "INTEGER");
 addColumnIfMissing("movies", "rating_metacritic", "INTEGER");
 addColumnIfMissing("movies", "trailer_url", "TEXT");
 addColumnIfMissing("movies", "backdrop_url", "TEXT");
+addColumnIfMissing("movies", "uuid", "TEXT");
+addColumnIfMissing("movies", "letterboxd_id", "TEXT");
+
+addColumnIfMissing("people", "uuid", "TEXT");
+
+db.exec(`UPDATE movies SET uuid = lower(hex(randomblob(16))) WHERE uuid IS NULL`);
+db.exec(`UPDATE people SET uuid = lower(hex(randomblob(16))) WHERE uuid IS NULL`);
 
 addColumnIfMissing("languages", "native_script", "TEXT");
 
@@ -217,6 +286,9 @@ addColumnIfMissing("languages", "native_script", "TEXT");
 addColumnIfMissing("watchlist", "notes", "TEXT");
 addColumnIfMissing("watchlist", "updated_at", "TEXT");
 db.exec(`UPDATE watchlist SET updated_at = added_at WHERE updated_at IS NULL`);
+
+// better-auth missing columns
+addColumnIfMissing("account", "issuer", "TEXT");
 
 // Unique + post-migration indexes — all safe to re-run (IF NOT EXISTS)
 db.exec(

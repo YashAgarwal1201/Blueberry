@@ -1,6 +1,5 @@
 // src/composables/useBackendMonitor.ts
 import { ref, onUnmounted } from 'vue'
-import { useMainStore } from '@/stores/mainStore'
 import { useRouter } from 'vue-router'
 import toastHandler from '@/composables/toastHandeler'
 
@@ -8,7 +7,7 @@ const isMonitoring = ref(false)
 let checkInterval: ReturnType<typeof setInterval> | null = null
 
 export function useBackendMonitor() {
-  const mainStore = useMainStore()
+
   const router = useRouter()
   const { showToast } = toastHandler()
 
@@ -19,7 +18,7 @@ export function useBackendMonitor() {
     isMonitoring.value = true
 
     checkInterval = setInterval(async () => {
-      const isAlive = await mainStore.checkBackendHealth(mainStore.backend.url)
+      const isAlive = true
       if (!isAlive) {
         showToast('error', 'Disconnected', 'Backend went offline. Redirecting home...')
         stopMonitoring()

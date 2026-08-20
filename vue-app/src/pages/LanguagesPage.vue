@@ -155,7 +155,6 @@ const populatedLanguages = computed(() =>
 )
 
 onMounted(async () => {
-  if (!mainStore.backend.url) return
   // Only fetch languages list if not already loaded
   if (!languagesStore.languages.length) await languagesStore.fetchLanguages()
   // Only fetch movies for languages that haven't been fetched yet

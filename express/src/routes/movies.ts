@@ -13,7 +13,7 @@ import type {
   UpdateMovieRequest,
   CastMemberRequest,
   CompanyRequest,
-  IdParam,
+  UuidParam,
   MovieListQuery,
   PaginationQuery,
   PaginationMeta,
@@ -123,6 +123,8 @@ function toMovieCards(movies: Movie[], watchlistSet: Set<number>): MovieCard[] {
 
   return movies.map((m) => ({
     id: m.id,
+    uuid: m.uuid,
+    type: "movie",
     title: m.title,
     poster_url: m.poster_url,
     backdrop_url: m.backdrop_url,
@@ -137,12 +139,15 @@ function toMovieCards(movies: Movie[], watchlistSet: Set<number>): MovieCard[] {
   }));
 }
 
-/** Fetch full MovieWithDetails for a single movie — used by GET /:id, POST, PUT */
-function getMovieWithDetails(id: number): MovieWithDetails | undefined {
-  const movie = db.prepare(`SELECT * FROM movies WHERE id = ?`).get(id) as
-    | Movie
-    | undefined;
+/** Fetch full MovieWithDetails for a single movie — used by GET /:uuid, POST, PUT */
+function getMovieWithDetails(identifier: string | number): MovieWithDetails | undefined {
+  const isUuid = typeof identifier === "string";
+  const movie = isUuid
+    ? db.prepare(`SELECT * FROM movies WHERE uuid = ?`).get(identifier) as Movie | undefined
+    : db.prepare(`SELECT * FROM movies WHERE id = ?`).get(identifier) as Movie | undefined;
+  
   if (!movie) return undefined;
+  const id = movie.id;
 
   const inWatchlist = !!db
     .prepare(`SELECT 1 FROM watchlist WHERE movie_id = ?`)
@@ -241,7 +246,7 @@ function upsertCompany(req: CompanyRequest): number {
 router.get("/recent", (_req: Request, res: Response) => {
   try {
     const movies = db
-      .prepare(`SELECT * FROM movies ORDER BY created_at DESC LIMIT 20`)
+      .prepare(`SELECT * FROM movies ORDER BY release_year DESC LIMIT 20`)
       .all() as Movie[];
     const cards = toMovieCards(movies, getWatchlistSet());
     res.json({ success: true, data: cards });
@@ -435,16 +440,16 @@ router.get("/", (req: Request<{}, {}, {}, MovieListQuery>, res: Response) => {
   }
 });
 
-// ── GET /movies/:id ───────────────────────────────────────────────────────────
-router.get("/:id", (req: Request<IdParam>, res: Response) => {
+// ── GET /movies/:uuid ───────────────────────────────────────────────────────────
+router.get("/:uuid", (req: Request<UuidParam>, res: Response) => {
   try {
-    const id = parseInt(req.params.id as string);
-    if (isNaN(id))
+    const uuid = req.params.uuid;
+    if (!uuid)
       return res
         .status(400)
-        .json({ success: false, error: "Invalid movie ID" });
+        .json({ success: false, error: "Invalid movie UUID" });
 
-    const movie = getMovieWithDetails(id);
+    const movie = getMovieWithDetails(uuid);
     if (!movie)
       return res.status(404).json({ success: false, error: "Movie not found" });
 
@@ -473,11 +478,11 @@ router.post("/", (req: Request, res: Response) => {
       const info = db
         .prepare(
           `INSERT INTO movies (
-            title, tagline, description, status, release_year, runtime,
+            uuid, title, tagline, description, status, release_year, runtime,
             origin_country, original_language, age_rating, director,
-            imdb_id, tmdb_id, poster_url, backdrop_url, trailer_url,
+            imdb_id, tmdb_id, letterboxd_id, poster_url, backdrop_url, trailer_url,
             budget, box_office, rating_imdb, rating_rt, rating_metacritic
-          ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          ) VALUES (lower(hex(randomblob(16))),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         )
         .run(
           body.title.trim(),
@@ -492,6 +497,7 @@ router.post("/", (req: Request, res: Response) => {
           clean(body.director),
           clean(body.imdb_id),
           body.tmdb_id ?? null,
+          clean(body.letterboxd_id),
           clean(body.poster_url),
           clean(body.backdrop_url),
           clean(body.trailer_url),
@@ -536,7 +542,8 @@ router.post("/", (req: Request, res: Response) => {
         ).run(movieId, companyId, c.role);
       });
 
-      return getMovieWithDetails(movieId)!;
+      const uuid = db.prepare(`SELECT uuid FROM movies WHERE id = ?`).get(movieId) as { uuid: string };
+      return getMovieWithDetails(uuid.uuid)!;
     })();
 
     res
@@ -557,21 +564,22 @@ router.post("/", (req: Request, res: Response) => {
   }
 });
 
-// ── PUT /movies/:id ───────────────────────────────────────────────────────────
-router.put("/:id", (req: Request<IdParam>, res: Response) => {
+// ── PUT /movies/:uuid ───────────────────────────────────────────────────────────
+router.put("/:uuid", (req: Request<UuidParam>, res: Response) => {
   try {
-    const id = parseInt(req.params.id as string);
-    if (isNaN(id))
+    const uuid = req.params.uuid;
+    if (!uuid)
       return res
         .status(400)
-        .json({ success: false, error: "Invalid movie ID" });
+        .json({ success: false, error: "Invalid movie UUID" });
 
-    const existing = db.prepare(`SELECT * FROM movies WHERE id = ?`).get(id) as
+    const existing = db.prepare(`SELECT * FROM movies WHERE uuid = ?`).get(uuid) as
       | Movie
       | undefined;
     if (!existing)
       return res.status(404).json({ success: false, error: "Movie not found" });
 
+    const id = existing.id;
     const body = req.body as UpdateMovieRequest;
 
     const result = db.transaction(() => {
@@ -580,7 +588,7 @@ router.put("/:id", (req: Request<IdParam>, res: Response) => {
           title = ?, tagline = ?, description = ?, status = ?,
           release_year = ?, runtime = ?, origin_country = ?,
           original_language = ?, age_rating = ?, director = ?,
-          imdb_id = ?, tmdb_id = ?, poster_url = ?, backdrop_url = ?,
+          imdb_id = ?, tmdb_id = ?, letterboxd_id = ?, poster_url = ?, backdrop_url = ?,
           trailer_url = ?, budget = ?, box_office = ?,
           rating_imdb = ?, rating_rt = ?, rating_metacritic = ?,
           updated_at = datetime('now')
@@ -598,6 +606,7 @@ router.put("/:id", (req: Request<IdParam>, res: Response) => {
         clean(body.director ?? existing.director),
         clean(body.imdb_id ?? existing.imdb_id),
         body.tmdb_id ?? existing.tmdb_id ?? null,
+        clean(body.letterboxd_id ?? existing.letterboxd_id),
         clean(body.poster_url ?? existing.poster_url),
         clean(body.backdrop_url ?? existing.backdrop_url),
         clean(body.trailer_url ?? existing.trailer_url),
@@ -654,7 +663,7 @@ router.put("/:id", (req: Request<IdParam>, res: Response) => {
         });
       }
 
-      return getMovieWithDetails(id)!;
+      return getMovieWithDetails(uuid)!;
     })();
 
     res.json({
@@ -673,22 +682,22 @@ router.put("/:id", (req: Request<IdParam>, res: Response) => {
   }
 });
 
-// ── DELETE /movies/:id ────────────────────────────────────────────────────────
-router.delete("/:id", (req: Request<IdParam>, res: Response) => {
+// ── DELETE /movies/:uuid ────────────────────────────────────────────────────────
+router.delete("/:uuid", (req: Request<UuidParam>, res: Response) => {
   try {
-    const id = parseInt(req.params.id as string);
-    if (isNaN(id))
+    const uuid = req.params.uuid;
+    if (!uuid)
       return res
         .status(400)
-        .json({ success: false, error: "Invalid movie ID" });
+        .json({ success: false, error: "Invalid movie UUID" });
 
     const movie = db
-      .prepare(`SELECT id, title FROM movies WHERE id = ?`)
-      .get(id) as Pick<Movie, "id" | "title"> | undefined;
+      .prepare(`SELECT id, title FROM movies WHERE uuid = ?`)
+      .get(uuid) as Pick<Movie, "id" | "title"> | undefined;
     if (!movie)
       return res.status(404).json({ success: false, error: "Movie not found" });
 
-    db.prepare(`DELETE FROM movies WHERE id = ?`).run(id);
+    db.prepare(`DELETE FROM movies WHERE id = ?`).run(movie.id);
     res.json({
       success: true,
       message: "Movie deleted successfully",
