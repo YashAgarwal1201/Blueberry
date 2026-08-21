@@ -217,7 +217,7 @@
 
           <!-- Watchlist badge -->
           <div
-            v-if="watchlistStore.isInWatchlist(movie.id)"
+            v-if="watchlistStore.isMovieInWatchlist(movie.id)"
             class="flex items-center gap-1 px-0.5 text-xs text-red-400"
           >
             <Heart :size="11" class="fill-red-400" />
@@ -235,13 +235,11 @@ import { RouterLink } from 'vue-router'
 import { Heart, Plus, Search, X } from 'lucide-vue-next'
 import { useMoviesStore } from '@/stores/moviesStore'
 import { useLanguagesStore } from '@/stores/languagesStore'
-import { useMainStore } from '@/stores/mainStore'
 import { useWatchlistStore } from '@/stores/watchListStore'
 
 const moviesStore = useMoviesStore()
 const languagesStore = useLanguagesStore()
 const watchlistStore = useWatchlistStore()
-const mainStore = useMainStore()
 
 // ── Filter state ──────────────────────────────────────────────────────────────
 const searchQuery = ref('')

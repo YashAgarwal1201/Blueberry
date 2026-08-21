@@ -6,7 +6,7 @@ export const useAuthStore = defineStore('auth', () => {
   const session = authClient.useSession()
   
   const isAuthenticated = ref(false)
-  const user = ref<any>(null)
+  const user = ref<Record<string, unknown> | null>(null)
   const isAuthLoading = ref(true)
 
   watchEffect(() => {

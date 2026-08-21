@@ -5,6 +5,19 @@
     <HeroCarousel v-else-if="moviesStore.movies && moviesStore.movies.length > 0"
       :items="moviesStore.movies.slice(0, 5)" :auto-play-interval="4000" @clickItem="openDrawer" />
 
+    <!-- Continue Watching -->
+    <div v-if="watchlistStore.watchingMedia.length > 0" class="flex flex-col gap-y-4">
+      <div class="flex items-center justify-between gap-3 px-2">
+        <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Continue Watching</h2>
+      </div>
+      <MediaCarousel>
+        <MediaCard v-for="media in watchlistStore.watchingMedia as MediaCardType[]" :key="media.uuid" :title="media.title"
+          :poster-url="media.poster_url"
+          :year="media.release_year"
+          :type="media.type" @click="openDrawer(media)" />
+      </MediaCarousel>
+    </div>
+
     <!-- Trending Movies -->
     <div v-if="moviesStore.loadingHot || moviesStore.hotMovies?.length" class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
@@ -12,8 +25,8 @@
       </div>
       <div v-if="moviesStore.loadingHot" class="px-2 text-text-muted">Loading trending movies...</div>
       <MediaCarousel v-else>
-        <MediaCard v-for="movie in moviesStore.hotMovies" :key="movie.uuid" :title="movie.title" :poster-url="movie.poster_url"
-          :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+        <MediaCard v-for="movie in moviesStore.hotMovies" :key="movie.uuid" :title="movie.title"
+          :poster-url="movie.poster_url" :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
       </MediaCarousel>
     </div>
 
@@ -21,7 +34,8 @@
     <div v-if="moviesStore.loading || recentMovies?.length" class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <RouterLink :to="'/movies'">
-          <h2 class="text-xl sm:text-2xl font-heading font-bold text-text hover:text-primary transition-colors">Recent Movies</h2>
+          <h2 class="text-xl sm:text-2xl font-heading font-bold text-text hover:text-primary transition-colors">Recent
+            Movies</h2>
         </RouterLink>
         <RouterLink :to="'/movies'" class="flex items-center gap-x-1 text-primary text-sm font-medium hover:underline">
           <span>See all</span>
@@ -43,8 +57,8 @@
       </div>
       <div v-if="moviesStore.loadingTopRated" class="px-2 text-text-muted">Loading top rated movies...</div>
       <MediaCarousel v-else>
-        <MediaCard v-for="movie in moviesStore.topRatedMovies" :key="movie.uuid" :title="movie.title" :poster-url="movie.poster_url"
-          :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+        <MediaCard v-for="movie in moviesStore.topRatedMovies" :key="movie.uuid" :title="movie.title"
+          :poster-url="movie.poster_url" :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
       </MediaCarousel>
     </div>
 
@@ -75,7 +89,8 @@
     </div>
 
     <!-- Watchlist Preview -->
-    <div v-if="authStore.isAuthenticated && (watchlistStore.loading || watchlistPreview?.length)" class="flex flex-col gap-y-4">
+    <div v-if="authStore.isAuthenticated && (watchlistStore.loading || watchlistPreview?.length)"
+      class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <RouterLink :to="'/watchlist'">
           <h2 class="text-xl sm:text-2xl font-heading font-bold text-text hover:text-primary transition-colors">Your
@@ -90,9 +105,9 @@
 
       <div v-if="watchlistStore.loading" class="px-2 text-text-muted">Loading watchlist...</div>
       <MediaCarousel v-else>
-        <MediaCard v-for="item in watchlistPreview" :key="item.id" :title="item.movie.title"
-          :poster-url="item.movie.poster_url" :year="item.movie.release_year" :type="item.movie.type"
-          @click="openDrawer(item.movie)">
+        <MediaCard v-for="item in watchlistPreview" :key="item.id" :title="getMedia(item)?.title"
+          :poster-url="getMedia(item)?.poster_url" :year="getMedia(item)?.release_year" :type="getMedia(item)?.type"
+          @click="openDrawer(getMedia(item))">
           <template #badge>
             <div
               class="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary text-on-primary shadow-lg backdrop-blur-sm">
@@ -150,7 +165,8 @@
     </div>
 
     <!-- Slide-up Details Drawer -->
-    <MediaDrawer v-model:visible="isDrawerOpen" :media="selectedMedia" @watchlistAction="handleWatchlistAction" @removeWatchlistAction="handleRemoveWatchlistAction" />
+    <MediaDrawer v-model:visible="isDrawerOpen" :media="selectedMedia" @watchlistAction="handleWatchlistAction"
+      @removeWatchlistAction="handleRemoveWatchlistAction" />
   </div>
 </template>
 
@@ -169,7 +185,7 @@ import HeroCarousel from '@/components/HeroCarousel.vue'
 import MediaCarousel from '@/components/MediaCarousel.vue'
 import MediaCard from '@/components/MediaCard.vue'
 import MediaDrawer from '@/components/MediaDrawer.vue'
-import type { MediaCard as MediaCardType } from 'shared-types'
+import type { MediaCard as MediaCardType, WatchlistPopulatedItem } from 'shared-types'
 
 const moviesStore = useMoviesStore()
 const tvStore = useTvStore()
@@ -181,6 +197,10 @@ const showToast = toastHandler().showToast
 
 const recentMovies = computed(() => moviesStore.movies?.slice(0, 10))
 const watchlistPreview = computed(() => watchlistStore.items?.slice(0, 10))
+
+const getMedia = (item: WatchlistPopulatedItem): MediaCardType => {
+  return 'movie' in item ? item.movie : item.show;
+}
 
 // Drawer State
 const isDrawerOpen = ref(false)
@@ -198,10 +218,11 @@ async function handleWatchlistAction(media: MediaCardType) {
   }
   try {
     if (media.type === 'movie') {
-      await watchlistStore.addToWatchlist(media.id, 'want_to_watch')
+      await watchlistStore.addMovieToWatchlist(media.id, 'want_to_watch')
       showToast('success', 'Added', `${media.title} added to watchlist!`)
-    } else {
-      showToast('info', 'Coming Soon', 'Watchlist for TV shows is not supported yet.')
+    } else if (media.type === 'tv') {
+      await watchlistStore.addShowToWatchlist(media.id, 'want_to_watch')
+      showToast('success', 'Added', `${media.title} added to watchlist!`)
     }
   } catch (error) {
     console.error('Error in watchlist action:', error)
@@ -221,8 +242,12 @@ async function handleRemoveWatchlistAction(media: MediaCardType) {
         await watchlistStore.removeFromWatchlist(item.id)
         showToast('success', 'Removed', `${media.title} removed from watchlist!`)
       }
-    } else {
-      showToast('info', 'Coming Soon', 'Watchlist for TV shows is not supported yet.')
+    } else if (media.type === 'tv') {
+      const item = watchlistStore.getItemByShowId(media.id)
+      if (item) {
+        await watchlistStore.removeFromWatchlist(item.id)
+        showToast('success', 'Removed', `${media.title} removed from watchlist!`)
+      }
     }
   } catch (error) {
     console.error('Error in remove watchlist action:', error)
@@ -249,17 +274,17 @@ function getGradientClass(index: number) {
 
 onMounted(() => {
   // Graceful unblocked loading to keep UI snappy
-  
+
   if (!moviesStore.movies?.length) moviesStore.fetchMovies({ sort: 'recent' }).catch(console.error)
   if (!moviesStore.hotMovies?.length) moviesStore.fetchHotMovies().catch(console.error)
   if (!moviesStore.topRatedMovies?.length) moviesStore.fetchTopRatedMovies().catch(console.error)
-  
+
   if (!tvStore.topRatedShows?.length) tvStore.fetchTopRatedShows().catch(console.error)
   if (!tvStore.recentShows?.length) tvStore.fetchRecentShows().catch(console.error)
-  
+
   if (!genresStore.genres?.length) genresStore.fetchGenres().catch(console.error)
   if (!languagesStore.languages?.length) languagesStore.fetchLanguages().catch(console.error)
-  
+
   if (authStore.isAuthenticated && !watchlistStore.items?.length) {
     watchlistStore.fetchWatchlist().catch(console.error)
   }

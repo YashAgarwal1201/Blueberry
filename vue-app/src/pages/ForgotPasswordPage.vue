@@ -25,7 +25,8 @@ const handleReset = async () => {
   isLoading.value = true
 
   try {
-    const { error: resetError } = await (authClient as any).forgetPassword({
+    // @ts-expect-error: forgetPassword comes from better-auth plugin but isn't typed correctly
+    const { error: resetError } = await authClient.forgetPassword({
       email: email.value,
       redirectTo: 'http://localhost:5130/reset-password',
     })
@@ -35,8 +36,8 @@ const handleReset = async () => {
     } else {
       success.value = true
     }
-  } catch (err: any) {
-    error.value = err.message || 'An unexpected error occurred'
+  } catch (err: unknown) {
+    error.value = (err as Error).message || 'An unexpected error occurred'
   } finally {
     isLoading.value = false
   }

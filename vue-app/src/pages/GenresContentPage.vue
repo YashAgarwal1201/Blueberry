@@ -33,7 +33,7 @@
     <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
       <RouterLink v-for="movie in movies" :key="movie.uuid" :to="`/movies/${movie.uuid}`">
         <MediaCard :title="movie.title" :poster-url="movie.poster_url" :year="movie.release_year"
-          :type="movie.type || 'movie'" />
+          :type="movie.type || 'movie'" fluid />
       </RouterLink>
     </div>
   </div>

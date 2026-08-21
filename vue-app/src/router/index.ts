@@ -111,7 +111,17 @@ const router = createRouter({
     {
       path: '/movies',
       name: 'movies',
-      component: () => import('@/pages/AllMoviesPage.vue'),
+      component: () => import('@/pages/MoviesPage.vue'),
+    },
+    {
+      path: '/shows',
+      name: 'shows',
+      component: () => import('@/pages/ShowsPage.vue'),
+    },
+    {
+      path: '/shows/:uuid',
+      name: 'show-detail',
+      component: () => import('@/pages/ShowDetailsPage.vue'),
     },
     {
       path: '/movies/:uuid',

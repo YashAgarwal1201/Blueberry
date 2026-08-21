@@ -31,9 +31,9 @@
             class="rounded-xl bg-surface-2 p-3 flex flex-col gap-2"
           >
             <div
-              v-if="item.movie.poster_url"
+              v-if="getMedia(item).poster_url"
               class="w-full aspect-[2/3] rounded-lg bg-surface-3"
-              :style="{ backgroundImage: `url(${item.movie.poster_url})`, backgroundSize: 'cover' }"
+              :style="{ backgroundImage: `url(${getMedia(item).poster_url})`, backgroundSize: 'cover' }"
             />
             <div
               v-else
@@ -43,10 +43,10 @@
             </div>
 
             <div class="text-sm font-medium text-text line-clamp-2">
-              {{ item.movie.title }}
+              {{ getMedia(item).title }}
             </div>
             <div class="text-xs text-text-muted">
-              {{ item.movie.release_year || 'N/A' }}
+              {{ getMedia(item).release_year || 'N/A' }}
             </div>
 
             <div class="flex flex-wrap gap-2 mt-auto">
@@ -89,9 +89,9 @@
             class="rounded-xl bg-surface-2 p-3 flex flex-col gap-2"
           >
             <div
-              v-if="item.movie.poster_url"
+              v-if="getMedia(item).poster_url"
               class="w-full aspect-[2/3] rounded-lg bg-surface-3"
-              :style="{ backgroundImage: `url(${item.movie.poster_url})`, backgroundSize: 'cover' }"
+              :style="{ backgroundImage: `url(${getMedia(item).poster_url})`, backgroundSize: 'cover' }"
             />
             <div
               v-else
@@ -101,10 +101,10 @@
             </div>
 
             <div class="text-sm font-medium text-text line-clamp-2">
-              {{ item.movie.title }}
+              {{ getMedia(item).title }}
             </div>
             <div class="text-xs text-text-muted">
-              {{ item.movie.release_year || 'N/A' }}
+              {{ getMedia(item).release_year || 'N/A' }}
             </div>
 
             <div class="flex flex-wrap gap-2 mt-auto">
@@ -147,9 +147,9 @@
             class="rounded-xl bg-surface-2 p-3 flex flex-col gap-2"
           >
             <div
-              v-if="item.movie.poster_url"
+              v-if="getMedia(item).poster_url"
               class="w-full aspect-[2/3] rounded-lg bg-surface-3"
-              :style="{ backgroundImage: `url(${item.movie.poster_url})`, backgroundSize: 'cover' }"
+              :style="{ backgroundImage: `url(${getMedia(item).poster_url})`, backgroundSize: 'cover' }"
             />
             <div
               v-else
@@ -159,7 +159,7 @@
             </div>
 
             <div class="text-sm font-medium text-text line-clamp-2">
-              {{ item.movie.title }}
+              {{ getMedia(item).title }}
             </div>
 
             <div class="text-xs text-text-muted">
@@ -183,13 +183,15 @@
 <!-- script unchanged -->
 <script lang="ts" setup>
 import { onMounted } from 'vue'
-import { useMainStore } from '@/stores/mainStore'
-import type { WatchlistStatus } from "shared-types"
+import type { WatchlistStatus, WatchlistPopulatedItem, MediaCard as MediaCardType } from "shared-types"
 import { useWatchlistStore } from '@/stores/watchListStore'
 import { Panel } from 'primevue'
 
 const watchlistStore = useWatchlistStore()
-const mainStore = useMainStore()
+
+const getMedia = (item: WatchlistPopulatedItem): MediaCardType => {
+  return 'movie' in item ? item.movie : item.show;
+}
 
 onMounted(async () => {
   await watchlistStore.fetchWatchlist()

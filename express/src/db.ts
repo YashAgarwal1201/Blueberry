@@ -59,12 +59,15 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS watchlist (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    movie_id   INTEGER NOT NULL REFERENCES movies(id) ON DELETE CASCADE,
+    movie_id   INTEGER REFERENCES movies(id) ON DELETE CASCADE,
+    show_id    INTEGER REFERENCES tv_shows(id) ON DELETE CASCADE,
     status     TEXT    NOT NULL CHECK(status IN ('want_to_watch','watching','watched')),
     added_at   TEXT    DEFAULT (datetime('now')),
     watched_at TEXT,
     notes      TEXT,
-    UNIQUE(movie_id)
+    CHECK (movie_id IS NOT NULL OR show_id IS NOT NULL),
+    UNIQUE(movie_id),
+    UNIQUE(show_id)
   );
 
 
@@ -212,6 +215,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_movie_languages_movie        ON movie_languages(movie_id);
   CREATE INDEX IF NOT EXISTS idx_movie_languages_language     ON movie_languages(language_id);
   CREATE INDEX IF NOT EXISTS idx_watchlist_movie              ON watchlist(movie_id);
+  CREATE INDEX IF NOT EXISTS idx_watchlist_show               ON watchlist(show_id);
   CREATE INDEX IF NOT EXISTS idx_watchlist_status             ON watchlist(status);
   CREATE INDEX IF NOT EXISTS idx_movie_genres_movie           ON movie_genres(movie_id);
   CREATE INDEX IF NOT EXISTS idx_movie_genres_genre           ON movie_genres(genre_id);

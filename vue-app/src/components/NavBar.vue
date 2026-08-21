@@ -4,7 +4,10 @@
       v-for="link in navLinks"
       :key="link.to"
       :to="link.to"
-      class="cursor-pointer pointer-events-auto w-auto md:w-full h-full md:h-auto md:aspect-square rounded-xl flex items-center justify-center transition-colors duration-200 text-text-muted bg-surface-2 hover:bg-surface-3 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      :class="[
+        'cursor-pointer pointer-events-auto w-auto md:w-full h-full md:h-auto md:aspect-square rounded-xl items-center justify-center transition-colors duration-200 text-text-muted bg-surface-2 hover:bg-surface-3 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        link.mobileHidden ? 'hidden md:flex' : 'flex'
+      ]"
       active-class="!bg-primary !text-on-primary !pointer-events-none !cursor-default"
     >
       <component :is="link.icon" :size="20" />
@@ -21,15 +24,17 @@
 
 <script setup lang="ts">
 import { useMainStore } from '@/stores/mainStore'
-import { Blocks, Home, List, Menu, UserSquare, UserCircle } from 'lucide-vue-next'
+import { Blocks, Home, Menu, UserSquare, UserCircle, Film, Tv } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
 
 const mainStore = useMainStore()
 
 const navLinks = [
-  { to: '/', icon: Home },
-  { to: '/genres', icon: Blocks },
-  { to: '/people', icon: UserSquare },
-  { to: '/profile', icon: UserCircle },
+  { to: '/', icon: Home, mobileHidden: false },
+  { to: '/movies', icon: Film, mobileHidden: true },
+  { to: '/shows', icon: Tv, mobileHidden: true },
+  { to: '/genres', icon: Blocks, mobileHidden: false },
+  { to: '/people', icon: UserSquare, mobileHidden: false },
+  { to: '/profile', icon: UserCircle, mobileHidden: false },
 ]
 </script>

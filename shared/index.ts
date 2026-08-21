@@ -257,6 +257,12 @@ export interface WatchlistItemWithMovie extends WatchlistItem {
   movie: MovieCard;
 }
 
+export interface WatchlistItemWithShow extends WatchlistItem {
+  show: TVShowCard;
+}
+
+export type WatchlistPopulatedItem = WatchlistItemWithMovie | WatchlistItemWithShow;
+
 export interface WatchlistStats {
   total: number;
   want_to_watch: number;
@@ -362,7 +368,7 @@ export type UpdateMovieRequest = Partial<CreateMovieRequest>;
 export interface AddToWatchlistRequest {
   movie_id?: number;
   show_id?: number;
-  status: WatchlistStatus;
+  status?: WatchlistStatus;
   notes?: string;
 }
 

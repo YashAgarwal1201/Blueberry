@@ -72,8 +72,8 @@ const handleRegister = async () => {
     } else {
       router.push('/')
     }
-  } catch (err: any) {
-    error.value = err.message || 'An unexpected error occurred'
+  } catch (err: unknown) {
+    error.value = (err as Error).message || 'An unexpected error occurred'
   } finally {
     isLoading.value = false
   }

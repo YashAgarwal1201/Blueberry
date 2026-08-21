@@ -37,7 +37,7 @@
       class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-6 3xl:grid-cols-7 gap-4">
       <RouterLink v-for="movie in movies" :key="movie.uuid" :to="`/movies/${movie.uuid}`">
         <MediaCard :title="movie.title" :poster-url="movie.poster_url" :year="movie.release_year"
-          :type="movie.type || 'movie'" />
+          :type="movie.type || 'movie'" fluid />
       </RouterLink>
     </div>
   </div>

@@ -2,9 +2,9 @@
   <div class="w-full h-full overflow-y-auto bg-surface-0 hide-scrollbar relative">
 
     <!-- Background Image that blends into the page -->
-    <div v-if="movie && !loading" class="absolute top-0 left-0 w-full h-[80vh] pointer-events-none z-0">
+    <div v-if="show && !loading" class="absolute top-0 left-0 w-full h-[80vh] pointer-events-none z-0">
       <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 scale-105"
-        :style="{ backgroundImage: `url(${movie.backdrop_url || movie.poster_url})` }"></div>
+        :style="{ backgroundImage: `url(${show.backdrop_url || show.poster_url})` }"></div>
       <div class="absolute inset-0 bg-black/40"></div> <!-- Base darkening -->
       <div class="absolute inset-0 bg-linear-to-t from-surface-0 via-surface-0/80 to-transparent"></div>
     </div>
@@ -37,54 +37,52 @@
       <div class="p-4 rounded-full bg-red-500/10 text-red-500">
         <AlertCircle :size="48" />
       </div>
-      <h2 class="text-2xl font-bold text-text">Failed to load movie</h2>
+      <h2 class="text-2xl font-bold text-text">Failed to load show</h2>
       <p class="text-text-muted">{{ error }}</p>
-      <button @click="loadMovie" class="px-6 py-2 bg-surface-2 rounded-lg hover:bg-surface-3 transition-colors mt-2">Try
+      <button @click="loadShow" class="px-6 py-2 bg-surface-2 rounded-lg hover:bg-surface-3 transition-colors mt-2">Try
         Again</button>
     </div>
 
     <!-- Main Content -->
-    <div v-else-if="movie" class="relative z-10 flex flex-col min-h-full pt-[15vh] md:pt-[25vh] pb-20">
+    <div v-else-if="show" class="relative z-10 flex flex-col min-h-full pt-[15vh] md:pt-[25vh] pb-20">
 
       <div class="px-6 md:px-12 max-w-7xl mx-auto w-full flex flex-col gap-10">
 
         <!-- Hero: Poster + Info -->
         <div class="flex flex-col md:flex-row gap-6 md:gap-10 items-end md:items-center">
           <!-- Poster -->
-          <div v-if="movie.poster_url"
+          <div v-if="show.poster_url"
             class="w-32 md:w-56 aspect-2/3 rounded-2xl shadow-2xl shrink-0 overflow-hidden border-2 border-white/10 bg-surface-3">
-            <img :src="movie.poster_url" class="w-full h-full object-cover" />
+            <img :src="show.poster_url" class="w-full h-full object-cover" />
           </div>
 
           <!-- Info -->
           <div class="flex flex-col gap-3 w-full">
             <h1 class="text-4xl md:text-5xl lg:text-7xl font-heading font-bold text-white drop-shadow-xl leading-tight">
-              {{ movie.title }}
+              {{ show.title }}
             </h1>
-            <p v-if="movie.tagline" class="text-lg md:text-xl text-white/80 italic drop-shadow-md font-medium">
-              {{ movie.tagline }}
-            </p>
 
             <!-- Meta Badges -->
             <div class="flex flex-wrap items-center gap-3 text-sm font-bold text-white/90 mt-2">
-              <span v-if="movie.release_year"
-                class="px-3 py-1 rounded-md bg-white/10 backdrop-blur-md border border-white/10">{{ movie.release_year
-                }}</span>
-              <span v-if="movie.age_rating"
-                class="px-3 py-1 rounded-md bg-white/10 backdrop-blur-md border border-white/10">{{ movie.age_rating
-                }}</span>
-              <span v-if="movie.runtime"
-                class="flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/10 backdrop-blur-md border border-white/10">
-                <Clock :size="16" /> {{ movie.runtime }} min
+              <span v-if="show.first_air_date"
+                class="px-3 py-1 rounded-md bg-white/10 backdrop-blur-md border border-white/10">
+                {{ new Date(show.first_air_date).getFullYear() }}
+                <template v-if="show.status === 'ended' && show.last_air_date"> - {{ new
+                  Date(show.last_air_date).getFullYear() }}</template>
+                <template v-else-if="show.status !== 'ended'"> - Present</template>
+              </span>
+              <span v-if="show.network"
+                class="px-3 py-1 rounded-md bg-white/10 backdrop-blur-md border border-white/10 flex items-center gap-1.5">
+                <Tv :size="16" /> {{ show.network }}
               </span>
               <span
                 class="flex items-center gap-1.5 px-3 py-1 rounded-md bg-primary/20 text-primary border border-primary/20 uppercase tracking-wider">{{
-                  prettyStatus(movie.status) }}</span>
+                  prettyStatus(show.status) }}</span>
             </div>
 
             <!-- Action Row -->
             <div class="flex flex-wrap items-center gap-4 mt-6">
-              <button v-if="movie.trailer_url" @click="playVideo(movie.trailer_url)"
+              <button @click="playVideo('https://www.youtube.com/watch?v=dQw4w9WgXcQ')"
                 class="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 bg-white text-black rounded-full font-bold hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-white/20">
                 <Play :size="20" fill="currentColor" /> Play Trailer
               </button>
@@ -134,38 +132,13 @@
           </div>
         </div>
 
-        <!-- Inline Ratings Row -->
-        <div class="flex flex-wrap gap-8 md:gap-12 items-center border-b border-white/10 pb-8" v-if="hasRatings">
-          <div v-if="movie.rating_imdb != null" class="flex items-center gap-3">
-            <Star :size="32" class="text-yellow-500 fill-yellow-500 drop-shadow-md" />
-            <div class="flex flex-col">
-              <span class="text-2xl font-heading font-bold text-white leading-none">{{ movie.rating_imdb }}<span
-                  class="text-base text-text-muted font-medium">/10</span></span>
-              <span class="text-xs text-text-muted mt-1 uppercase tracking-widest font-bold">IMDb</span>
-            </div>
-          </div>
-          <div v-if="movie.rating_rt != null" class="flex items-center gap-3">
-            <div class="flex flex-col">
-              <span class="text-2xl font-heading font-bold"
-                :class="movie.rating_rt >= 60 ? 'text-green-500' : 'text-red-500'">{{ movie.rating_rt }}%</span>
-              <span class="text-xs text-text-muted mt-1 uppercase tracking-widest font-bold">Rotten Tomatoes</span>
-            </div>
-          </div>
-          <div v-if="movie.rating_metacritic != null" class="flex items-center gap-3">
-            <span class="text-xl font-heading font-bold p-2 rounded-lg"
-              :class="movie.rating_metacritic >= 60 ? 'bg-green-500 text-black' : (movie.rating_metacritic >= 40 ? 'bg-yellow-500 text-black' : 'bg-red-500 text-white')">{{
-                movie.rating_metacritic }}</span>
-            <span class="text-xs text-text-muted uppercase tracking-widest font-bold">Metacritic</span>
-          </div>
-        </div>
-
         <!-- Synopsis & Genres -->
-        <div class="flex flex-col gap-5">
+        <div class="flex flex-col gap-5 mt-4">
           <h2 class="text-2xl font-heading font-bold text-white">Synopsis</h2>
-          <p class="text-lg text-text-muted leading-relaxed max-w-5xl">{{ movie.description || "No overview available."
-            }}</p>
-          <div class="flex flex-wrap gap-2 mt-2">
-            <RouterLink v-for="genre in movie.genres" :key="genre.id" :to="`/genres/${genre.slug}`"
+          <p class="text-lg text-text-muted leading-relaxed max-w-5xl">{{ show.description || "No overview available."
+          }}</p>
+          <div class="flex flex-wrap gap-2 mt-2" v-if="(show as any).genres?.length">
+            <RouterLink v-for="genre in (show as any).genres" :key="genre.id" :to="`/genres/${genre.slug}`"
               class="px-5 py-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-white text-sm font-medium">
               {{ genre.name }}
             </RouterLink>
@@ -205,11 +178,47 @@
           </div>
         </div>
 
-        <!-- Cast & Crew -->
-        <div v-if="sortedCast.length" class="flex flex-col gap-5 mt-4">
-          <h2 class="text-2xl font-heading font-bold text-white">Cast & Crew</h2>
+        <!-- Seasons Carousel -->
+        <div v-if="displaySeasons.length" class="flex flex-col gap-5 mt-4">
+          <h2 class="text-2xl font-heading font-bold text-white flex items-baseline gap-3">
+            Seasons
+            <span v-if="isDummySeasons"
+              class="text-xs font-normal text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20 tracking-wider uppercase">Dummy
+              Data</span>
+          </h2>
           <div class="flex overflow-x-auto gap-4 md:gap-6 pb-6 pt-2 snap-x hide-scrollbar">
-            <div v-for="member in sortedCast" :key="`${member.id}-${member.role}`"
+            <div v-for="season in displaySeasons" :key="season.id"
+              class="flex flex-col gap-3 w-32 md:w-40 shrink-0 snap-start group cursor-pointer">
+              <div
+                class="w-full aspect-2/3 rounded-2xl bg-surface-2 overflow-hidden border-2 border-transparent group-hover:border-primary/50 shadow-md group-hover:shadow-xl transition-all relative">
+                <img v-if="season.poster_url" :src="season.poster_url" class="w-full h-full object-cover" />
+                <div v-else
+                  class="w-full h-full flex items-center justify-center text-text-muted flex-col gap-2 p-4 text-center">
+                  <MonitorPlay :size="32" class="opacity-50" />
+                  <span class="text-xs">{{ season.title }}</span>
+                </div>
+              </div>
+              <div class="flex flex-col w-full px-1">
+                <div class="text-sm md:text-base font-bold text-white leading-tight">{{ season.title }}</div>
+                <div class="flex items-center justify-between mt-1 text-xs text-text-muted">
+                  <span class="font-medium">{{ season.episode_count }} Episodes</span>
+                  <span v-if="season.air_date">{{ new Date(season.air_date).getFullYear() }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Horizontal Cast Scroller -->
+        <div v-if="displayCast.length" class="flex flex-col gap-5 mt-4">
+          <h2 class="text-2xl font-heading font-bold text-white flex items-baseline gap-3">
+            Cast & Crew
+            <span v-if="isDummyCast"
+              class="text-xs font-normal text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20 tracking-wider uppercase">Dummy
+              Data</span>
+          </h2>
+          <div class="flex overflow-x-auto gap-4 md:gap-6 pb-6 pt-2 snap-x hide-scrollbar">
+            <div v-for="member in displayCast" :key="`${member.id}-${member.role}`"
               class="flex flex-col items-center gap-3 w-28 md:w-32 shrink-0 snap-start group cursor-pointer">
               <div
                 class="w-24 h-24 md:w-28 md:h-28 rounded-full bg-surface-2 overflow-hidden border-2 border-transparent group-hover:border-primary/50 shadow-md group-hover:shadow-xl transition-all flex items-center justify-center relative">
@@ -231,43 +240,19 @@
         <div class="flex flex-col gap-5 mt-4">
           <h2 class="text-2xl font-heading font-bold text-white">Details</h2>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-6 p-6 md:p-8 rounded-3xl bg-surface-1 border border-white/5">
-            <div class="flex flex-col gap-1">
-              <span class="text-xs font-bold text-text-muted uppercase tracking-widest">Director</span>
-              <span class="text-base font-medium text-white">{{ movie.director || 'Unknown' }}</span>
+            <div v-if="show.first_air_date" class="flex flex-col gap-1">
+              <span class="text-xs font-bold text-text-muted uppercase tracking-widest">First Aired</span>
+              <span class="text-base font-medium text-white">{{ show.first_air_date }}</span>
+            </div>
+            <div v-if="show.network" class="flex flex-col gap-1">
+              <span class="text-xs font-bold text-text-muted uppercase tracking-widest">Network</span>
+              <span class="text-base font-medium text-white">{{ show.network }}</span>
             </div>
             <div class="flex flex-col gap-1">
-              <span class="text-xs font-bold text-text-muted uppercase tracking-widest">Language</span>
-              <span class="text-base font-medium text-white uppercase">{{ movie.original_language || 'Unknown' }}</span>
-            </div>
-            <div class="flex flex-col gap-1">
-              <span class="text-xs font-bold text-text-muted uppercase tracking-widest">Budget</span>
-              <span class="text-base font-medium text-white">{{ movie.budget ? formatMoney(movie.budget) : 'Unknown'
-                }}</span>
-            </div>
-            <div class="flex flex-col gap-1">
-              <span class="text-xs font-bold text-text-muted uppercase tracking-widest">Box Office</span>
-              <span class="text-base font-medium text-white">{{ movie.box_office ? formatMoney(movie.box_office) :
-                'Unknown'
-                }}</span>
-            </div>
-            <div v-if="movie.companies.length" class="flex flex-col gap-1 col-span-2 md:col-span-4 mt-2">
-              <span class="text-xs font-bold text-text-muted uppercase tracking-widest">Production</span>
-              <span class="text-base font-medium text-white">{{movie.companies.map(c => c.name).join(', ')}}</span>
+              <span class="text-xs font-bold text-text-muted uppercase tracking-widest">Status</span>
+              <span class="text-base font-medium text-white capitalize">{{ prettyStatus(show.status) }}</span>
             </div>
           </div>
-        </div>
-
-        <!-- Admin Actions -->
-        <div v-if="authStore.isAuthenticated"
-          class="flex items-center justify-end gap-4 mt-8 pt-8 border-t border-white/10">
-          <RouterLink :to="`/movies/${movie.uuid}/edit`"
-            class="text-sm text-text-muted hover:text-white transition-colors flex items-center gap-1.5">
-            <Edit :size="16" /> Edit Movie
-          </RouterLink>
-          <button @click="confirmDelete"
-            class="text-sm text-red-500 hover:text-red-400 transition-colors flex items-center gap-1.5">
-            <Trash2 :size="16" /> Delete
-          </button>
         </div>
 
       </div>
@@ -298,76 +283,127 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, onBeforeUnmount } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { useMoviesStore } from '@/stores/moviesStore'
+import { useTvStore } from '@/stores/tvStore'
 import { useWatchlistStore } from '@/stores/watchListStore'
-import type { MovieWithDetails, WatchlistItemWithMovie, WatchlistStatus } from "shared-types"
+import type { TVShowWithDetails, TVSeason, CastMember, WatchlistPopulatedItem, WatchlistStatus } from "shared-types"
 import toastHandler from '@/composables/toastHandeler'
 import { getErrorMessage } from '@/services/errorUtils'
 import { useAuthStore } from '@/stores/authStore'
-import { AlertCircle, Play, Plus, CheckCircle2, ChevronDown, Clock, User, Star, X, Edit, Trash2, ArrowLeft } from 'lucide-vue-next'
+import { AlertCircle, Tv, User, MonitorPlay, ArrowLeft, Play, X, Plus, CheckCircle2, ChevronDown, Trash2 } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
-const moviesStore = useMoviesStore()
+const tvStore = useTvStore()
 const watchlistStore = useWatchlistStore()
 const authStore = useAuthStore()
 const showToast = toastHandler().showToast
 
-const movie = ref<MovieWithDetails | null>(null)
+const show = ref<TVShowWithDetails | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 
 const showTrailer = ref(false)
 const activeVideoUrl = ref<string>('')
-
 const watchlistMenuOpen = ref(false)
 const watchlistDropdownRef = ref<HTMLElement | null>(null)
 
-// --- Dummy Trailers ---
-const isDummyTrailers = ref(false)
-const displayTrailers = computed(() => {
-  if (!movie.value) return []
-  const trailers = []
-  if (movie.value.trailer_url) {
-    trailers.push({
-      id: 1,
-      title: 'Official Trailer',
-      type: 'Trailer',
-      url: movie.value.trailer_url,
-      thumbnail_url: movie.value.backdrop_url || movie.value.poster_url || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&q=80'
-    })
-  }
-
-  // Always inject some dummy clips to show the scroller
-  trailers.push(
-    { id: 2, title: 'Teaser Trailer', type: 'Clip', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnail_url: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&q=80' },
-    { id: 3, title: 'Behind the Scenes', type: 'Featurette', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnail_url: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&q=80' }
-  )
-  return trailers
-})
-// ----------------------
-
-const watchlistItem = computed<WatchlistItemWithMovie | undefined>(() => {
-  if (!movie.value) return undefined
-  const item = watchlistStore.getItemByMovieId(movie.value.id)
-  return item && 'movie' in item ? (item as WatchlistItemWithMovie) : undefined
+const watchlistItem = computed<WatchlistPopulatedItem | undefined>(() => {
+  if (!show.value) return undefined
+  return watchlistStore.getItemByShowId(show.value.id)
 })
 
 const isInWatchlist = computed(() => !!watchlistItem.value)
 
-const hasRatings = computed(() => {
-  if (!movie.value) return false
-  return (
-    movie.value.rating_imdb != null ||
-    movie.value.rating_rt != null ||
-    movie.value.rating_metacritic != null
+function prettyWatchlistStatus(status?: WatchlistStatus) {
+  if (!status) return ''
+  switch (status) {
+    case 'want_to_watch': return 'Want to watch'
+    case 'watching': return 'Watching'
+    case 'watched': return 'Watched'
+  }
+}
+
+async function addToWatchlist() {
+  if (!show.value) return
+  try {
+    await watchlistStore.addShowToWatchlist(show.value.id, 'want_to_watch')
+    showToast('success', 'Added', 'Show added to watchlist')
+  } catch (err: unknown) {
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to add show'))
+  }
+}
+
+async function removeFromWatchlist() {
+  if (!watchlistItem.value) return
+  try {
+    await watchlistStore.removeFromWatchlist(watchlistItem.value.id)
+    watchlistMenuOpen.value = false
+    showToast('success', 'Removed', 'Show removed from watchlist')
+  } catch (err: unknown) {
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to remove show'))
+  }
+}
+
+async function updateStatus(status: WatchlistStatus) {
+  if (!watchlistItem.value) return
+  try {
+    await watchlistStore.updateStatus(watchlistItem.value.id, status)
+    watchlistMenuOpen.value = false
+    showToast('success', 'Updated', 'Watchlist status updated')
+  } catch (err: unknown) {
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to update status'))
+  }
+}
+
+// Close dropdown when clicking outside
+function handleClickOutside(event: MouseEvent) {
+  if (watchlistMenuOpen.value && watchlistDropdownRef.value && !watchlistDropdownRef.value.contains(event.target as Node)) {
+    watchlistMenuOpen.value = false
+  }
+}
+
+// --- Dummy Data Injectors ---
+const isDummyTrailers = computed(() => true)
+const displayTrailers = computed(() => {
+  if (!show.value) return []
+  const trailers = []
+
+  // Inject some dummy clips to show the scroller
+  trailers.push(
+    { id: 1, title: 'Series Premiere Trailer', type: 'Trailer', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnail_url: show.value.backdrop_url || show.value.poster_url || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&q=80' },
+    { id: 2, title: 'Season 2 Teaser', type: 'Clip', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnail_url: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&q=80' },
+    { id: 3, title: 'Behind the Scenes', type: 'Featurette', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnail_url: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&q=80' }
   )
+  return trailers
 })
 
-const sortedCast = computed(() => {
-  if (!movie.value) return []
-  return [...movie.value.cast].sort((a, b) => a.display_order - b.display_order)
+const isDummySeasons = computed(() => !show.value || !show.value.seasons || show.value.seasons.length === 0)
+const displaySeasons = computed<TVSeason[]>(() => {
+  if (!show.value) return []
+  if (show.value.seasons && show.value.seasons.length > 0) {
+    return [...show.value.seasons].sort((a, b) => a.season_number - b.season_number)
+  }
+  return [
+    { id: 991, uuid: 's1', show_id: show.value.id, season_number: 1, title: 'Season 1', episode_count: 10, air_date: show.value.first_air_date, poster_url: show.value.poster_url },
+    { id: 992, uuid: 's2', show_id: show.value.id, season_number: 2, title: 'Season 2', episode_count: 12, air_date: '2023-09-10', poster_url: show.value.poster_url },
+    { id: 993, uuid: 's3', show_id: show.value.id, season_number: 3, title: 'Season 3', episode_count: 8, air_date: '2024-10-05', poster_url: show.value.poster_url },
+  ]
 })
+
+const isDummyCast = computed(() => !show.value || !show.value.cast || show.value.cast.length === 0)
+const displayCast = computed<CastMember[]>(() => {
+  if (!show.value) return []
+  if (show.value.cast && show.value.cast.length > 0) {
+    return [...show.value.cast].sort((a, b) => a.display_order - b.display_order)
+  }
+  return [
+    { id: 881, uuid: 'c1', name: 'Bryan Cranston', role: 'actor', character: 'Walter White', display_order: 1, created_at: '', profile_url: 'https://image.tmdb.org/t/p/w276_and_h350_face/a7cPqAOXhtBElJ3y62n5lWl8V6V.jpg' },
+    { id: 882, uuid: 'c2', name: 'Aaron Paul', role: 'actor', character: 'Jesse Pinkman', display_order: 2, created_at: '', profile_url: 'https://image.tmdb.org/t/p/w276_and_h350_face/u8UdsB9yenM4uHEjmce4nkBn48X.jpg' },
+    { id: 883, uuid: 'c3', name: 'Anna Gunn', role: 'actor', character: 'Skyler White', display_order: 3, created_at: '', profile_url: 'https://image.tmdb.org/t/p/w276_and_h350_face/ad3U93OEXqKj26XhWzX4kY0gG.jpg' },
+    { id: 884, uuid: 'c4', name: 'Bob Odenkirk', role: 'actor', character: 'Saul Goodman', display_order: 4, created_at: '', profile_url: 'https://image.tmdb.org/t/p/w276_and_h350_face/2R1eC9iN2b450N98B60Xh92j.jpg' },
+  ]
+})
+// ----------------------------
 
 function playVideo(url: string) {
   activeVideoUrl.value = url
@@ -390,101 +426,25 @@ function prettyStatus(status: string) {
   return status.replace(/_/g, ' ')
 }
 
-function prettyWatchlistStatus(status?: WatchlistStatus) {
-  if (!status) return ''
-  switch (status) {
-    case 'want_to_watch': return 'Want to watch'
-    case 'watching': return 'Watching'
-    case 'watched': return 'Watched'
-  }
-}
-
-function formatMoney(value: number) {
-  if (value === 0) return 'Unknown'
-  if (value >= 1000000000) {
-    return `$${(value / 1000000000).toFixed(2)}B`
-  }
-  if (value >= 1000000) {
-    return `$${(value / 1000000).toFixed(2)}M`
-  }
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value)
-}
-
-async function loadMovie() {
+async function loadShow() {
   loading.value = true
   error.value = null
   try {
     const uuid = route.params.uuid as string
-    if (!uuid) throw new Error('Invalid movie ID')
-    movie.value = await moviesStore.fetchMovieById(uuid)
+    if (!uuid) throw new Error('Invalid show ID')
+    show.value = await tvStore.fetchShowById(uuid)
     if (authStore.isAuthenticated && !watchlistStore.items.length) {
       await watchlistStore.fetchWatchlist()
     }
   } catch (err: unknown) {
-    error.value = getErrorMessage(err, 'Failed to load movie')
+    error.value = getErrorMessage(err, 'Failed to load show')
   } finally {
     loading.value = false
   }
 }
 
-async function addToWatchlist() {
-  if (!movie.value) return
-  try {
-    await watchlistStore.addMovieToWatchlist(movie.value.id, 'want_to_watch')
-    showToast('success', 'Added', 'Movie added to watchlist')
-  } catch (err: unknown) {
-    showToast('error', 'Error', getErrorMessage(err, 'Failed to add movie'))
-  }
-}
-
-async function removeFromWatchlist() {
-  if (!watchlistItem.value) return
-  try {
-    await watchlistStore.removeFromWatchlist(watchlistItem.value.id)
-    watchlistMenuOpen.value = false
-    showToast('success', 'Removed', 'Movie removed from watchlist')
-  } catch (err: unknown) {
-    showToast('error', 'Error', getErrorMessage(err, 'Failed to remove movie'))
-  }
-}
-
-async function updateStatus(status: WatchlistStatus) {
-  if (!watchlistItem.value) return
-  try {
-    await watchlistStore.updateStatus(watchlistItem.value.id, status)
-    watchlistMenuOpen.value = false
-    showToast('success', 'Updated', 'Watchlist status updated')
-  } catch (err: unknown) {
-    showToast('error', 'Error', getErrorMessage(err, 'Failed to update status'))
-  }
-}
-
-async function confirmDelete() {
-  if (!movie.value) return
-  const ok = window.confirm(`Delete "${movie.value.title}"?`)
-  if (!ok) return
-  try {
-    await moviesStore.deleteMovie(movie.value.uuid)
-    showToast('success', 'Deleted', 'Movie deleted successfully')
-    router.push('/movies')
-  } catch (err: unknown) {
-    showToast('error', 'Error', getErrorMessage(err, 'Failed to delete movie'))
-  }
-}
-
-// Close dropdown when clicking outside
-function handleClickOutside(event: MouseEvent) {
-  if (watchlistMenuOpen.value && watchlistDropdownRef.value && !watchlistDropdownRef.value.contains(event.target as Node)) {
-    watchlistMenuOpen.value = false
-  }
-}
-
 onMounted(() => {
-  loadMovie()
+  loadShow()
   document.addEventListener('click', handleClickOutside)
 })
 

@@ -12,27 +12,31 @@
         <!-- Gradient Overlay -->
         <div class="absolute inset-0 bg-linear-to-t from-surface-1 via-surface-1/4 to-transparent"></div>
 
+        <!-- Top Right Tags -->
+        <div class="absolute top-4 sm:top-6 right-4 sm:right-8 flex flex-col gap-2 items-end z-10 pointer-events-none">
+          <span class="px-3 py-1 bg-primary/80 backdrop-blur-md text-white rounded-md text-xs sm:text-sm font-bold uppercase tracking-wider shadow-lg">
+            {{ item.type }}
+          </span>
+          <span v-if="item.status === 'returning_series'"
+            class="px-3 py-1 bg-purple-500/80 backdrop-blur-md text-white rounded-md text-xs sm:text-sm font-bold uppercase tracking-wider shadow-lg">
+            New Episodes
+          </span>
+        </div>
+
         <!-- Content -->
         <div class="absolute bottom-0 left-0 w-full p-4 sm:p-8 md:p-12 flex flex-col gap-2 sm:gap-4 justify-end">
           <h2 class="text-3xl sm:text-5xl font-heading font-bold text-white drop-shadow-lg">
             {{ item.title }}
           </h2>
           <div class="flex items-center gap-3 text-sm text-gray-200">
-            <span>{{ item.release_year }}</span>
-            <span class="px-2 py-0.5 bg-primary/80 text-white rounded-md text-xs font-bold uppercase tracking-wider">
-              {{ item.type }}
-            </span>
-            <span v-if="item.status === 'returning_series'"
-              class="px-2 py-0.5 bg-purple-500/80 text-white rounded-md text-xs font-bold uppercase tracking-wider">
-              New Episodes
-            </span>
+            <span class="font-medium text-base">{{ item.release_year }}</span>
           </div>
 
           <div class="mt-2 flex gap-3">
             <button
               class="px-5 py-2 sm:px-6 sm:py-2.5 rounded-full bg-primary text-on-primary font-bold shadow-lg hover:scale-105 active:scale-95 transition-transform"
               @click.stop="$emit('clickItem', item)">
-              Watch Now
+              More Info
             </button>
           </div>
         </div>

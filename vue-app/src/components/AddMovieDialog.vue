@@ -141,7 +141,7 @@ watch(
         director: movie.director || '',
         poster_url: movie.poster_url || '',
         runtime: movie.runtime,
-        language_ids: movie.languages.map((l: any) => l.id),
+        language_ids: movie.languages.map((l) => l.id),
       }
     } else {
       resetForm()

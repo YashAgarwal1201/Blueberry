@@ -45,7 +45,7 @@
 
         <!-- Action Buttons -->
         <div class="grid grid-cols-2 gap-3 mt-4">
-          <RouterLink :to="`/${media.type === 'movie' ? 'movies' : 'tv'}/${media.uuid}`"
+          <RouterLink :to="`/${media.type === 'movie' ? 'movies' : 'shows'}/${media.uuid}`"
             class="flex items-center justify-center gap-2 py-3 rounded-2xl bg-surface-3 text-text font-semibold hover:bg-surface-4 hover:-translate-y-0.5 active:scale-95 transition-all duration-200"
             @click="$emit('update:visible', false)">
             <Info :size="18" />
@@ -88,7 +88,9 @@ const watchlistStore = useWatchlistStore()
 
 const isInWatchlist = computed(() => {
   if (!props.media) return false
-  return watchlistStore.isInWatchlist(props.media.id)
+  return props.media.type === 'movie' 
+    ? watchlistStore.isMovieInWatchlist(props.media.id)
+    : watchlistStore.isShowInWatchlist(props.media.id)
 })
 
 function handleWatchlist() {

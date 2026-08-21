@@ -1,15 +1,13 @@
 // stores/watchlistStore.ts
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-// import { useMainStore } from './mainStore'
 import apiClient from '@/services/apiInterceptors'
-import type { WatchlistItemWithMovie, WatchlistStatus, AddToWatchlistRequest } from "shared-types"
+import type { WatchlistPopulatedItem, WatchlistStatus, AddToWatchlistRequest, WatchlistItemWithMovie, WatchlistItemWithShow } from "shared-types"
 import { getErrorMessage } from '@/services/errorUtils'
 
 export const useWatchlistStore = defineStore('watchlistStore', () => {
-  // const mainStore = useMainStore()
 
-  const items = ref<WatchlistItemWithMovie[]>([])
+  const items = ref<WatchlistPopulatedItem[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -22,7 +20,7 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
         acc[item.status].push(item)
         return acc
       },
-      {} as Record<WatchlistStatus, WatchlistItemWithMovie[]>,
+      {} as Record<WatchlistStatus, WatchlistPopulatedItem[]>,
     )
   })
 
@@ -30,16 +28,38 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
   const watching = computed(() => itemsByStatus.value.watching || [])
   const watched = computed(() => itemsByStatus.value.watched || [])
 
-  const movieIdsInWatchlist = computed(() => {
-    return new Set(items.value.map((item) => item.movie_id))
+  // Derived getters for Continue Watching
+  const watchingMovies = computed(() => watching.value.filter(item => 'movie' in item).map(item => (item as WatchlistItemWithMovie).movie))
+  const watchingShows = computed(() => watching.value.filter(item => 'show' in item).map(item => (item as WatchlistItemWithShow).show))
+  const watchingMedia = computed(() => {
+    return watching.value.map(item => {
+      if ('movie' in item) return item.movie;
+      if ('show' in item) return item.show;
+    }).filter(Boolean);
   })
 
-  const isInWatchlist = (movieId: number): boolean => {
+  const movieIdsInWatchlist = computed(() => {
+    return new Set(items.value.map((item) => item.movie_id).filter(Boolean))
+  })
+
+  const showIdsInWatchlist = computed(() => {
+    return new Set(items.value.map((item) => item.show_id).filter(Boolean))
+  })
+
+  const isMovieInWatchlist = (movieId: number): boolean => {
     return movieIdsInWatchlist.value.has(movieId)
   }
 
-  const getItemByMovieId = (movieId: number): WatchlistItemWithMovie | undefined => {
+  const isShowInWatchlist = (showId: number): boolean => {
+    return showIdsInWatchlist.value.has(showId)
+  }
+
+  const getItemByMovieId = (movieId: number): WatchlistPopulatedItem | undefined => {
     return items.value.find((item) => item.movie_id === movieId)
+  }
+
+  const getItemByShowId = (showId: number): WatchlistPopulatedItem | undefined => {
+    return items.value.find((item) => item.show_id === showId)
   }
 
   const fetchWatchlist = async (status?: WatchlistStatus) => {
@@ -61,12 +81,33 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
     }
   }
 
-  const addToWatchlist = async (movieId: number, status: WatchlistStatus = 'want_to_watch') => {
+  const addMovieToWatchlist = async (movieId: number, status: WatchlistStatus = 'want_to_watch') => {
     loading.value = true
     error.value = null
     try {
       const response = await apiClient.post('/watchlist', {
         movie_id: movieId,
+        status,
+      } as AddToWatchlistRequest)
+      const data = response.data
+      items.value.unshift(data.data)
+      return data.data
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error adding to watchlist')
+      console.error('Error adding to watchlist:', err)
+      error.value = message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const addShowToWatchlist = async (showId: number, status: WatchlistStatus = 'want_to_watch') => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await apiClient.post('/watchlist', {
+        show_id: showId,
         status,
       } as AddToWatchlistRequest)
       const data = response.data
@@ -88,7 +129,7 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
     try {
       const response = await apiClient.patch(`/watchlist/${itemId}`, { status })
       const data = response.data
-      const updatedItem = data.data as WatchlistItemWithMovie
+      const updatedItem = data.data as WatchlistPopulatedItem
       const idx = items.value.findIndex((i) => i.id === itemId)
       if (idx !== -1) {
         items.value[idx] = updatedItem
@@ -121,20 +162,6 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
     }
   }
 
-  const checkMovieStatus = async (movieId: number) => {
-    try {
-      const response = await apiClient.get(`/watchlist/movie/${movieId}`)
-      const data = response.data
-      return {
-        inWatchlist: data.data?.item != null,
-        item: data.data as WatchlistItemWithMovie | null,
-      }
-    } catch (err: unknown) {
-      console.error('Error checking watchlist status:', err)
-      return { inWatchlist: false, item: null }
-    }
-  }
-
   return {
     items,
     loading,
@@ -143,12 +170,17 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
     wantToWatch,
     watching,
     watched,
-    isInWatchlist,
+    watchingMovies,
+    watchingShows,
+    watchingMedia,
+    isMovieInWatchlist,
+    isShowInWatchlist,
     getItemByMovieId,
+    getItemByShowId,
     fetchWatchlist,
-    addToWatchlist,
+    addMovieToWatchlist,
+    addShowToWatchlist,
     updateStatus,
     removeFromWatchlist,
-    checkMovieStatus,
   }
 })

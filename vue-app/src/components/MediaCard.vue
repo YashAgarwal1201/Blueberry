@@ -1,6 +1,7 @@
 <template>
   <div
-    class="group/card shrink-0 w-36 sm:w-44 h-full cursor-pointer rounded-xl bg-surface-2 flex flex-col snap-start overflow-hidden hover:ring-2 hover:ring-primary transition-all shadow-md active:scale-95"
+    class="group/card shrink-0 h-full cursor-pointer rounded-xl bg-surface-2 flex flex-col snap-start overflow-hidden hover:ring-2 hover:ring-primary transition-all shadow-md active:scale-95"
+    :class="fluid ? 'w-full' : 'w-36 sm:w-44'"
     @click="$emit('click')">
     <div v-if="posterUrl" class="w-full aspect-2/3 bg-surface-3 relative overflow-hidden">
       <img :src="posterUrl" :alt="title" class="w-full h-full object-cover select-none group-hover/card:scale-110 transition-transform duration-500" loading="lazy" />
@@ -31,6 +32,7 @@ defineProps<{
   posterUrl?: string
   year?: number | string
   type: string
+  fluid?: boolean
 }>()
 
 defineEmits(['click'])
