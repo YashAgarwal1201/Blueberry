@@ -150,7 +150,7 @@
     </div>
 
     <!-- Slide-up Details Drawer -->
-    <MediaDrawer v-model:visible="isDrawerOpen" :media="selectedMedia" @watchlistAction="handleWatchlistAction" />
+    <MediaDrawer v-model:visible="isDrawerOpen" :media="selectedMedia" @watchlistAction="handleWatchlistAction" @removeWatchlistAction="handleRemoveWatchlistAction" />
   </div>
 </template>
 
@@ -206,6 +206,27 @@ async function handleWatchlistAction(media: MediaCardType) {
   } catch (error) {
     console.error('Error in watchlist action:', error)
     showToast('error', 'Error', 'Could not add to watchlist (might already exist)')
+  }
+}
+
+async function handleRemoveWatchlistAction(media: MediaCardType) {
+  if (!authStore.isAuthenticated) {
+    showToast('info', 'Login Required', 'Please login to use watchlist')
+    return
+  }
+  try {
+    if (media.type === 'movie') {
+      const item = watchlistStore.getItemByMovieId(media.id)
+      if (item) {
+        await watchlistStore.removeFromWatchlist(item.id)
+        showToast('success', 'Removed', `${media.title} removed from watchlist!`)
+      }
+    } else {
+      showToast('info', 'Coming Soon', 'Watchlist for TV shows is not supported yet.')
+    }
+  } catch (error) {
+    console.error('Error in remove watchlist action:', error)
+    showToast('error', 'Error', 'Could not remove from watchlist')
   }
 }
 

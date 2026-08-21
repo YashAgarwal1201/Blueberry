@@ -19,11 +19,25 @@ import { requireAuth } from "./middleware/authMiddleware";
 const app: Application = express();
 const PORT = process.env.PORT || 8100;
 
+// Allow multiple origins by splitting the FRONTEND_URL environment variable by comma, or fallback to localhost
+const allowedOrigins = process.env.FRONTEND_URL 
+  ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
+  : ['http://localhost:5130'];
+
 app.use(
   cors({
-    origin: "http://localhost:5130", // my frontend URL
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      // or if the origin is in our allowed list
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true, // if i need to send cookies or auth headers
-  }),
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  })
 );
 
 app.use(loggerMiddleware);

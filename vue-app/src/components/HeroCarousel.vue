@@ -30,7 +30,7 @@
 
           <div class="mt-2 flex gap-3">
             <button
-              class="px-5 py-2 sm:px-6 sm:py-2.5 rounded-full bg-primary text-on-primary font-bold shadow-lg hover:scale-105 transition-transform"
+              class="px-5 py-2 sm:px-6 sm:py-2.5 rounded-full bg-primary text-on-primary font-bold shadow-lg hover:scale-105 active:scale-95 transition-transform"
               @click.stop="$emit('clickItem', item)">
               Watch Now
             </button>

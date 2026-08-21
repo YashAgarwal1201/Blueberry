@@ -47,7 +47,7 @@
       <div v-if="authStore.isAuthenticated" class="p-4 sm:p-6 flex flex-col gap-6">
         <div class="flex flex-wrap gap-2">
           <button v-if="!isInWatchlist" @click="addToWatchlist"
-            class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm">
+            class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm hover:-translate-y-0.5 active:scale-95 transition-all">
             Add to Watchlist
           </button>
 
@@ -63,17 +63,17 @@
               <option value="watched">Watched</option>
             </select>
 
-            <button @click="removeFromWatchlist" class="px-4 py-2 rounded-lg border border-border text-text text-sm">
+            <button @click="removeFromWatchlist" class="px-4 py-2 rounded-lg border border-border text-text text-sm hover:-translate-y-0.5 active:scale-95 transition-all">
               Remove
             </button>
           </div>
 
           <RouterLink :to="`/movies/${movie.id}/edit`"
-            class="px-4 py-2 rounded-lg border border-border text-text text-sm">
+            class="px-4 py-2 rounded-lg border border-border text-text text-sm hover:-translate-y-0.5 active:scale-95 transition-all">
             Edit
           </RouterLink>
 
-          <button @click="confirmDelete" class="px-4 py-2 rounded-lg border border-red-500 text-red-500 text-sm">
+          <button @click="confirmDelete" class="px-4 py-2 rounded-lg border border-red-500 text-red-500 text-sm hover:-translate-y-0.5 active:scale-95 transition-all">
             Delete
           </button>
         </div>
