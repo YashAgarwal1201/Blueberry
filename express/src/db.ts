@@ -231,29 +231,66 @@ db.exec(`
 
 
   -- ── Default seed data ─────────────────────────────────────────────────────
-  INSERT OR IGNORE INTO languages (name, code) VALUES
-    ('English',    'en'), ('Hindi',      'hi'), ('Spanish',    'es'),
-    ('French',     'fr'), ('German',     'de'), ('Japanese',   'ja'),
-    ('Korean',     'ko'), ('Mandarin',   'zh'), ('Tamil',      'ta'),
-    ('Telugu',     'te'), ('Arabic',     'ar'), ('Portuguese', 'pt'),
-    ('Russian',    'ru'), ('Italian',    'it'), ('Turkish',    'tr');
+  INSERT OR IGNORE INTO languages (name, code, native_script) VALUES
+    ('English',    'en', 'English'),
+    ('Hindi',      'hi', 'हिन्दी'),
+    ('Spanish',    'es', 'Español'),
+    ('French',     'fr', 'Français'),
+    ('German',     'de', 'Deutsch'),
+    ('Japanese',   'ja', '日本語'),
+    ('Korean',     'ko', '한국어'),
+    ('Mandarin',   'zh', '中文'),
+    ('Tamil',      'ta', 'தமிழ்'),
+    ('Telugu',     'te', 'తెలుగు'),
+    ('Arabic',     'ar', 'العربية'),
+    ('Portuguese', 'pt', 'Português'),
+    ('Russian',    'ru', 'Русский'),
+    ('Italian',    'it', 'Italiano'),
+    ('Turkish',    'tr', 'Türkçe'),
+    ('Bengali',    'bn', 'বাংলা'),
+    ('Polish',     'pl', 'Polski'),
+    ('Dutch',      'nl', 'Nederlands'),
+    ('Swedish',    'sv', 'Svenska'),
+    ('Indonesian', 'id', 'Bahasa Indonesia'),
+    ('Vietnamese', 'vi', 'Tiếng Việt'),
+    ('Thai',       'th', 'ไทย'),
+    ('Greek',      'el', 'Ελληνικά'),
+    ('Hebrew',     'he', 'עברית'),
+    ('Danish',     'da', 'Dansk'),
+    ('Finnish',    'fi', 'Suomi'),
+    ('Norwegian',  'no', 'Norsk'),
+    ('Malayalam',  'ml', 'മലയാളം'),
+    ('Kannada',    'kn', 'ಕನ್ನಡ'),
+    ('Marathi',    'mr', 'मराठी'),
+    ('Punjabi',    'pa', 'ਪੰਜਾਬੀ'),
+    ('Gujarati',   'gu', 'ગુજરાતી');
 
 
   INSERT OR IGNORE INTO genres (name, slug) VALUES
     ('Action',      'action'),
     ('Adventure',   'adventure'),
     ('Animation',   'animation'),
+    ('Biography',   'biography'),
     ('Comedy',      'comedy'),
     ('Crime',       'crime'),
     ('Documentary', 'documentary'),
     ('Drama',       'drama'),
+    ('Family',      'family'),
     ('Fantasy',     'fantasy'),
+    ('History',     'history'),
     ('Horror',      'horror'),
+    ('Music',       'music'),
     ('Musical',     'musical'),
     ('Mystery',     'mystery'),
+    ('News',        'news'),
+    ('Reality-TV',  'reality-tv'),
     ('Romance',     'romance'),
     ('Sci-Fi',      'sci-fi'),
+    ('Short',       'short'),
+    ('Sport',       'sport'),
+    ('Talk-Show',   'talk-show'),
     ('Thriller',    'thriller'),
+    ('War',         'war'),
     ('Western',     'western');
 `);
 
@@ -286,6 +323,24 @@ db.exec(`UPDATE people SET uuid = lower(hex(randomblob(16))) WHERE uuid IS NULL`
 
 addColumnIfMissing("languages", "native_script", "TEXT");
 
+const languageScripts: Record<string, string> = {
+  en: 'English', hi: 'हिन्दी', es: 'Español', fr: 'Français',
+  de: 'Deutsch', ja: '日本語', ko: '한국어', zh: '中文',
+  ta: 'தமிழ்', te: 'తెలుగు', ar: 'العربية', pt: 'Português',
+  ru: 'Русский', it: 'Italiano', tr: 'Türkçe', bn: 'বাংলা',
+  pl: 'Polski', nl: 'Nederlands', sv: 'Svenska', id: 'Bahasa Indonesia',
+  vi: 'Tiếng Việt', th: 'ไทย', el: 'Ελληνικά', he: 'עברית',
+  da: 'Dansk', fi: 'Suomi', no: 'Norsk', ml: 'മലയാളം',
+  kn: 'ಕನ್ನಡ', mr: 'मराठी', pa: 'ਪੰਜਾਬੀ', gu: 'ગુજરાતી'
+};
+
+const updateLangStmt = db.prepare(`UPDATE languages SET native_script = ? WHERE code = ? AND (native_script IS NULL OR native_script = '')`);
+db.transaction(() => {
+  for (const [code, script] of Object.entries(languageScripts)) {
+    updateLangStmt.run(script, code);
+  }
+})();
+
 // watchlist columns added after initial schema
 addColumnIfMissing("watchlist", "notes", "TEXT");
 addColumnIfMissing("watchlist", "updated_at", "TEXT");
@@ -293,6 +348,7 @@ db.exec(`UPDATE watchlist SET updated_at = added_at WHERE updated_at IS NULL`);
 
 // better-auth missing columns
 addColumnIfMissing("account", "issuer", "TEXT");
+addColumnIfMissing("user", "preferences", "TEXT DEFAULT '{}'");
 
 // Unique + post-migration indexes — all safe to re-run (IF NOT EXISTS)
 db.exec(

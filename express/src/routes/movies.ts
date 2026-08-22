@@ -1,6 +1,8 @@
 // src/routes/movies.ts
 import express, { Request, Response, Router } from "express";
 import db from "../db";
+import { optionalAuth } from "../middleware/authMiddleware";
+import { getBlockConditions } from "../utils/preferences";
 import type {
   Movie,
   MovieCard,
@@ -243,11 +245,13 @@ function upsertCompany(req: CompanyRequest): number {
 }
 
 // ── GET /movies/recent ────────────────────────────────────────────────────────
-router.get("/recent", (_req: Request, res: Response) => {
+router.get("/recent", optionalAuth, (req: Request, res: Response) => {
   try {
+    const user = (req as any).user;
+    const { clause, params } = getBlockConditions(user?.id);
     const movies = db
-      .prepare(`SELECT * FROM movies ORDER BY release_year DESC LIMIT 20`)
-      .all() as Movie[];
+      .prepare(`SELECT m.* FROM movies m ${clause} ORDER BY release_year DESC LIMIT 20`)
+      .all(...params) as Movie[];
     const cards = toMovieCards(movies, getWatchlistSet());
     res.json({ success: true, data: cards });
   } catch (err: any) {
@@ -262,13 +266,15 @@ router.get("/recent", (_req: Request, res: Response) => {
 });
 
 // ── GET /movies/top-rated ─────────────────────────────────────────────────────
-router.get("/top-rated", (_req: Request, res: Response) => {
+router.get("/top-rated", optionalAuth, (req: Request, res: Response) => {
   try {
+    const user = (req as any).user;
+    const { andClause, params } = getBlockConditions(user?.id);
     const movies = db
       .prepare(
-        `SELECT * FROM movies WHERE rating_imdb IS NOT NULL ORDER BY rating_imdb DESC LIMIT 20`,
+        `SELECT m.* FROM movies m WHERE m.rating_imdb IS NOT NULL ${andClause} ORDER BY rating_imdb DESC LIMIT 20`,
       )
-      .all() as Movie[];
+      .all(...params) as Movie[];
     const cards = toMovieCards(movies, getWatchlistSet());
     res.json({ success: true, data: cards });
   } catch (err: any) {
@@ -284,16 +290,19 @@ router.get("/top-rated", (_req: Request, res: Response) => {
 
 // ── GET /movies/hot ───────────────────────────────────────────────────────────
 // "Hot" = movies most recently added/updated in the watchlist
-router.get("/hot", (_req: Request, res: Response) => {
+router.get("/hot", optionalAuth, (req: Request, res: Response) => {
   try {
+    const user = (req as any).user;
+    const { clause, params } = getBlockConditions(user?.id);
     const movies = db
       .prepare(
         `SELECT m.* FROM movies m
          JOIN watchlist w ON m.id = w.movie_id
+         ${clause}
          ORDER BY w.updated_at DESC
          LIMIT 20`,
       )
-      .all() as Movie[];
+      .all(...params) as Movie[];
     const cards = toMovieCards(movies, getWatchlistSet());
     res.json({ success: true, data: cards });
   } catch (err: any) {
@@ -308,8 +317,10 @@ router.get("/hot", (_req: Request, res: Response) => {
 });
 
 // ── GET /movies/search ────────────────────────────────────────────────────────
-router.get("/search", (req: Request, res: Response) => {
+router.get("/search", optionalAuth, (req: Request, res: Response) => {
   try {
+    const user = (req as any).user;
+    const { andClause, params } = getBlockConditions(user?.id);
     const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
     if (!q)
       return res
@@ -322,19 +333,19 @@ router.get("/search", (req: Request, res: Response) => {
     const total = (
       db
         .prepare(
-          `SELECT COUNT(*) as count FROM movies
-         WHERE title LIKE ? OR description LIKE ? OR director LIKE ? OR tagline LIKE ?`,
+          `SELECT COUNT(*) as count FROM movies m
+         WHERE (m.title LIKE ? OR m.description LIKE ? OR m.director LIKE ? OR m.tagline LIKE ?) ${andClause}`,
         )
-        .get(pattern, pattern, pattern, pattern) as { count: number }
+        .get(pattern, pattern, pattern, pattern, ...params) as { count: number }
     ).count;
 
     const movies = db
       .prepare(
-        `SELECT * FROM movies
-         WHERE title LIKE ? OR description LIKE ? OR director LIKE ? OR tagline LIKE ?
+        `SELECT m.* FROM movies m
+         WHERE (m.title LIKE ? OR m.description LIKE ? OR m.director LIKE ? OR m.tagline LIKE ?) ${andClause}
          ORDER BY
-           CASE WHEN title LIKE ? THEN 0 ELSE 1 END,
-           created_at DESC
+           CASE WHEN m.title LIKE ? THEN 0 ELSE 1 END,
+           m.created_at DESC
          LIMIT ? OFFSET ?`,
       )
       .all(
@@ -342,6 +353,7 @@ router.get("/search", (req: Request, res: Response) => {
         pattern,
         pattern,
         pattern,
+        ...params,
         pattern,
         limit,
         offset,
@@ -361,14 +373,22 @@ router.get("/search", (req: Request, res: Response) => {
 });
 
 // ── GET /movies ───────────────────────────────────────────────────────────────
-router.get("/", (req: Request<{}, {}, {}, MovieListQuery>, res: Response) => {
+router.get("/", optionalAuth, (req: Request<{}, {}, {}, MovieListQuery>, res: Response) => {
   try {
+    const user = (req as any).user;
+    const blockConditions = getBlockConditions(user?.id);
     const { sort = "recent", language, genre, year, status } = req.query;
     const { page, limit, offset } = parsePage(req.query);
 
     // Build WHERE clauses
     const conditions: string[] = [];
     const params: (string | number)[] = [];
+
+    if (blockConditions.clause !== "") {
+      // It's easier to just push the individual subqueries than parsing the clause
+      conditions.push(blockConditions.clause.replace("WHERE ", ""));
+      params.push(...blockConditions.params);
+    }
 
     if (year) {
       conditions.push("m.release_year = ?");

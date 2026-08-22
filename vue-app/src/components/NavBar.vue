@@ -24,17 +24,30 @@
 
 <script setup lang="ts">
 import { useMainStore } from '@/stores/mainStore'
+import { usePreferencesStore } from '@/stores/preferencesStore'
 import { Blocks, Home, Menu, UserSquare, UserCircle, Film, Tv } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
+import { computed } from 'vue'
 
 const mainStore = useMainStore()
+const preferencesStore = usePreferencesStore()
 
-const navLinks = [
-  { to: '/', icon: Home, mobileHidden: false },
-  { to: '/movies', icon: Film, mobileHidden: true },
-  { to: '/shows', icon: Tv, mobileHidden: true },
-  { to: '/genres', icon: Blocks, mobileHidden: false },
-  { to: '/people', icon: UserSquare, mobileHidden: false },
-  { to: '/profile', icon: UserCircle, mobileHidden: false },
-]
+const navLinks = computed(() => {
+  const links = [
+    { to: '/', icon: Home, mobileHidden: false },
+  ]
+  if (preferencesStore.showMovies) {
+    links.push({ to: '/movies', icon: Film, mobileHidden: true })
+  }
+  if (preferencesStore.showShows) {
+    links.push({ to: '/shows', icon: Tv, mobileHidden: true })
+  }
+  links.push({ to: '/genres', icon: Blocks, mobileHidden: false })
+  if (preferencesStore.showPeople) {
+    links.push({ to: '/people', icon: UserSquare, mobileHidden: false })
+  }
+  links.push({ to: '/profile', icon: UserCircle, mobileHidden: false })
+  
+  return links
+})
 </script>

@@ -60,6 +60,11 @@ export const useTvStore = defineStore('tvStore', () => {
     }
   }
 
+  const removeShowLocally = (uuid: string) => {
+    recentShows.value = recentShows.value.filter(s => s.uuid !== uuid)
+    topRatedShows.value = topRatedShows.value.filter(s => s.uuid !== uuid)
+  }
+
   return {
     recentShows,
     topRatedShows,
@@ -68,5 +73,6 @@ export const useTvStore = defineStore('tvStore', () => {
     fetchRecentShows,
     fetchTopRatedShows,
     fetchShowById,
+    removeShowLocally,
   }
 })

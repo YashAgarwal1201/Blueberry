@@ -1,0 +1,70 @@
+/* PrimeVue Custom Overrides */
+
+/* MultiSelect */
+.p-multiselect {
+  background: var(--surface-2);
+  border-color: var(--border-color);
+  border-radius: 0.75rem;
+}
+.p-multiselect:not(.p-disabled):hover {
+  border-color: var(--primary-color);
+}
+.p-multiselect-label-container {
+  padding: 0.25rem;
+}
+.p-multiselect-token {
+  background: var(--surface-3);
+  color: var(--text-color);
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.75rem;
+}
+.p-multiselect-token-icon {
+  color: var(--text-color-muted);
+}
+.p-multiselect-token-icon:hover {
+  color: var(--text-color);
+}
+.p-multiselect-panel {
+  background: var(--surface-2);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+.p-multiselect-header {
+  background: var(--surface-3);
+  border-bottom: 1px solid var(--border-color);
+}
+.p-multiselect-item {
+  color: var(--text-color);
+}
+.p-multiselect-item:not(.p-highlight):not(.p-disabled):hover {
+  background: var(--surface-3);
+  color: var(--text-color);
+}
+
+/* MultiSelect Highlight (Unselected Checkbox Area) */
+.p-multiselect-item.p-highlight {
+  background: var(--surface-3);
+  color: var(--text-color);
+}
+
+/* Custom Checkbox within MultiSelect */
+.p-checkbox-box {
+  background: var(--surface-1);
+  border-color: var(--border-color);
+  border-radius: 4px;
+}
+.p-checkbox-box.p-highlight {
+  background: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+.p-checkbox-icon {
+  color: #ffffff !important;
+}
+
+/* MultiSelect Search Input */
+.p-multiselect-filter-container .p-inputtext {
+  background: var(--surface-1);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}

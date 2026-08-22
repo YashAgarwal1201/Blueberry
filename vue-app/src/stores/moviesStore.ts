@@ -325,6 +325,12 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     }
   }
 
+  const removeMovieLocally = (uuid: string) => {
+    movies.value = movies.value.filter(m => m.uuid !== uuid)
+    topRatedMovies.value = topRatedMovies.value.filter(m => m.uuid !== uuid)
+    hotMovies.value = hotMovies.value.filter(m => m.uuid !== uuid)
+  }
+
   const searchLocal = (query: string) => {
     if (!query) return movies.value
     const lowerQuery = query.toLowerCase()
@@ -357,6 +363,7 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     addMovie,
     updateMovie,
     deleteMovie,
+    removeMovieLocally,
     findMovieById,
     searchLocal,
   }

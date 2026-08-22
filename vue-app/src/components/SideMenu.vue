@@ -29,12 +29,13 @@
               <List :size="16" class="text-text-muted" />
               <span>Watchlist</span>
             </RouterLink>
-            <div class="mx-2 my-1 h-px bg-border" />
-
-            <RouterLink :class="buttonStyles" to="/movies" @click="mainStore.showSideMenu = false">
-              <Blocks :size="16" class="text-text-muted" />
-              <span>Movies</span>
-            </RouterLink>
+            <template v-if="preferencesStore.showMovies">
+              <div class="mx-2 my-1 h-px bg-border" />
+              <RouterLink :class="buttonStyles" to="/movies" @click="mainStore.showSideMenu = false">
+                <Blocks :size="16" class="text-text-muted" />
+                <span>Movies</span>
+              </RouterLink>
+            </template>
 
             <div class="mx-2 my-1 h-px bg-border" />
 
@@ -50,13 +51,13 @@
               <span>Genres</span>
             </RouterLink>
 
-            <div class="mx-2 my-1 h-px bg-border" />
-
-            <RouterLink :class="buttonStyles" to="/people" @click="mainStore.showSideMenu = false">
-              <UserSquare :size="16" class="text-text-muted" />
-              <span>People</span>
-            </RouterLink>
-
+            <template v-if="preferencesStore.showPeople">
+              <div class="mx-2 my-1 h-px bg-border" />
+              <RouterLink :class="buttonStyles" to="/people" @click="mainStore.showSideMenu = false">
+                <UserSquare :size="16" class="text-text-muted" />
+                <span>People</span>
+              </RouterLink>
+            </template>
             <div class="mx-2 my-1 h-px bg-border" />
 
             <RouterLink :class="buttonStyles" to="/settings" @click="mainStore.showSideMenu = false">
@@ -83,11 +84,13 @@
 import { Blocks, Languages, List, Palette, UserCircle, UserSquare, Wrench } from 'lucide-vue-next'
 import { Drawer, Select } from 'primevue'
 import { useMainStore } from '@/stores/mainStore'
+import { usePreferencesStore } from '@/stores/preferencesStore'
 import toastHandler from '@/composables/toastHandeler'
 import { DEVELOPER_PROFILE } from '@/services/constants'
 import { useTheme } from '@/composables/theme'
 
 const mainStore = useMainStore()
+const preferencesStore = usePreferencesStore()
 
 const { showToast } = toastHandler()
 const { theme, updateTheme } = useTheme()

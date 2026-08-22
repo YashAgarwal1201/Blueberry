@@ -107,11 +107,11 @@ const showAddDialog = ref(false)
 const newLanguage = ref({ name: '', code: '' })
 
 const allLoaded = computed(() =>
-  languagesStore.languages.every((l) => !languagesStore.moviesLoadingMap.get(l.code)),
+  languagesStore.visibleLanguages.every((l) => !languagesStore.moviesLoadingMap.get(l.code)),
 )
 
 const populatedLanguages = computed(() =>
-  languagesStore.languages.filter(
+  languagesStore.visibleLanguages.filter(
     (l) => (languagesStore.moviesByLanguage.get(l.code) ?? []).length > 0,
   ),
 )
@@ -121,7 +121,7 @@ onMounted(async () => {
   if (!languagesStore.languages.length) await languagesStore.fetchLanguages()
   // Only fetch movies for languages that haven't been fetched yet
   await Promise.all(
-    languagesStore.languages
+    languagesStore.visibleLanguages
       .filter((l) => !languagesStore.moviesByLanguage.has(l.code))
       .map((l) => languagesStore.fetchMoviesByLanguage(l.code)),
   )

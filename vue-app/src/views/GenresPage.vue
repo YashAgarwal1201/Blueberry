@@ -109,11 +109,11 @@ const showAddDialog = ref(false)
 const newGenre = ref({ name: '', description: '' })
 
 const allLoaded = computed(() =>
-  genresStore.genres.every((g) => !genresStore.moviesLoadingMap.get(g.slug)),
+  genresStore.visibleGenres.every((g) => !genresStore.moviesLoadingMap.get(g.slug)),
 )
 
 const populatedGenres = computed(() =>
-  genresStore.genres.filter((g) => (genresStore.moviesByGenre.get(g.slug) ?? []).length > 0),
+  genresStore.visibleGenres.filter((g) => (genresStore.moviesByGenre.get(g.slug) ?? []).length > 0),
 )
 
 onMounted(async () => {
@@ -121,7 +121,7 @@ onMounted(async () => {
   if (!genresStore.genres.length) await genresStore.fetchGenres()
   // Only fetch movies for genres that haven't been fetched yet
   await Promise.all(
-    genresStore.genres
+    genresStore.visibleGenres
       .filter((g) => !genresStore.moviesByGenre.has(g.slug))
       .map((g) => genresStore.fetchMoviesByGenre(g.slug)),
   )

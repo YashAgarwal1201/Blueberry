@@ -4,6 +4,7 @@ import { defineStore } from 'pinia'
 import apiClient from '@/services/apiInterceptors'
 import type { Language, MovieWithDetails } from "shared-types"
 import { getErrorMessage } from '@/services/errorUtils'
+import { usePreferencesStore } from './preferencesStore'
 
 export const useLanguagesStore = defineStore('languagesStore', () => {
   const languages = ref<Language[]>([])
@@ -13,6 +14,12 @@ export const useLanguagesStore = defineStore('languagesStore', () => {
   // Map keyed by language code — holds movies for multiple languages simultaneously
   const moviesByLanguage = ref<Map<string, MovieWithDetails[]>>(new Map())
   const moviesLoadingMap = ref<Map<string, boolean>>(new Map())
+
+  const preferencesStore = usePreferencesStore()
+
+  const visibleLanguages = computed(() => {
+    return languages.value.filter(lang => !preferencesStore.blockedLanguages.includes(lang.code))
+  })
 
   const languageMap = computed(() => {
     const map = new Map<number, Language>()
@@ -82,6 +89,7 @@ export const useLanguagesStore = defineStore('languagesStore', () => {
 
   return {
     languages,
+    visibleLanguages,
     loading,
     error,
     moviesByLanguage,

@@ -126,6 +126,13 @@
                       </button>
                     </div>
                   </div>
+                  
+                  <!-- Block Show -->
+                  <button @click="blockShow"
+                    class="w-12 sm:w-auto sm:px-6 py-3.5 flex items-center justify-center gap-2 bg-surface-2/60 backdrop-blur-md text-red-400 hover:text-red-500 hover:bg-red-500/10 rounded-full font-bold transition-all border border-white/10 hover:border-red-500/30" title="Block Show">
+                    <span class="hidden sm:inline">Block</span>
+                    <X :size="20" />
+                  </button>
                 </template>
               </div>
             </div>
@@ -210,7 +217,7 @@
         </div>
 
         <!-- Horizontal Cast Scroller -->
-        <div v-if="displayCast.length" class="flex flex-col gap-5 mt-4">
+        <div v-if="preferencesStore.showCastDetails && displayCast.length" class="flex flex-col gap-5 mt-4">
           <h2 class="text-2xl font-heading font-bold text-white flex items-baseline gap-3">
             Cast & Crew
             <span v-if="isDummyCast"
@@ -289,6 +296,7 @@ import type { TVShowWithDetails, TVSeason, CastMember, WatchlistPopulatedItem, W
 import toastHandler from '@/composables/toastHandeler'
 import { getErrorMessage } from '@/services/errorUtils'
 import { useAuthStore } from '@/stores/authStore'
+import { usePreferencesStore } from '@/stores/preferencesStore'
 import { AlertCircle, Tv, User, MonitorPlay, ArrowLeft, Play, X, Plus, CheckCircle2, ChevronDown, Trash2 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -296,6 +304,7 @@ const router = useRouter()
 const tvStore = useTvStore()
 const watchlistStore = useWatchlistStore()
 const authStore = useAuthStore()
+const preferencesStore = usePreferencesStore()
 const showToast = toastHandler().showToast
 
 const show = ref<TVShowWithDetails | null>(null)
@@ -440,6 +449,19 @@ async function loadShow() {
     error.value = getErrorMessage(err, 'Failed to load show')
   } finally {
     loading.value = false
+  }
+}
+
+async function blockShow() {
+  if (!show.value) return
+  try {
+    const uuid = show.value.uuid
+    await preferencesStore.blockShow(uuid)
+    tvStore.removeShowLocally(uuid)
+    showToast('success', 'Blocked', 'Show will no longer be shown')
+    router.push('/')
+  } catch (err: unknown) {
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to block show'))
   }
 }
 

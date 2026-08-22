@@ -21,3 +21,19 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    });
+
+    if (session) {
+      (req as any).user = session.user;
+    }
+    next();
+  } catch (error) {
+    console.error("Optional auth middleware error:", error);
+    next();
+  }
+};

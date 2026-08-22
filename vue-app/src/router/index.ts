@@ -62,6 +62,11 @@ const router = createRouter({
           name: 'settings-customise-homepage',
           component: () => import('../views/settings/CustomiseHomepageSettingsPage.vue'),
         },
+        {
+          path: 'blocked-titles',
+          name: 'settings-blocked-titles',
+          component: () => import('../views/settings/BlockedTitlesSettingsPage.vue'),
+        },
       ],
     },
     {
@@ -141,12 +146,23 @@ const router = createRouter({
   ],
 })
 
+import { usePreferencesStore } from '@/stores/preferencesStore'
+
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
+  const preferencesStore = usePreferencesStore()
   
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next({ name: 'Login' })
   } else if ((to.name === 'Login' || to.name === 'Register') && authStore.isAuthenticated) {
+    next({ name: 'Home' })
+  } else if (to.path.startsWith('/movies') && !preferencesStore.showMovies && to.name !== 'Home') {
+    next({ name: 'Home' })
+  } else if (to.path.startsWith('/shows') && !preferencesStore.showShows && to.name !== 'Home') {
+    next({ name: 'Home' })
+  } else if (to.path.startsWith('/people') && !preferencesStore.showPeople && to.name !== 'Home') {
+    next({ name: 'Home' })
+  } else if (to.name === 'settings-movies-added' && !authStore.isAdmin) {
     next({ name: 'Home' })
   } else {
     next()

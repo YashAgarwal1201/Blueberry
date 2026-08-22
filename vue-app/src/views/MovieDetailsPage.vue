@@ -128,6 +128,13 @@
                       </button>
                     </div>
                   </div>
+                  
+                  <!-- Block Movie -->
+                  <button @click="blockMovie"
+                    class="w-12 sm:w-auto sm:px-6 py-3.5 flex items-center justify-center gap-2 bg-surface-2/60 backdrop-blur-md text-red-400 hover:text-red-500 hover:bg-red-500/10 rounded-full font-bold transition-all border border-white/10 hover:border-red-500/30" title="Block Movie">
+                    <span class="hidden sm:inline">Block</span>
+                    <X :size="20" />
+                  </button>
                 </template>
               </div>
             </div>
@@ -206,7 +213,7 @@
         </div>
 
         <!-- Cast & Crew -->
-        <div v-if="sortedCast.length" class="flex flex-col gap-5 mt-4">
+        <div v-if="preferencesStore.showCastDetails && sortedCast.length" class="flex flex-col gap-5 mt-4">
           <h2 class="text-2xl font-heading font-bold text-white">Cast & Crew</h2>
           <div class="flex overflow-x-auto gap-4 md:gap-6 pb-6 pt-2 snap-x hide-scrollbar">
             <div v-for="member in sortedCast" :key="`${member.id}-${member.role}`"
@@ -304,6 +311,7 @@ import type { MovieWithDetails, WatchlistItemWithMovie, WatchlistStatus } from "
 import toastHandler from '@/composables/toastHandeler'
 import { getErrorMessage } from '@/services/errorUtils'
 import { useAuthStore } from '@/stores/authStore'
+import { usePreferencesStore } from '@/stores/preferencesStore'
 import { AlertCircle, Play, Plus, CheckCircle2, ChevronDown, Clock, User, Star, X, Edit, Trash2, ArrowLeft } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -311,6 +319,7 @@ const router = useRouter()
 const moviesStore = useMoviesStore()
 const watchlistStore = useWatchlistStore()
 const authStore = useAuthStore()
+const preferencesStore = usePreferencesStore()
 const showToast = toastHandler().showToast
 
 const movie = ref<MovieWithDetails | null>(null)
@@ -473,6 +482,19 @@ async function confirmDelete() {
     router.push('/movies')
   } catch (err: unknown) {
     showToast('error', 'Error', getErrorMessage(err, 'Failed to delete movie'))
+  }
+}
+
+async function blockMovie() {
+  if (!movie.value) return
+  try {
+    const uuid = movie.value.uuid
+    await preferencesStore.blockMovie(uuid)
+    moviesStore.removeMovieLocally(uuid)
+    showToast('success', 'Blocked', 'Movie will no longer be shown')
+    router.push('/')
+  } catch (err: unknown) {
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to block movie'))
   }
 }
 

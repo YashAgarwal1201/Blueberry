@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, watchEffect } from 'vue'
+import { ref, watchEffect, computed } from 'vue'
 import { authClient } from '../lib/auth-client'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -20,9 +20,12 @@ export const useAuthStore = defineStore('auth', () => {
     }
   })
 
+  const isAdmin = computed(() => user.value?.role === 'admin')
+
   return {
     isAuthenticated,
     user,
+    isAdmin,
     isAuthLoading,
     session
   }

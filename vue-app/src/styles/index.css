@@ -1,6 +1,7 @@
 @import "./tailwind.css";
 @import "./animations.css";
 @import "./utilities.css";
+@import "./primevue-override.css";
 
 @layer base {
 

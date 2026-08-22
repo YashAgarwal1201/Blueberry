@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import apiClient from '@/services/apiInterceptors'
 import type { Genre, MovieWithDetails } from "shared-types"
 import { getErrorMessage } from '@/services/errorUtils'
+import { usePreferencesStore } from './preferencesStore'
 
 export const useGenresStore = defineStore('genresStore', () => {
   const genres = ref<Genre[]>([])
@@ -12,6 +13,12 @@ export const useGenresStore = defineStore('genresStore', () => {
   // Map keyed by slug — holds movies for multiple genres simultaneously
   const moviesByGenre = ref<Map<string, MovieWithDetails[]>>(new Map())
   const moviesLoadingMap = ref<Map<string, boolean>>(new Map())
+
+  const preferencesStore = usePreferencesStore()
+
+  const visibleGenres = computed(() => {
+    return genres.value.filter(g => !preferencesStore.blockedGenres.includes(g.slug))
+  })
 
   const genreMap = computed(() => {
     const map = new Map<number, Genre>()
@@ -78,6 +85,7 @@ export const useGenresStore = defineStore('genresStore', () => {
 
   return {
     genres,
+    visibleGenres,
     loading,
     error,
     moviesByGenre,

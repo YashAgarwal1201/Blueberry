@@ -1,8 +1,8 @@
 <template>
   <div class="w-full h-full flex flex-col gap-y-8 md:gap-y-10 overflow-y-auto hide-scrollbar">
     <!-- Hero Carousel -->
-    <div v-if="moviesStore.loading" class="w-full h-64 sm:h-96 bg-surface-2 animate-pulse rounded-xl"></div>
-    <HeroCarousel v-else-if="moviesStore.movies && moviesStore.movies.length > 0"
+    <div v-if="preferencesStore.showMovies && moviesStore.loading" class="w-full h-64 sm:h-96 bg-surface-2 animate-pulse rounded-xl"></div>
+    <HeroCarousel v-else-if="preferencesStore.showMovies && moviesStore.movies && moviesStore.movies.length > 0"
       :items="moviesStore.movies.slice(0, 5)" :auto-play-interval="4000" @clickItem="openDrawer" />
 
     <!-- Continue Watching -->
@@ -19,7 +19,7 @@
     </div>
 
     <!-- Trending Movies -->
-    <div v-if="moviesStore.loadingHot || moviesStore.hotMovies?.length" class="flex flex-col gap-y-4">
+    <div v-if="preferencesStore.showMovies && (moviesStore.loadingHot || moviesStore.hotMovies?.length)" class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Trending Movies</h2>
       </div>
@@ -31,7 +31,7 @@
     </div>
 
     <!-- Recent Movies -->
-    <div v-if="moviesStore.loading || recentMovies?.length" class="flex flex-col gap-y-4">
+    <div v-if="preferencesStore.showMovies && (moviesStore.loading || recentMovies?.length)" class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <RouterLink :to="'/movies'">
           <h2 class="text-xl sm:text-2xl font-heading font-bold text-text hover:text-primary transition-colors">Recent
@@ -51,7 +51,7 @@
     </div>
 
     <!-- Top Rated Movies -->
-    <div v-if="moviesStore.loadingTopRated || moviesStore.topRatedMovies?.length" class="flex flex-col gap-y-4">
+    <div v-if="preferencesStore.showMovies && (moviesStore.loadingTopRated || moviesStore.topRatedMovies?.length)" class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Top Rated Movies</h2>
       </div>
@@ -63,7 +63,7 @@
     </div>
 
     <!-- Top Rated TV Shows -->
-    <div v-if="tvStore.loading || tvStore.topRatedShows?.length" class="flex flex-col gap-y-4">
+    <div v-if="preferencesStore.showShows && (tvStore.loading || tvStore.topRatedShows?.length)" class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Top Rated TV Shows</h2>
       </div>
@@ -76,7 +76,7 @@
     </div>
 
     <!-- Recent TV Shows -->
-    <div v-if="tvStore.loading || tvStore.recentShows?.length" class="flex flex-col gap-y-4">
+    <div v-if="preferencesStore.showShows && (tvStore.loading || tvStore.recentShows?.length)" class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Recent TV Shows</h2>
       </div>
@@ -125,7 +125,7 @@
     </div>
 
     <!-- Genres -->
-    <div v-if="genresStore.loading || genresStore.genres?.length" class="flex flex-col gap-y-4">
+    <div v-if="genresStore.loading || genresStore.visibleGenres?.length" class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Genres</h2>
         <RouterLink to="/genres" class="flex items-center gap-x-1 text-primary text-sm font-medium hover:underline">
@@ -135,7 +135,7 @@
       </div>
       <div v-if="genresStore.loading" class="px-2 text-text-muted">Loading genres...</div>
       <div v-else class="flex flex-nowrap items-center gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-4">
-        <RouterLink v-for="(genre, index) in genresStore.genres?.slice(0, 10)" :key="genre.id"
+        <RouterLink v-for="(genre, index) in genresStore.visibleGenres?.slice(0, 10)" :key="genre.id"
           :to="`/genres/${genre.slug}`"
           class="shrink-0 w-40 sm:w-48 h-24 sm:h-28 rounded-2xl snap-start cursor-pointer hover:scale-105 transition-transform flex items-center justify-center shadow-md relative overflow-hidden"
           :class="getGradientClass(index)">
@@ -145,7 +145,7 @@
     </div>
 
     <!-- Languages -->
-    <div v-if="languagesStore.loading || languagesStore.languages?.length" class="flex flex-col gap-y-4">
+    <div v-if="languagesStore.loading || languagesStore.visibleLanguages?.length" class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Languages</h2>
         <RouterLink to="/languages" class="flex items-center gap-x-1 text-primary text-sm font-medium hover:underline">
@@ -155,11 +155,12 @@
       </div>
       <div v-if="languagesStore.loading" class="px-2 text-text-muted">Loading languages...</div>
       <div v-else class="flex flex-nowrap items-center gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-4">
-        <RouterLink v-for="(lang, index) in languagesStore.languages?.slice(0, 10)" :key="lang.id"
+        <RouterLink v-for="(lang, index) in languagesStore.visibleLanguages?.slice(0, 10)" :key="lang.id"
           :to="`/languages/${lang.code}`"
-          class="shrink-0 w-32 sm:w-40 h-20 sm:h-24 rounded-2xl snap-start cursor-pointer hover:scale-105 transition-transform flex items-center justify-center shadow-md relative overflow-hidden"
+          class="shrink-0 w-32 sm:w-40 h-20 sm:h-24 rounded-2xl snap-start cursor-pointer hover:scale-105 transition-transform flex flex-col items-center justify-center shadow-md relative overflow-hidden"
           :class="getGradientClass(index + 5)">
-          <span class="font-heading font-bold text-white text-lg drop-shadow-md relative z-10">{{ lang.name }}</span>
+          <span v-if="lang.native_script && lang.native_script !== lang.name" class="font-heading font-bold text-white text-xl sm:text-2xl drop-shadow-md relative z-10 mb-0.5">{{ lang.native_script }}</span>
+          <span class="font-content font-medium text-white drop-shadow-md relative z-10" :class="lang.native_script && lang.native_script !== lang.name ? 'text-xs sm:text-sm text-white/90' : 'text-lg font-bold font-heading'">{{ lang.name }}</span>
         </RouterLink>
       </div>
     </div>
@@ -180,6 +181,7 @@ import { useWatchlistStore } from '@/stores/watchListStore'
 import { useGenresStore } from '@/stores/genresStore'
 import { useLanguagesStore } from '@/stores/languagesStore'
 import { useAuthStore } from '@/stores/authStore'
+import { usePreferencesStore } from '@/stores/preferencesStore'
 import toastHandler from '@/composables/toastHandeler'
 import HeroCarousel from '@/components/HeroCarousel.vue'
 import MediaCarousel from '@/components/MediaCarousel.vue'
@@ -193,6 +195,7 @@ const watchlistStore = useWatchlistStore()
 const genresStore = useGenresStore()
 const languagesStore = useLanguagesStore()
 const authStore = useAuthStore()
+const preferencesStore = usePreferencesStore()
 const showToast = toastHandler().showToast
 
 const recentMovies = computed(() => moviesStore.movies?.slice(0, 10))
