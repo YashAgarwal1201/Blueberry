@@ -1,5 +1,8 @@
 // src/index.ts
 import express, { Request, Response, Application } from "express";
+import fs from "fs";
+import https from "https";
+import path from "path";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import { loggerMiddleware } from "./middleware/logger-middleware";
@@ -22,7 +25,7 @@ const PORT = process.env.PORT || 8100;
 // Allow multiple origins by splitting the FRONTEND_URL environment variable by comma, or fallback to localhost
 const allowedOrigins = process.env.FRONTEND_URL 
   ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
-  : ['http://localhost:5130'];
+  : ['http://localhost:5130', 'http://127.0.0.1:5130', 'https://localhost:5130', 'https://127.0.0.1:5130', 'http://localhost:5173', 'http://127.0.0.1:5173', 'https://localhost:5173', 'https://127.0.0.1:5173'];
 
 app.use(
   cors({
@@ -32,6 +35,7 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.warn(`[CORS] Origin not allowed: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     },
@@ -118,10 +122,26 @@ app.use((req: Request, res: Response) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Database: SQLite (data/app.db)`);
-  console.log(`Routes: /movies, /languages, /watchlist`);
-});
+const certPath = path.join(process.cwd(), "certs", "localhost.pem");
+const keyPath = path.join(process.cwd(), "certs", "localhost-key.pem");
+const hasCerts = fs.existsSync(certPath) && fs.existsSync(keyPath);
+
+if (hasCerts) {
+  const options = {
+    key: fs.readFileSync(keyPath),
+    cert: fs.readFileSync(certPath),
+  };
+  https.createServer(options, app).listen(PORT, () => {
+    console.log(`Server running securely on https://localhost:${PORT}`);
+    console.log(`Database: SQLite (data/app.db)`);
+    console.log(`Routes: /movies, /languages, /watchlist`);
+  });
+} else {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Database: SQLite (data/app.db)`);
+    console.log(`Routes: /movies, /languages, /watchlist`);
+  });
+}
 
 export default app;

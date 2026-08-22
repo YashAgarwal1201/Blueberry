@@ -1,4 +1,4 @@
-import HomePage from '@/pages/HomePage.vue'
+import HomePage from '@/views/HomePage.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -13,40 +13,40 @@ const router = createRouter({
     {
       path: '/profile',
       name: 'Profile',
-      component: () => import('../pages/ProfilePage.vue'),
+      component: () => import('../views/ProfilePage.vue'),
     },
     {
       path: '/login',
       name: 'Login',
-      component: () => import('../pages/LoginPage.vue'),
+      component: () => import('../views/LoginPage.vue'),
       meta: { hideSidebar: true }
     },
     {
       path: '/register',
       name: 'Register',
-      component: () => import('../pages/RegisterPage.vue'),
+      component: () => import('../views/RegisterPage.vue'),
       meta: { hideSidebar: true }
     },
     {
       path: '/forgot-password',
       name: 'ForgotPassword',
-      component: () => import('../pages/ForgotPasswordPage.vue'),
+      component: () => import('../views/ForgotPasswordPage.vue'),
       meta: { hideSidebar: true },
     },
     {
       path: '/reset-password',
       name: 'ResetPassword',
-      component: () => import('../pages/ResetPasswordPage.vue'),
+      component: () => import('../views/ResetPasswordPage.vue'),
       meta: { hideSidebar: true },
     },
     // {
     //   path: '/settings',
     //   name: 'Settings',
-    //   component: () => import('./../pages/SettingsPage.vue'),
+    //   component: () => import('./../views/SettingsPage.vue'),
     // },
     {
       path: '/settings',
-      component: () => import('../pages/SettingsPage.vue'),
+      component: () => import('../views/SettingsPage.vue'),
       children: [
         {
           path: '',
@@ -55,88 +55,88 @@ const router = createRouter({
         {
           path: 'movies-added',
           name: 'settings-movies-added',
-          component: () => import('../pages/settings/MoviesAddedSettingsPage.vue'),
+          component: () => import('../views/settings/MoviesAddedSettingsPage.vue'),
         },
         {
           path: 'customise-homepage',
           name: 'settings-customise-homepage',
-          component: () => import('../pages/settings/CustomiseHomepageSettingsPage.vue'),
+          component: () => import('../views/settings/CustomiseHomepageSettingsPage.vue'),
         },
       ],
     },
     {
       path: '/genres',
       name: 'Genres',
-      component: () => import('../pages/GenresPage.vue'),
+      component: () => import('../views/GenresPage.vue'),
     },
     {
       path: '/genres/:slug',
       name: 'genre-content',
-      component: () => import('../pages/GenresContentPage.vue'),
+      component: () => import('../views/GenresContentPage.vue'),
     },
 
     {
       path: '/languages',
       name: 'Languages',
-      component: () => import('./../pages/LanguagesPage.vue'),
+      component: () => import('./../views/LanguagesPage.vue'),
     },
     {
       path: '/languages/:code',
       name: 'language-content',
-      component: () => import('@/pages/LanguageContentPage.vue'),
+      component: () => import('@/views/LanguageContentPage.vue'),
     },
 
     {
       path: '/watchlist',
       name: 'Watchlist',
-      component: () => import('./../pages/WatchListPage.vue'),
+      component: () => import('./../views/WatchListPage.vue'),
       meta: { requiresAuth: true }
     },
     {
       path: '/people',
       name: 'People',
-      component: () => import('../pages/PeoplePage.vue'),
+      component: () => import('../views/PeoplePage.vue'),
     },
     {
       path: '/people/add',
       name: 'add-person',
-      component: () => import('@/pages/PersonFormPage.vue'),
+      component: () => import('@/views/PersonFormPage.vue'),
     },
     {
       path: '/people/:uuid/edit',
       name: 'edit-person',
-      component: () => import('@/pages/PersonFormPage.vue'),
+      component: () => import('@/views/PersonFormPage.vue'),
     },
 
     {
       path: '/movies',
       name: 'movies',
-      component: () => import('@/pages/MoviesPage.vue'),
+      component: () => import('@/views/MoviesPage.vue'),
     },
     {
       path: '/shows',
       name: 'shows',
-      component: () => import('@/pages/ShowsPage.vue'),
+      component: () => import('@/views/ShowsPage.vue'),
     },
     {
       path: '/shows/:uuid',
       name: 'show-detail',
-      component: () => import('@/pages/ShowDetailsPage.vue'),
+      component: () => import('@/views/ShowDetailsPage.vue'),
     },
     {
       path: '/movies/:uuid',
       name: 'movie-detail',
-      component: () => import('@/pages/MovieDetailsPage.vue'),
+      component: () => import('@/views/MovieDetailsPage.vue'),
     },
     {
       path: '/movies/add',
       name: 'add-movie',
-      component: () => import('@/pages/MovieFormPage.vue'),
+      component: () => import('@/views/MovieFormPage.vue'),
     },
     {
       path: '/movies/:uuid/edit',
       name: 'edit-movie',
-      component: () => import('@/pages/MovieFormPage.vue'),
+      component: () => import('@/views/MovieFormPage.vue'),
     },
   ],
 })

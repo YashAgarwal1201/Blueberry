@@ -71,17 +71,7 @@
               <span>Developer Profile</span>
             </a>
 
-            <div class="mx-2 my-1 h-px bg-border" />
 
-            <button v-if="authStore.isAuthenticated" :class="buttonStyles" class="w-full text-left"
-              @click="handleSignOut">
-              <LogOut :size="16" class="text-text-muted" />
-              <span>Sign Out ({{ authStore.user?.name || authStore.user?.email }})</span>
-            </button>
-            <RouterLink v-else :class="buttonStyles" to="/login" @click="mainStore.showSideMenu = false">
-              <LogIn :size="16" class="text-text-muted" />
-              <span>Sign In</span>
-            </RouterLink>
           </div>
         </div>
       </div>
@@ -90,27 +80,19 @@
 </template>
 
 <script setup lang="ts">
-import { Blocks, Languages, List, Palette, UserCircle, UserSquare, Wrench, LogIn, LogOut } from 'lucide-vue-next'
+import { Blocks, Languages, List, Palette, UserCircle, UserSquare, Wrench } from 'lucide-vue-next'
 import { Drawer, Select } from 'primevue'
 import { useMainStore } from '@/stores/mainStore'
-import { useAuthStore } from '@/stores/authStore'
-import { authClient } from '@/lib/auth-client'
-import { useRouter } from 'vue-router'
 import toastHandler from '@/composables/toastHandeler'
 import { DEVELOPER_PROFILE } from '@/services/constants'
 import { useTheme } from '@/composables/theme'
 
 const mainStore = useMainStore()
-const authStore = useAuthStore()
-const router = useRouter()
+
 const { showToast } = toastHandler()
 const { theme, updateTheme } = useTheme()
 
-const handleSignOut = async () => {
-  mainStore.showSideMenu = false
-  await authClient.signOut()
-  router.push('/')
-}
+
 
 const buttonStyles =
   'px-2 py-4 bg-transparent text-text flex items-center gap-x-3 rounded-xl text-base font-normal font-content transition-colors duration-200 hover:bg-surface-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'

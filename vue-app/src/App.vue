@@ -16,26 +16,24 @@ const route = useRoute()
     </div>
 
     <!-- Floating Pills for Mobile -->
-    <div v-if="!route.meta.hideSidebar" class="md:hidden absolute bottom-20 w-full flex justify-center gap-4 pointer-events-none z-50">
-      <RouterLink 
-        to="/movies" 
+    <div v-if="!route.meta.hideSidebar"
+      class="md:hidden absolute bottom-20 w-full flex justify-center gap-4 pointer-events-none z-50">
+      <RouterLink to="/movies"
         class="pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md bg-surface-2/80 text-text font-medium shadow-lg hover:bg-surface-3 transition-colors border border-border/50"
-        active-class="!bg-primary !text-on-primary !border-primary"
-      >
+        active-class="!bg-primary !text-on-primary !border-primary">
         <Film :size="18" />
         <span>Movies</span>
       </RouterLink>
-      <RouterLink 
-        to="/shows" 
+      <RouterLink to="/shows"
         class="pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md bg-surface-2/80 text-text font-medium shadow-lg hover:bg-surface-3 transition-colors border border-border/50"
-        active-class="!bg-primary !text-on-primary !border-primary"
-      >
+        active-class="!bg-primary !text-on-primary !border-primary">
         <Tv :size="18" />
         <span>Shows</span>
       </RouterLink>
     </div>
 
-    <div class="h-full grow overflow-y-auto flex justify-center items-center" :class="route.meta.hideSidebar ? '' : 'p-2 sm:p-3'">
+    <div class="h-full grow overflow-y-auto flex justify-center items-center"
+      :class="route.meta.hideSidebar ? '' : 'p-2 sm:p-3'">
       <RouterView v-slot="{ Component }">
         <transition name="page-fade" mode="out-in">
           <component :is="Component" />
@@ -47,4 +45,4 @@ const route = useRoute()
   </div>
 </template>
 
-<style scoped lang="css" src="./styles.css"></style>
+<style scoped lang="css" src="./styles/index.css"></style>

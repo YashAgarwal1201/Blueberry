@@ -7,7 +7,7 @@ import App from './App.vue'
 import router from './router'
 import ToastService from 'primevue/toastservice'
 import { ConfirmationService } from 'primevue'
-import './styles.css'
+import './styles/index.css'
 import { startBackendMonitoring } from './services/apiInterceptors'
 
 const BlueberryPreset = definePreset(Aura, {
