@@ -1,4 +1,5 @@
 import { fileURLToPath, URL } from 'node:url'
+import fs from 'node:fs'
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
@@ -7,14 +8,26 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
-export default defineConfig({
-  server: {
-    port: 5130,
-  },
-  plugins: [vue(), vueJsx(), vueDevTools(), tailwindcss()],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+export default defineConfig(({ command }) => {
+  const isDev = command === 'serve'
+  const hasCerts = fs.existsSync('./certs/localhost.pem') && fs.existsSync('./certs/localhost-key.pem')
+
+  return {
+    server: {
+      port: 5130,
+      ...(isDev &&
+        hasCerts && {
+          https: {
+            key: fs.readFileSync('./certs/localhost-key.pem'),
+            cert: fs.readFileSync('./certs/localhost.pem'),
+          },
+        }),
     },
-  },
+    plugins: [vue(), vueJsx(), vueDevTools(), tailwindcss()],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
+      },
+    },
+  }
 })

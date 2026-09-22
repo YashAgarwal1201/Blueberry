@@ -2,3 +2,14 @@ node_modules/
 dist/
 .env
 *.log
+certs/
+*.pem
+
+# Database
+data/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+
+blueberry-api-architecture.md

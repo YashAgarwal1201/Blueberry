@@ -1,7 +1,7 @@
 // src/routes/people.ts
 import express, { Request, Response, Router } from "express";
 import db from "../db";
-import type { Person, CreatePersonRequest, IdParam } from "../types.ts";
+import type { Person, CreatePersonRequest, IdParam } from "shared-types";
 
 const router: Router = express.Router();
 
@@ -21,11 +21,11 @@ router.get("/", (req: Request, res: Response) => {
         .all(`%${search.trim()}%`, `%${search.trim()}%`) as Person[];
     } else {
       people = db
-        .prepare(`SELECT * FROM people ORDER BY name ASC`)
+        .prepare(`SELECT * FROM people ORDER BY name ASC LIMIT 100`)
         .all() as Person[];
     }
 
-    res.json({ success: true, count: people.length, people });
+    res.json({ success: true, data: people });
   } catch (err: any) {
     res.status(500).json({
       success: false,
@@ -38,7 +38,7 @@ router.get("/", (req: Request, res: Response) => {
 // GET /people/:id
 router.get("/:id", (req: Request<IdParam>, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id as string);
     if (isNaN(id))
       return res.status(400).json({ success: false, error: "Invalid ID" });
 
@@ -53,17 +53,15 @@ router.get("/:id", (req: Request<IdParam>, res: Response) => {
     // Also fetch their filmography
     const filmography = db
       .prepare(
-        `
-      SELECT m.id, m.title, m.release_year, m.poster_url, mc.role, mc.character
-      FROM movies m
-      JOIN movie_cast mc ON m.id = mc.movie_id
-      WHERE mc.person_id = ?
-      ORDER BY m.release_year DESC NULLS LAST
-    `,
+        `SELECT m.id, m.title, m.release_year, m.poster_url, mc.role, mc.character
+         FROM movies m
+         JOIN movie_cast mc ON m.id = mc.movie_id
+         WHERE mc.person_id = ?
+         ORDER BY m.release_year DESC NULLS LAST`,
       )
       .all(id);
 
-    res.json({ success: true, person: { ...person, filmography } });
+    res.json({ success: true, data: { ...person, filmography } });
   } catch (err: any) {
     res.status(500).json({
       success: false,
@@ -78,11 +76,10 @@ router.post("/", (req: Request, res: Response) => {
   try {
     const body = req.body as CreatePersonRequest;
 
-    if (!body.name?.trim()) {
+    if (!body.name?.trim())
       return res
         .status(400)
         .json({ success: false, error: "Name is required" });
-    }
 
     // Check duplicate by name (case-insensitive)
     const existing = db
@@ -99,10 +96,8 @@ router.post("/", (req: Request, res: Response) => {
 
     const info = db
       .prepare(
-        `
-      INSERT INTO people (name, also_known_as, bio, birth_date, birth_place, profile_url, tmdb_id, imdb_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `,
+        `INSERT INTO people (name, also_known_as, bio, birth_date, birth_place, profile_url, tmdb_id, imdb_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         body.name.trim(),
@@ -120,7 +115,7 @@ router.post("/", (req: Request, res: Response) => {
       .get(info.lastInsertRowid) as Person;
     res
       .status(201)
-      .json({ success: true, message: "Person created successfully", person });
+      .json({ success: true, message: "Person created successfully", data: person });
   } catch (err: any) {
     res.status(500).json({
       success: false,
@@ -133,7 +128,7 @@ router.post("/", (req: Request, res: Response) => {
 // PUT /people/:id
 router.put("/:id", (req: Request<IdParam>, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id as string);
     if (isNaN(id))
       return res.status(400).json({ success: false, error: "Invalid ID" });
 
@@ -148,12 +143,10 @@ router.put("/:id", (req: Request<IdParam>, res: Response) => {
     const body = req.body as Partial<CreatePersonRequest>;
 
     db.prepare(
-      `
-      UPDATE people SET
+      `UPDATE people SET
         name = ?, also_known_as = ?, bio = ?, birth_date = ?,
         birth_place = ?, profile_url = ?, tmdb_id = ?, imdb_id = ?
-      WHERE id = ?
-    `,
+       WHERE id = ?`,
     ).run(
       body.name?.trim() ?? existing.name,
       body.also_known_as?.trim() ?? existing.also_known_as ?? null,
@@ -172,7 +165,7 @@ router.put("/:id", (req: Request<IdParam>, res: Response) => {
     res.json({
       success: true,
       message: "Person updated successfully",
-      person: updated,
+      data: updated,
     });
   } catch (err: any) {
     res.status(500).json({
@@ -186,7 +179,7 @@ router.put("/:id", (req: Request<IdParam>, res: Response) => {
 // DELETE /people/:id
 router.delete("/:id", (req: Request<IdParam>, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id as string);
     if (isNaN(id))
       return res.status(400).json({ success: false, error: "Invalid ID" });
 
@@ -214,7 +207,7 @@ router.delete("/:id", (req: Request<IdParam>, res: Response) => {
     res.json({
       success: true,
       message: "Person deleted successfully",
-      deletedPerson: person,
+      data: person,
     });
   } catch (err: any) {
     res.status(500).json({

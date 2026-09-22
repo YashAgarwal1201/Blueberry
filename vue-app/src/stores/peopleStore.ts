@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import apiClient from '@/services/apiInterceptors'
-import type { Person, CreatePersonRequest } from '@/types/movies'
+import type { Person, CreatePersonRequest } from "shared-types"
 import { getErrorMessage } from '@/services/errorUtils'
 
 export const usePeopleStore = defineStore('peopleStore', () => {
@@ -17,7 +17,7 @@ export const usePeopleStore = defineStore('peopleStore', () => {
     try {
       const params = search?.trim() ? `?search=${encodeURIComponent(search.trim())}` : ''
       const response = await apiClient.get(`people${params}`)
-      people.value = response.data.people || []
+      people.value = response.data.data || []
       return people.value
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Error fetching people')
@@ -34,7 +34,7 @@ export const usePeopleStore = defineStore('peopleStore', () => {
     error.value = null
     try {
       const response = await apiClient.post('people', data)
-      const newPerson: Person = response.data.person
+      const newPerson: Person = response.data.data
       people.value.push(newPerson)
       return newPerson
     } catch (err: unknown) {
@@ -51,7 +51,7 @@ export const usePeopleStore = defineStore('peopleStore', () => {
     if (!query.trim()) return []
     try {
       const response = await apiClient.get(`people?search=${encodeURIComponent(query.trim())}`)
-      return response.data.people || []
+      return response.data.data || []
     } catch (err: unknown) {
       // const message = getErrorMessage(err, 'Error updating watchlist')
       console.error('Error searching people:', err)

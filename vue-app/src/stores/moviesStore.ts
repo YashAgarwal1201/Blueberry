@@ -3,19 +3,19 @@
 // import { defineStore } from 'pinia'
 // // import { useMainStore } from './mainStore'
 // import apiClient from '@/services/apiInterceptors'
-// import type { MovieWithLanguages, CreateMovieRequest, UpdateMovieRequest } from '@/types/movies'
+// import type { MovieWithDetails, CreateMovieRequest, UpdateMovieRequest } from "shared-types"
 
 // export const useMoviesStore = defineStore('moviesStore', () => {
 //   // const mainStore = useMainStore()
 
-//   const movies = ref<MovieWithLanguages[]>([])
+//   const movies = ref<MovieWithDetails[]>([])
 //   const loading = ref(false)
 //   const error = ref<string | null>(null)
 
 //   const movieCount = computed(() => movies.value.length)
 
 //   const moviesByYear = computed(() => {
-//     const grouped = new Map<number, MovieWithLanguages[]>()
+//     const grouped = new Map<number, MovieWithDetails[]>()
 //     movies.value.forEach((movie) => {
 //       const year = movie.release_year || 0
 //       if (!grouped.has(year)) {
@@ -30,7 +30,7 @@
 //     return [...movies.value].slice(0, 10)
 //   })
 
-//   const findMovieById = (id: number): MovieWithLanguages | undefined => {
+//   const findMovieById = (id: number): MovieWithDetails | undefined => {
 //     return movies.value.find((m) => m.id === id)
 //   }
 
@@ -70,7 +70,7 @@
 //     try {
 //       const response = await apiClient.get(`/movies/${id}`)
 //       const data = response.data
-//       return data.movie as MovieWithLanguages
+//       return data.movie as MovieWithDetails
 //     } catch (err: any) {
 //       console.error('Error fetching movie:', err)
 //       error.value = err.message
@@ -86,7 +86,7 @@
 //     try {
 //       const response = await apiClient.post('/movies', movieData)
 //       const data = response.data
-//       const newMovie = data.movie as MovieWithLanguages
+//       const newMovie = data.movie as MovieWithDetails
 //       movies.value.unshift(newMovie)
 //       return newMovie
 //     } catch (err: any) {
@@ -104,7 +104,7 @@
 //     try {
 //       const response = await apiClient.put(`/movies/${id}`, updates)
 //       const data = response.data
-//       const updatedMovie = data.movie as MovieWithLanguages
+//       const updatedMovie = data.movie as MovieWithDetails
 //       const idx = movies.value.findIndex((m) => m.id === id)
 //       if (idx !== -1) {
 //         movies.value[idx] = updatedMovie
@@ -168,12 +168,17 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import apiClient from '@/services/apiInterceptors'
-import type { MovieWithDetails, CreateMovieRequest, UpdateMovieRequest } from '@/types/movies'
+import type { MovieWithDetails, CreateMovieRequest, UpdateMovieRequest } from "shared-types"
 import { getErrorMessage } from '@/services/errorUtils'
 
 export const useMoviesStore = defineStore('moviesStore', () => {
   const movies = ref<MovieWithDetails[]>([])
+  const topRatedMovies = ref<MovieWithDetails[]>([])
+  const hotMovies = ref<MovieWithDetails[]>([])
+  
   const loading = ref(false)
+  const loadingTopRated = ref(false)
+  const loadingHot = ref(false)
   const error = ref<string | null>(null)
 
   const movieCount = computed(() => movies.value.length)
@@ -190,8 +195,8 @@ export const useMoviesStore = defineStore('moviesStore', () => {
 
   const recentMovies = computed(() => [...movies.value].slice(0, 10))
 
-  const findMovieById = (id: number): MovieWithDetails | undefined => {
-    return movies.value.find((m) => m.id === id)
+  const findMovieById = (uuid: string): MovieWithDetails | undefined => {
+    return movies.value.find((m) => m.uuid === uuid)
   }
 
   const fetchMovies = async (params?: {
@@ -210,8 +215,8 @@ export const useMoviesStore = defineStore('moviesStore', () => {
       if (params?.sort) queryParams.append('sort', params.sort)
       const url = `movies${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
       const response = await apiClient.get(url)
-      movies.value = response.data.movies as MovieWithDetails[]
-      return response.data.movies as MovieWithDetails[]
+      movies.value = response.data.data as MovieWithDetails[]
+      return response.data.data as MovieWithDetails[]
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Error fetching movies')
       console.error('Error fetching movies:', err)
@@ -222,12 +227,40 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     }
   }
 
-  const fetchMovieById = async (id: number) => {
+  const fetchTopRatedMovies = async () => {
+    loadingTopRated.value = true
+    try {
+      const response = await apiClient.get('movies/top-rated')
+      topRatedMovies.value = response.data.data as MovieWithDetails[]
+      return topRatedMovies.value
+    } catch (err: unknown) {
+      console.error('Error fetching top rated movies:', err)
+      throw err
+    } finally {
+      loadingTopRated.value = false
+    }
+  }
+
+  const fetchHotMovies = async () => {
+    loadingHot.value = true
+    try {
+      const response = await apiClient.get('movies/hot')
+      hotMovies.value = response.data.data as MovieWithDetails[]
+      return hotMovies.value
+    } catch (err: unknown) {
+      console.error('Error fetching hot movies:', err)
+      throw err
+    } finally {
+      loadingHot.value = false
+    }
+  }
+
+  const fetchMovieById = async (uuid: string) => {
     loading.value = true
     error.value = null
     try {
-      const response = await apiClient.get(`movies/${id}`)
-      return response.data.movie as MovieWithDetails
+      const response = await apiClient.get(`movies/${uuid}`)
+      return response.data.data as MovieWithDetails
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Error fetching movie')
       console.error('Error fetching movie:', err)
@@ -243,7 +276,7 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     error.value = null
     try {
       const response = await apiClient.post('movies', movieData)
-      const newMovie = response.data.movie as MovieWithDetails
+      const newMovie = response.data.data as MovieWithDetails
       movies.value.unshift(newMovie)
       return newMovie
     } catch (err: unknown) {
@@ -256,13 +289,13 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     }
   }
 
-  const updateMovie = async (id: number, updates: UpdateMovieRequest) => {
+  const updateMovie = async (uuid: string, updates: UpdateMovieRequest) => {
     loading.value = true
     error.value = null
     try {
-      const response = await apiClient.put(`movies/${id}`, updates)
-      const updatedMovie = response.data.movie as MovieWithDetails
-      const idx = movies.value.findIndex((m) => m.id === id)
+      const response = await apiClient.put(`movies/${uuid}`, updates)
+      const updatedMovie = response.data.data as MovieWithDetails
+      const idx = movies.value.findIndex((m) => m.uuid === uuid)
       if (idx !== -1) movies.value[idx] = updatedMovie
       return updatedMovie
     } catch (err: unknown) {
@@ -275,12 +308,12 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     }
   }
 
-  const deleteMovie = async (id: number) => {
+  const deleteMovie = async (uuid: string) => {
     loading.value = true
     error.value = null
     try {
-      await apiClient.delete(`movies/${id}`)
-      movies.value = movies.value.filter((m) => m.id !== id)
+      await apiClient.delete(`movies/${uuid}`)
+      movies.value = movies.value.filter((m) => m.uuid !== uuid)
       return true
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Error deleting movie')
@@ -290,6 +323,12 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     } finally {
       loading.value = false
     }
+  }
+
+  const removeMovieLocally = (uuid: string) => {
+    movies.value = movies.value.filter(m => m.uuid !== uuid)
+    topRatedMovies.value = topRatedMovies.value.filter(m => m.uuid !== uuid)
+    hotMovies.value = hotMovies.value.filter(m => m.uuid !== uuid)
   }
 
   const searchLocal = (query: string) => {
@@ -308,16 +347,23 @@ export const useMoviesStore = defineStore('moviesStore', () => {
 
   return {
     movies,
+    topRatedMovies,
+    hotMovies,
     loading,
+    loadingTopRated,
+    loadingHot,
     error,
     movieCount,
     moviesByYear,
     recentMovies,
     fetchMovies,
+    fetchTopRatedMovies,
+    fetchHotMovies,
     fetchMovieById,
     addMovie,
     updateMovie,
     deleteMovie,
+    removeMovieLocally,
     findMovieById,
     searchLocal,
   }

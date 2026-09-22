@@ -2,8 +2,9 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import apiClient from '@/services/apiInterceptors'
-import type { Language, MovieWithLanguages } from '@/types/movies'
+import type { Language, MovieWithDetails } from "shared-types"
 import { getErrorMessage } from '@/services/errorUtils'
+import { usePreferencesStore } from './preferencesStore'
 
 export const useLanguagesStore = defineStore('languagesStore', () => {
   const languages = ref<Language[]>([])
@@ -11,8 +12,14 @@ export const useLanguagesStore = defineStore('languagesStore', () => {
   const error = ref<string | null>(null)
 
   // Map keyed by language code — holds movies for multiple languages simultaneously
-  const moviesByLanguage = ref<Map<string, MovieWithLanguages[]>>(new Map())
+  const moviesByLanguage = ref<Map<string, MovieWithDetails[]>>(new Map())
   const moviesLoadingMap = ref<Map<string, boolean>>(new Map())
+
+  const preferencesStore = usePreferencesStore()
+
+  const visibleLanguages = computed(() => {
+    return languages.value.filter(lang => !preferencesStore.blockedLanguages.includes(lang.code))
+  })
 
   const languageMap = computed(() => {
     const map = new Map<number, Language>()
@@ -35,7 +42,7 @@ export const useLanguagesStore = defineStore('languagesStore', () => {
     error.value = null
     try {
       const response = await apiClient.get('/languages')
-      languages.value = response.data.languages || []
+      languages.value = response.data.data || []
       return languages.value
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Error fetching languages data')
@@ -53,7 +60,7 @@ export const useLanguagesStore = defineStore('languagesStore', () => {
     try {
       const response = await apiClient.post('/languages', { name, code })
       languages.value.push(response.data.language)
-      return response.data.language as Language
+      return response.data.data as Language
     } catch (err: unknown) {
       const message = getErrorMessage(err, 'Error adding language')
       console.error('Error adding language:', err)
@@ -68,7 +75,7 @@ export const useLanguagesStore = defineStore('languagesStore', () => {
     moviesLoadingMap.value.set(code, true)
     try {
       const response = await apiClient.get(`/languages/${code}/movies?sort=recent`)
-      const movies: MovieWithLanguages[] = response.data.movies || []
+      const movies: MovieWithDetails[] = response.data.data.movies || []
       moviesByLanguage.value.set(code, movies)
       return movies
     } catch (err: unknown) {
@@ -82,6 +89,7 @@ export const useLanguagesStore = defineStore('languagesStore', () => {
 
   return {
     languages,
+    visibleLanguages,
     loading,
     error,
     moviesByLanguage,

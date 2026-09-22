@@ -252,7 +252,7 @@
 import { ref } from 'vue'
 import { Plus, User, X } from 'lucide-vue-next'
 import { usePeopleStore } from '@/stores/peopleStore'
-import type { CastMemberRequest, CastRole, CreatePersonRequest, Person } from '@/types/movies'
+import type { CastMemberRequest, CastRole, CreatePersonRequest, Person } from "shared-types"
 import { getErrorStatus } from '@/services/errorUtils'
 
 const props = defineProps<{
