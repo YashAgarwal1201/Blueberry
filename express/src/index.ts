@@ -6,7 +6,7 @@ import path from "path";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import { loggerMiddleware } from "./middleware/logger-middleware";
-import itemsRouter from "./routes/items";
+
 import moviesRouter from "./routes/movies";
 import tvRouter from "./routes/tv";
 import languagesRouter from "./routes/languages";
@@ -85,7 +85,8 @@ app.get("/health", (req: Request, res: Response): void => {
 });
 
 // Routes
-app.use("/items", itemsRouter); // Keeping old routes
+// Keeping old routes
+// app.use("/items", itemsRouter); 
 app.use("/movies", moviesRouter);
 app.use("/tv", tvRouter);
 app.use("/languages", languagesRouter);
@@ -128,22 +129,24 @@ const certPath = path.join(process.cwd(), "certs", "localhost.pem");
 const keyPath = path.join(process.cwd(), "certs", "localhost-key.pem");
 const hasCerts = fs.existsSync(certPath) && fs.existsSync(keyPath);
 
-if (hasCerts) {
-  const options = {
-    key: fs.readFileSync(keyPath),
-    cert: fs.readFileSync(certPath),
-  };
-  https.createServer(options, app).listen(PORT, () => {
-    console.log(`Server running securely on https://localhost:${PORT}`);
-    console.log(`Database: SQLite (data/app.db)`);
-    console.log(`Routes: /movies, /languages, /watchlist`);
-  });
-} else {
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Database: SQLite (data/app.db)`);
-    console.log(`Routes: /movies, /languages, /watchlist`);
-  });
+if (process.env.NODE_ENV !== 'test') {
+  if (hasCerts) {
+    const options = {
+      key: fs.readFileSync(keyPath),
+      cert: fs.readFileSync(certPath),
+    };
+    https.createServer(options, app).listen(PORT, () => {
+      console.log(`Server running securely on https://localhost:${PORT}`);
+      console.log(`Database: SQLite (data/app.db)`);
+      console.log(`Routes: /movies, /languages, /watchlist`);
+    });
+  } else {
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`Database: SQLite (data/app.db)`);
+      console.log(`Routes: /movies, /languages, /watchlist`);
+    });
+  }
 }
 
 export default app;
