@@ -7,6 +7,11 @@ describe('MediaCarousel.vue', () => {
     const wrapper = mount(MediaCarousel, {
       slots: {
         default: '<div class="test-item">Carousel Item</div>'
+      },
+      global: {
+        stubs: {
+          TransitionGroup: false
+        }
       }
     })
     
@@ -15,7 +20,13 @@ describe('MediaCarousel.vue', () => {
   })
 
   it('applies correct classes for scroll and snap', () => {
-    const wrapper = mount(MediaCarousel)
+    const wrapper = mount(MediaCarousel, {
+      global: {
+        stubs: {
+          TransitionGroup: false
+        }
+      }
+    })
     
     const scrollContainer = wrapper.find('div.flex')
     expect(scrollContainer.classes()).toContain('overflow-x-auto')

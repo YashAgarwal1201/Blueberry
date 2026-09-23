@@ -1,10 +1,10 @@
 <template>
   <div class="relative w-full group">
-    <div
+    <TransitionGroup name="list" tag="div"
       class="flex flex-nowrap items-stretch gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-4"
     >
       <slot></slot>
-    </div>
+    </TransitionGroup>
   </div>
 </template>
 

@@ -89,7 +89,7 @@
       </div>
 
       <!-- Grid -->
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <TransitionGroup name="list" tag="div" v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 relative">
         <button v-for="person in filteredPeople" :key="person.id" type="button"
           class="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-1 border border-border hover:border-primary/50 hover:bg-surface-2 transition-colors text-left group w-full"
           @click="openProfile(person)">
@@ -125,7 +125,7 @@
           <ChevronRight :size="15"
             class="text-text-muted shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
         </button>
-      </div>
+      </TransitionGroup>
     </div>
   </div>
 
