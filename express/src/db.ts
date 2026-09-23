@@ -3,9 +3,10 @@ import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
 
-const DB_FILE = path.resolve(process.cwd(), "data", "app.db");
-const dir = path.dirname(DB_FILE);
-if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+const isTest = process.env.NODE_ENV === "test";
+const DB_FILE = isTest ? ":memory:" : path.resolve(process.cwd(), "data", "app.db");
+const dir = isTest ? "" : path.dirname(DB_FILE);
+if (!isTest && !fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
 const db = new Database(DB_FILE);
 db.pragma("foreign_keys = ON");

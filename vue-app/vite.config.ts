@@ -6,6 +6,7 @@ import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig(({ command }) => {
@@ -23,7 +24,36 @@ export default defineConfig(({ command }) => {
           },
         }),
     },
-    plugins: [vue(), vueJsx(), vueDevTools(), tailwindcss()],
+    plugins: [
+      vue(),
+      vueJsx(),
+      vueDevTools(),
+      tailwindcss(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'logo.svg'],
+        manifest: {
+          short_name: 'Blueberry',
+          name: 'Blueberry Dashboard',
+          icons: [
+            {
+              src: './logo.svg',
+              sizes: 'any',
+              type: 'image/svg+xml',
+            },
+          ],
+          start_url: '/',
+          scope: '/',
+          display: 'standalone',
+          theme_color: '#fafafa',
+          background_color: '#0f172b',
+          prefer_related_applications: true,
+        },
+        devOptions: {
+          enabled: true,
+        },
+      }),
+    ],
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),

@@ -35,7 +35,7 @@ const route = useRoute()
     <div class="h-full grow overflow-y-auto flex justify-center items-center"
       :class="route.meta.hideSidebar ? '' : 'p-2 sm:p-3'">
       <RouterView v-slot="{ Component }">
-        <transition name="page-fade" mode="out-in">
+        <transition name="page-slide-fade" mode="out-in">
           <component :is="Component" />
         </transition>
       </RouterView>

@@ -13,9 +13,10 @@ Development is organized by feature categories.
 - [x] Set up Pinia store structure
 - [x] Integrate shared types workspace (`../shared`)
 - [x] Configure ESLint and Prettier for code quality
-- [ ] Progressive Web App (PWA) support (offline support and installability)
+- [x] Progressive Web App (PWA) support (offline support and installability)
 - [ ] SEO Optimization (Server-Side Rendering / Static Site Generation)
-- [ ] Comprehensive Testing suites (Vitest for unit tests, Playwright/Cypress for E2E)
+- [x] Comprehensive Unit Testing suites (Vitest for frontend, Jest for backend)
+- [ ] End-to-End (E2E) Testing (Playwright/Cypress)
 - [ ] Performance Optimization (Lazy loading components, CDN image delivery)
 
 ## Authentication & User Accounts
@@ -52,4 +53,4 @@ Development is organized by feature categories.
 - [ ] Theme Toggle (Full Dark Mode / Light Mode support with user preference saving)
 - [ ] Internationalization (i18n) support
 - [ ] Infinite Scrolling (Seamlessly load more content on list pages)
-- [ ] Micro-animations (Enhanced transition effects for page navigations and interactions)
+- [x] Micro-animations (Enhanced transition effects for page navigations and interactions)

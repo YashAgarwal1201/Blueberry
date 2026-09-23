@@ -1,5 +1,6 @@
 <template>
-  <div class="w-full h-full flex flex-col border border-border rounded-xl overflow-hidden">
+  <div class="w-full h-full">
+    <div class="w-full h-full flex flex-col border border-border rounded-xl overflow-hidden">
     <!-- ── Header ── -->
     <div class="flex items-center justify-between p-2 sm:p-3 shrink-0">
       <div>
@@ -89,7 +90,7 @@
       </div>
 
       <!-- Grid -->
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <TransitionGroup name="list" tag="div" v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 relative">
         <button v-for="person in filteredPeople" :key="person.id" type="button"
           class="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-1 border border-border hover:border-primary/50 hover:bg-surface-2 transition-colors text-left group w-full"
           @click="openProfile(person)">
@@ -125,7 +126,7 @@
           <ChevronRight :size="15"
             class="text-text-muted shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
         </button>
-      </div>
+      </TransitionGroup>
     </div>
   </div>
 
@@ -135,8 +136,9 @@
     :deleting="deleting" @load-filmography="loadFilmography" @save="saveEdit" @delete="confirmDelete"
     @edit="onEditPerson" />
 
-  <!-- Add Dialog -->
-  <PersonAddDialog v-model:visible="showAddDialog" :loading="peopleStore.creating" @submit="submitAdd" />
+    <!-- Add Dialog -->
+    <PersonAddDialog v-model:visible="showAddDialog" :loading="peopleStore.creating" @submit="submitAdd" />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -144,7 +146,7 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 // import { Button } from 'primevue'
 import { useConfirm } from 'primevue/useconfirm'
-import { ChevronRight, Search, User, X } from 'lucide-vue-next'
+import { ChevronRight, Search, User, X, Plus } from 'lucide-vue-next'
 import { usePeopleStore } from '@/stores/peopleStore'
 import { useMoviesStore } from '@/stores/moviesStore'
 

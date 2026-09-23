@@ -1,10 +1,13 @@
 <template>
   <div
-    class="group/card shrink-0 h-full cursor-pointer rounded-xl bg-surface-2 flex flex-col snap-start overflow-hidden hover:ring-2 hover:ring-primary transition-all shadow-md active:scale-95"
+    class="hover-lift group/card shrink-0 h-full cursor-pointer rounded-xl bg-surface-2 flex flex-col snap-start overflow-hidden hover:ring-2 hover:ring-primary shadow-md active:scale-95"
     :class="fluid ? 'w-full' : 'w-36 sm:w-44'"
     @click="$emit('click')">
     <div v-if="posterUrl" class="w-full aspect-2/3 bg-surface-3 relative overflow-hidden">
       <img :src="posterUrl" :alt="title" class="w-full h-full object-cover select-none group-hover/card:scale-110 transition-transform duration-500" loading="lazy" />
+      
+      <!-- Gradient Overlay for hover effect -->
+      <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
 
       <!-- Optional Status Badge Slot for Watchlist etc -->
       <slot name="badge"></slot>
