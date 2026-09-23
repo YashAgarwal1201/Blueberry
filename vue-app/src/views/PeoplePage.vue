@@ -1,5 +1,6 @@
 <template>
-  <div class="w-full h-full flex flex-col border border-border rounded-xl overflow-hidden">
+  <div class="w-full h-full">
+    <div class="w-full h-full flex flex-col border border-border rounded-xl overflow-hidden">
     <!-- ── Header ── -->
     <div class="flex items-center justify-between p-2 sm:p-3 shrink-0">
       <div>
@@ -135,8 +136,9 @@
     :deleting="deleting" @load-filmography="loadFilmography" @save="saveEdit" @delete="confirmDelete"
     @edit="onEditPerson" />
 
-  <!-- Add Dialog -->
-  <PersonAddDialog v-model:visible="showAddDialog" :loading="peopleStore.creating" @submit="submitAdd" />
+    <!-- Add Dialog -->
+    <PersonAddDialog v-model:visible="showAddDialog" :loading="peopleStore.creating" @submit="submitAdd" />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -144,7 +146,7 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 // import { Button } from 'primevue'
 import { useConfirm } from 'primevue/useconfirm'
-import { ChevronRight, Search, User, X } from 'lucide-vue-next'
+import { ChevronRight, Search, User, X, Plus } from 'lucide-vue-next'
 import { usePeopleStore } from '@/stores/peopleStore'
 import { useMoviesStore } from '@/stores/moviesStore'
 
