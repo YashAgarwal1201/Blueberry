@@ -10,7 +10,13 @@
     "clean": "rm -rf dist",
     "seed:tmdb": "npx ts-node scripts/tmdb-seed.ts",
     "seed:tmdb:movies": "npx ts-node scripts/tmdb-seed.ts --movies",
-    "seed:tmdb:tv": "npx ts-node scripts/tmdb-seed.ts --tv"
+    "seed:tmdb:tv": "npx ts-node scripts/tmdb-seed.ts --tv",
+    "import:csv": "npx ts-node scripts/csv-import.ts",
+    "import:csv:top": "npx ts-node scripts/csv-import.ts --top --limit 10000 --min-votes 100",
+    "import:csv:dry": "npx ts-node scripts/csv-import.ts --dry-run",
+    "import:csv:tv": "npx ts-node scripts/csv-import-tv.ts",
+    "import:csv:tv:top": "npx ts-node scripts/csv-import-tv.ts --top --limit 10000 --min-votes 100",
+    "import:csv:tv:dry": "npx ts-node scripts/csv-import-tv.ts --dry-run"
   },
   "author": "",
   "license": "ISC",
@@ -31,6 +37,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^24.3.0",
     "@types/supertest": "^7.2.1",
+    "csv-parse": "^7.0.2",
     "jest": "^30.5.2",
     "nodemon": "^3.1.10",
     "supertest": "^7.3.0",

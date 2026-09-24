@@ -10,6 +10,8 @@
  * POST /ingest/tmdb/search/tv      body: { query: string }
  * POST /ingest/tmdb/popular/movies body: { pages?: number }
  * POST /ingest/tmdb/popular/tv     body: { pages?: number }
+ * 
+ * POST /ingest/wikidata/search/movie body: { query: string }
  */
 
 import express, { Request, Response, Router } from "express";
@@ -22,6 +24,7 @@ import {
   ingestPopularTV,
   tmdbClient,
 } from "../plugins/tmdb";
+import { ingestMovieBySearch as ingestWikidataMovieBySearch } from "../plugins/wikidata";
 
 const router: Router = express.Router();
 
@@ -156,6 +159,23 @@ router.post("/tmdb/popular/tv", async (req: Request, res: Response) => {
     res.json({ success: true, data: results, summary });
   } catch (err: any) {
     console.error("[ingest] popular tv", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ── Wikidata Movie search ─────────────────────────────────────────────────────
+router.post("/wikidata/search/movie", async (req: Request, res: Response) => {
+  const { query } = req.body as { query?: string };
+  if (!query?.trim())
+    return res.status(400).json({ success: false, error: "query is required" });
+
+  const overwrite = req.body?.overwrite !== false;
+
+  try {
+    const result = await ingestWikidataMovieBySearch(query.trim(), { overwrite });
+    res.status(result.action === "created" ? 201 : 200).json({ success: true, data: result });
+  } catch (err: any) {
+    console.error("[ingest] wikidata search movie", query, err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
