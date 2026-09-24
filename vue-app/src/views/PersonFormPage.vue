@@ -85,9 +85,8 @@
               class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text" />
             <!-- Live preview -->
             <div v-if="form.profile_url" class="mt-3 flex items-center gap-3">
-              <img :src="form.profile_url" alt="Profile preview"
-                class="w-20 h-20 rounded-full object-cover ring-1 ring-border"
-                @error="($event.target as HTMLImageElement).style.display = 'none'" />
+              <AppImage :src="form.profile_url" alt="Profile preview" type="person"
+                class="w-20 h-20 rounded-full ring-1 ring-border" />
               <span class="text-xs text-text-muted">Preview</span>
             </div>
           </div>
@@ -110,6 +109,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import AppImage from '@/components/AppImage.vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { usePeopleStore } from '@/stores/peopleStore'
 

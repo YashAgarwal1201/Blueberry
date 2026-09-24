@@ -46,7 +46,7 @@ describe('languagesStore', () => {
     
     // Check computed properties
     expect(store.visibleLanguages).toHaveLength(1)
-    expect(store.visibleLanguages[0].code).toBe('en')
+    expect(store.visibleLanguages[0]!.code).toBe('en')
     expect(store.languageMap.get(1)?.name).toBe('English')
     expect(store.languageByCode.get('es')?.name).toBe('Spanish')
     expect(store.getLanguageName(1)).toBe('English')

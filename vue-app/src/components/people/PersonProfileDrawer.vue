@@ -25,18 +25,12 @@
           :style="{ backgroundImage: `url(${person.profile_url})` }"
         />
         <div class="relative shrink-0">
-          <img
-            v-if="person.profile_url"
+          <AppImage
             :src="person.profile_url"
             :alt="person.name"
-            class="w-24 h-24 md:w-28 md:h-28 rounded-2xl object-cover ring-2 ring-border shadow-xl"
+            type="person"
+            class="w-24 h-24 md:w-28 md:h-28 rounded-2xl ring-2 ring-border shadow-xl"
           />
-          <div
-            v-else
-            class="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-surface-3 flex items-center justify-center ring-2 ring-border"
-          >
-            <User :size="36" class="text-text-muted" />
-          </div>
         </div>
         <div class="relative flex flex-col gap-1 min-w-0 pb-1">
           <h2 class="font-heading text-2xl md:text-3xl text-text leading-tight">
@@ -126,25 +120,15 @@
             <RouterLink
               v-for="film in filmography"
               :key="`${film.id}-${film.role}`"
-              :to="`/movies/${film.id}`"
+              :to="`/movies/${film.uuid}`"
               class="flex flex-col gap-1.5 group cursor-pointer"
               @click="$emit('update:visible', false)"
             >
-              <div
-                v-if="film.poster_url"
-                class="w-full aspect-[2/3] rounded-xl bg-surface-3 group-hover:ring-2 group-hover:ring-primary transition-all"
-                :style="{
-                  backgroundImage: `url(${film.poster_url})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }"
+              <AppImage
+                :src="film.poster_url"
+                type="movie"
+                class="w-full aspect-[2/3] rounded-xl group-hover:ring-2 group-hover:ring-primary transition-all"
               />
-              <div
-                v-else
-                class="w-full aspect-[2/3] rounded-xl bg-surface-3 flex items-center justify-center group-hover:ring-2 group-hover:ring-primary transition-all"
-              >
-                <Film :size="18" class="text-text-muted" />
-              </div>
               <p class="text-xs font-medium text-text line-clamp-2 px-0.5">{{ film.title }}</p>
               <p class="text-xs text-text-muted px-0.5 capitalize">
                 {{ film.release_year || 'N/A'
@@ -176,10 +160,12 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Drawer, Button, Tag, Skeleton } from 'primevue'
 import { Calendar, Film, MapPin, User } from 'lucide-vue-next'
+import AppImage from '@/components/AppImage.vue'
 import type { Person } from "shared-types"
 
 type FilmographyEntry = {
   id: number
+  uuid: string
   title: string
   release_year: number | null
   poster_url: string | null

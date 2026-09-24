@@ -6,7 +6,7 @@ Development is organized by feature categories.
 
 ## Foundation & Architecture
 - [x] Scaffold Vue 3 + TS + Vite project
-- [x] Install core libraries (Tailwind, PrimeVue, Pinia, Vue Router, Better-Auth, Axios)
+- [x] Install core libraries (Tailwind, PrimeVue, Pinia, Vue Router, Better-Auth, Axios, Dexie)
 - [x] Set up folder structure (`src/components`, `src/views`, `src/stores`, `src/services`, etc.)
 - [x] Configure Tailwind CSS v4
 - [x] Set up base routing shell
@@ -33,7 +33,7 @@ Development is organized by feature categories.
 - [x] Filtering content by Genres and Languages
 - [x] Detailed pages for Movies and TV Shows (synopsis, cast, metadata)
 - [x] Responsive side menu and navigation bar
-- [ ] Advanced Search (Global search with autocomplete and complex filters e.g., year, rating)
+- [x] Advanced Search (Global search across movies, shows, and people with Dexie-powered recent history)
 - [ ] Personalized Recommendations (Based on user watchlists and history)
 - [ ] Trending/Popular Feeds (Dedicated sections for currently trending content)
 - [ ] Embedded video players for trailers and teasers
@@ -43,7 +43,7 @@ Development is organized by feature categories.
 - [x] Custom Movies & People (Forms to add user-generated content)
 - [x] Cast Editor (Dedicated UI to manage cast and crew for custom movies)
 - [ ] Ratings & Reviews (Allow users to rate and write reviews for movies/shows)
-- [ ] Custom Collections (Create, share, and follow user-generated lists like "Best Sci-Fi of 2020")
+- [x] Custom Collections (Create, share, and follow user-generated lists like "Best Sci-Fi of 2020")
 - [ ] Comments & Discussions (Community features for specific media or episodes)
 
 ## UI, UX & Design

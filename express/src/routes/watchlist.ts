@@ -2,6 +2,7 @@
 
 import express, { Request, Response, Router } from "express";
 import db from "../db";
+import { resolveImage } from "../utils/imageUtils";
 import type {
   WatchlistItem,
   AddToWatchlistRequest,
@@ -20,40 +21,52 @@ const router: Router = express.Router();
 // ── Prepared statements ───────────────────────────────────────────────────────
 
 const insertMovieWatchlistStmt = db.prepare(`
-  INSERT INTO watchlist (movie_id, status) VALUES (?, ?)
+  INSERT INTO watchlist (movie_id, status, user_rating, liked, review_text, watch_count, last_watched_at, source)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const insertShowWatchlistStmt = db.prepare(`
-  INSERT INTO watchlist (show_id, status) VALUES (?, ?)
+  INSERT INTO watchlist (show_id, status, user_rating, liked, review_text, watch_count, last_watched_at, source)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const selectAllWatchlistStmt = db.prepare(`
-  SELECT id, movie_id, show_id, status, added_at, watched_at, notes
+  SELECT id, movie_id, show_id, status, added_at, watched_at, notes,
+         user_rating, liked, review_text, watch_count, last_watched_at, source
   FROM watchlist ORDER BY added_at DESC
 `);
 
 const selectWatchlistByIdStmt = db.prepare(`
-  SELECT id, movie_id, show_id, status, added_at, watched_at, notes
+  SELECT id, movie_id, show_id, status, added_at, watched_at, notes,
+         user_rating, liked, review_text, watch_count, last_watched_at, source
   FROM watchlist WHERE id = ?
 `);
 
 const selectWatchlistByMovieIdStmt = db.prepare(`
-  SELECT id, movie_id, show_id, status, added_at, watched_at, notes
+  SELECT id, movie_id, show_id, status, added_at, watched_at, notes,
+         user_rating, liked, review_text, watch_count, last_watched_at, source
   FROM watchlist WHERE movie_id = ?
 `);
 
 const selectWatchlistByShowIdStmt = db.prepare(`
-  SELECT id, movie_id, show_id, status, added_at, watched_at, notes
+  SELECT id, movie_id, show_id, status, added_at, watched_at, notes,
+         user_rating, liked, review_text, watch_count, last_watched_at, source
   FROM watchlist WHERE show_id = ?
 `);
 
 const selectWatchlistByStatusStmt = db.prepare(`
-  SELECT id, movie_id, show_id, status, added_at, watched_at, notes
+  SELECT id, movie_id, show_id, status, added_at, watched_at, notes,
+         user_rating, liked, review_text, watch_count, last_watched_at, source
   FROM watchlist WHERE status = ? ORDER BY added_at DESC
 `);
 
 const updateWatchlistStatusStmt = db.prepare(`
-  UPDATE watchlist SET status = ?, watched_at = ?, notes = ? WHERE id = ?
+  UPDATE watchlist SET 
+    status = ?, watched_at = ?, notes = ?, 
+    user_rating = ?, liked = ?, review_text = ?, 
+    watch_count = ?, last_watched_at = ?, source = ?,
+    updated_at = datetime('now')
+  WHERE id = ?
 `);
 
 const deleteWatchlistStmt = db.prepare(`
@@ -108,8 +121,8 @@ function attachMediaToWatchlistItems(
         uuid: m.uuid,
         type: 'movie',
         title: m.title,
-        poster_url: m.poster_url,
-        backdrop_url: m.backdrop_url,
+        poster_url: resolveImage((m as any).tmdb_poster_path, (m as any).local_poster_url) || m.poster_url,
+        backdrop_url: resolveImage((m as any).tmdb_backdrop_path, (m as any).local_backdrop_url, 'w780') || m.backdrop_url,
         release_year: m.release_year,
         runtime: m.runtime,
         rating_imdb: m.rating_imdb,
@@ -133,8 +146,8 @@ function attachMediaToWatchlistItems(
         uuid: s.uuid,
         type: 'tv',
         title: s.title,
-        poster_url: s.poster_url,
-        backdrop_url: s.backdrop_url,
+        poster_url: resolveImage(s.tmdb_poster_path, null) || s.poster_url,
+        backdrop_url: resolveImage(s.tmdb_backdrop_path, null, 'w780') || s.backdrop_url,
         first_air_date: s.first_air_date,
         network: s.network,
         status: s.status,
@@ -144,13 +157,14 @@ function attachMediaToWatchlistItems(
   }
 
   return items.map((item) => {
-    if (item.movie_id) {
-      return { ...item, movie: movieMap.get(item.movie_id) };
+    const formattedItem = { ...item, liked: !!item.liked };
+    if (formattedItem.movie_id) {
+      return { ...formattedItem, movie: movieMap.get(formattedItem.movie_id) };
     }
-    if (item.show_id) {
-      return { ...item, show: showMap.get(item.show_id) };
+    if (formattedItem.show_id) {
+      return { ...formattedItem, show: showMap.get(formattedItem.show_id) };
     }
-    return item;
+    return formattedItem;
   });
 }
 
@@ -245,7 +259,11 @@ router.get("/:id", (req: Request<IdParam>, res: Response) => {
 
 router.post("/", (req: Request, res: Response) => {
   try {
-    const { movie_id, show_id, status = "want_to_watch" } = req.body as any;
+    const { 
+      movie_id, show_id, status = "want_to_watch",
+      user_rating = null, liked = 0, review_text = null,
+      watch_count = 0, last_watched_at = null, source = 'manual'
+    } = req.body as AddToWatchlistRequest;
 
     if (!movie_id && !show_id) {
       return res.status(400).json({ success: false, error: "movie_id or show_id is required" });
@@ -265,7 +283,7 @@ router.post("/", (req: Request, res: Response) => {
       const existing = selectWatchlistByMovieIdStmt.get(movie_id) as WatchlistItem | undefined;
       if (existing) return res.status(409).json({ success: false, error: "Movie already in watchlist", existingItem: existing });
 
-      const info = insertMovieWatchlistStmt.run(movie_id, status);
+      const info = insertMovieWatchlistStmt.run(movie_id, status, user_rating, liked ? 1 : 0, review_text, watch_count, last_watched_at, source);
       watchlistId = info.lastInsertRowid;
     } else {
       const exists = db.prepare(`SELECT id FROM tv_shows WHERE id = ?`).get(show_id);
@@ -274,7 +292,7 @@ router.post("/", (req: Request, res: Response) => {
       const existing = selectWatchlistByShowIdStmt.get(show_id) as WatchlistItem | undefined;
       if (existing) return res.status(409).json({ success: false, error: "Show already in watchlist", existingItem: existing });
 
-      const info = insertShowWatchlistStmt.run(show_id, status);
+      const info = insertShowWatchlistStmt.run(show_id, status, user_rating, liked ? 1 : 0, review_text, watch_count, last_watched_at, source);
       watchlistId = info.lastInsertRowid;
     }
 
@@ -298,7 +316,7 @@ router.patch("/:id", (req: Request<IdParam>, res: Response) => {
     const existing = selectWatchlistByIdStmt.get(id) as WatchlistItem | undefined;
     if (!existing) return res.status(404).json({ success: false, error: "Watchlist item not found" });
 
-    const { status, notes, watched_at } = req.body as UpdateWatchlistRequest;
+    const { status, notes, watched_at, user_rating, liked, review_text, watch_count, last_watched_at, source } = req.body as UpdateWatchlistRequest;
 
     if (status) {
       const validStatuses = ["want_to_watch", "watching", "watched"];
@@ -316,7 +334,19 @@ router.patch("/:id", (req: Request<IdParam>, res: Response) => {
           ? new Date().toISOString()
           : (existing.watched_at ?? null);
 
-    updateWatchlistStatusStmt.run(newStatus, newWatchedAt, newNotes, id);
+    const newUserRating = user_rating !== undefined ? user_rating : existing.user_rating ?? null;
+    const newLiked = liked !== undefined ? (liked ? 1 : 0) : existing.liked ?? 0;
+    const newReviewText = review_text !== undefined ? review_text : existing.review_text ?? null;
+    const newWatchCount = watch_count !== undefined ? watch_count : existing.watch_count ?? 0;
+    const newLastWatchedAt = last_watched_at !== undefined ? last_watched_at : existing.last_watched_at ?? null;
+    const newSource = source !== undefined ? source : existing.source ?? null;
+
+    updateWatchlistStatusStmt.run(
+      newStatus, newWatchedAt, newNotes, 
+      newUserRating, newLiked, newReviewText, 
+      newWatchCount, newLastWatchedAt, newSource, 
+      id
+    );
 
     const item = selectWatchlistByIdStmt.get(id) as WatchlistItem;
     const [populated] = attachMediaToWatchlistItems([item]);

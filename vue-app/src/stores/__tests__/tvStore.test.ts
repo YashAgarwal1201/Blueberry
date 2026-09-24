@@ -71,7 +71,7 @@ describe('tvStore', () => {
     store.removeShowLocally('1')
     
     expect(store.recentShows).toHaveLength(1)
-    expect(store.recentShows[0].uuid).toBe('2')
+    expect(store.recentShows[0]!.uuid).toBe('2')
     expect(store.topRatedShows).toHaveLength(0)
   })
 })

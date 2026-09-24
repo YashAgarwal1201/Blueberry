@@ -32,19 +32,13 @@
               class="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-surface-2 transition-colors"
               @mousedown.prevent="selectExistingPerson(person)"
             >
-              <img
-                loading="lazy"
+              <AppImage
                 v-if="person.profile_url"
                 :src="person.profile_url"
                 :alt="person.name"
-                class="w-8 h-8 rounded-full object-cover shrink-0"
+                type="person"
+                class="w-8 h-8 rounded-full shrink-0"
               />
-              <div
-                v-else
-                class="w-8 h-8 rounded-full bg-surface-3 flex items-center justify-center shrink-0"
-              >
-                <User :size="14" class="text-text-muted" />
-              </div>
               <div class="flex flex-col min-w-0">
                 <span class="text-sm text-text truncate">{{ person.name }}</span>
                 <span v-if="person.also_known_as" class="text-xs text-text-muted truncate">
@@ -137,19 +131,12 @@
       class="rounded-xl border border-primary/40 bg-surface-2 p-4 flex flex-col gap-3"
     >
       <div class="flex items-center gap-3">
-        <img
-          loading="lazy"
-          v-if="pendingPerson.profile_url"
+        <AppImage
           :src="pendingPerson.profile_url"
           :alt="pendingPerson.name"
-          class="w-10 h-10 rounded-full object-cover shrink-0"
+          type="person"
+          class="w-10 h-10 rounded-full shrink-0"
         />
-        <div
-          v-else
-          class="w-10 h-10 rounded-full bg-surface-3 flex items-center justify-center shrink-0"
-        >
-          <User :size="16" class="text-text-muted" />
-        </div>
         <span class="font-medium text-text">{{ pendingPerson.name }}</span>
         <button
           type="button"
@@ -204,19 +191,12 @@
         class="flex items-center gap-3 px-3 py-2 rounded-lg border border-border bg-surface-1"
       >
         <!-- Avatar -->
-        <img
-          loading="lazy"
-          v-if="member.profile_url"
+        <AppImage
           :src="member.profile_url"
           :alt="member.name"
-          class="w-9 h-9 rounded-full object-cover shrink-0"
+          type="person"
+          class="w-9 h-9 rounded-full shrink-0"
         />
-        <div
-          v-else
-          class="w-9 h-9 rounded-full bg-surface-3 flex items-center justify-center shrink-0"
-        >
-          <User :size="14" class="text-text-muted" />
-        </div>
 
         <!-- Info -->
         <div class="flex flex-col min-w-0 flex-1">
@@ -250,6 +230,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import AppImage from '@/components/AppImage.vue'
 import { Plus, User, X } from 'lucide-vue-next'
 import { usePeopleStore } from '@/stores/peopleStore'
 import type { CastMemberRequest, CastRole, CreatePersonRequest, Person } from "shared-types"
@@ -273,6 +254,7 @@ const ROLE_LABELS: Record<CastRole, string> = {
   cinematographer: 'Cinematographer',
   composer: 'Composer',
   editor: 'Editor',
+  creator: 'Creator',
 }
 
 // Search state

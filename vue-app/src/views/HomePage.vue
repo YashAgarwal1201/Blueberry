@@ -10,11 +10,13 @@
       <div class="flex items-center justify-between gap-3 px-2">
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Continue Watching</h2>
       </div>
-      <MediaCarousel>
-        <MediaCard v-for="media in watchlistStore.watchingMedia as MediaCardType[]" :key="media.uuid" :title="media.title"
-          :poster-url="media.poster_url"
-          :year="media.release_year"
-          :type="media.type" @click="openDrawer(media)" />
+      <MediaCarousel :items="watchlistStore.watchingMedia as MediaCardType[]">
+        <template #default="{ item: media }">
+          <MediaCard :title="media.title"
+            :poster-url="media.poster_url"
+            :year="media.release_year"
+            :type="media.type" @click="openDrawer(media)" />
+        </template>
       </MediaCarousel>
     </div>
 
@@ -24,9 +26,11 @@
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Trending Movies</h2>
       </div>
       <div v-if="moviesStore.loadingHot" class="px-2 text-text-muted">Loading trending movies...</div>
-      <MediaCarousel v-else>
-        <MediaCard v-for="movie in moviesStore.hotMovies" :key="movie.uuid" :title="movie.title"
-          :poster-url="movie.poster_url" :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+      <MediaCarousel v-else :items="moviesStore.hotMovies || []">
+        <template #default="{ item: movie }">
+          <MediaCard :title="movie.title"
+            :poster-url="movie.poster_url" :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+        </template>
       </MediaCarousel>
     </div>
 
@@ -44,9 +48,11 @@
       </div>
 
       <div v-if="moviesStore.loading" class="px-2 text-text-muted">Loading movies...</div>
-      <MediaCarousel v-else>
-        <MediaCard v-for="movie in recentMovies" :key="movie.uuid" :title="movie.title" :poster-url="movie.poster_url"
-          :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+      <MediaCarousel v-else :items="recentMovies || []">
+        <template #default="{ item: movie }">
+          <MediaCard :title="movie.title" :poster-url="movie.poster_url"
+            :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+        </template>
       </MediaCarousel>
     </div>
 
@@ -56,9 +62,11 @@
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Top Rated Movies</h2>
       </div>
       <div v-if="moviesStore.loadingTopRated" class="px-2 text-text-muted">Loading top rated movies...</div>
-      <MediaCarousel v-else>
-        <MediaCard v-for="movie in moviesStore.topRatedMovies" :key="movie.uuid" :title="movie.title"
-          :poster-url="movie.poster_url" :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+      <MediaCarousel v-else :items="moviesStore.topRatedMovies || []">
+        <template #default="{ item: movie }">
+          <MediaCard :title="movie.title"
+            :poster-url="movie.poster_url" :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+        </template>
       </MediaCarousel>
     </div>
 
@@ -69,9 +77,11 @@
       </div>
 
       <div v-if="tvStore.loading" class="px-2 text-text-muted">Loading tv shows...</div>
-      <MediaCarousel v-else>
-        <MediaCard v-for="show in tvStore.topRatedShows" :key="show.uuid" :title="show.title"
-          :poster-url="show.poster_url" :year="show.release_year" :type="show.type" @click="openDrawer(show)" />
+      <MediaCarousel v-else :items="tvStore.topRatedShows || []">
+        <template #default="{ item: show }">
+          <MediaCard :title="show.title"
+            :poster-url="show.poster_url" :year="show.release_year" :type="show.type" @click="openDrawer(show)" />
+        </template>
       </MediaCarousel>
     </div>
 
@@ -82,9 +92,11 @@
       </div>
 
       <div v-if="tvStore.loading" class="px-2 text-text-muted">Loading tv shows...</div>
-      <MediaCarousel v-else>
-        <MediaCard v-for="show in tvStore.recentShows" :key="show.uuid" :title="show.title"
-          :poster-url="show.poster_url" :year="show.release_year" :type="show.type" @click="openDrawer(show)" />
+      <MediaCarousel v-else :items="tvStore.recentShows || []">
+        <template #default="{ item: show }">
+          <MediaCard :title="show.title"
+            :poster-url="show.poster_url" :year="show.release_year" :type="show.type" @click="openDrawer(show)" />
+        </template>
       </MediaCarousel>
     </div>
 
@@ -104,24 +116,47 @@
       </div>
 
       <div v-if="watchlistStore.loading" class="px-2 text-text-muted">Loading watchlist...</div>
-      <MediaCarousel v-else>
-        <MediaCard v-for="item in watchlistPreview" :key="item.id" :title="getMedia(item)?.title"
-          :poster-url="getMedia(item)?.poster_url" :year="getMedia(item)?.release_year" :type="getMedia(item)?.type"
-          @click="openDrawer(getMedia(item))">
-          <template #badge>
-            <div
-              class="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary text-on-primary shadow-lg backdrop-blur-sm">
-              {{
-                item.status === 'want_to_watch'
-                  ? 'Plan'
-                  : item.status === 'watching'
-                    ? 'Watching'
-                    : 'Watched'
-              }}
-            </div>
-          </template>
-        </MediaCard>
+      <MediaCarousel v-else :items="watchlistPreview || []">
+        <template #default="{ item }">
+          <MediaCard :title="getMedia(item)?.title"
+            :poster-url="getMedia(item)?.poster_url" :year="getMedia(item)?.release_year" :type="getMedia(item)?.type"
+            @click="openDrawer(getMedia(item))">
+            <template #badge>
+              <div
+                class="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary text-on-primary shadow-lg backdrop-blur-sm">
+                {{
+                  item.status === 'want_to_watch'
+                    ? 'Plan'
+                    : item.status === 'watching'
+                      ? 'Watching'
+                      : 'Watched'
+                }}
+              </div>
+            </template>
+          </MediaCard>
+        </template>
       </MediaCarousel>
+    </div>
+
+    <!-- Community Collections -->
+    <div v-if="collectionsStore.loading || collectionsStore.communityCollections?.length" class="flex flex-col gap-y-4">
+      <div class="flex items-center justify-between gap-3 px-2">
+        <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Community Collections</h2>
+      </div>
+
+      <div v-if="collectionsStore.loading" class="px-2 text-text-muted">Loading collections...</div>
+      <div v-else class="flex flex-nowrap items-center gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-4 px-2">
+        <RouterLink v-for="collection in collectionsStore.communityCollections.slice(0, 8)" :key="collection.id"
+          :to="`/profile/collections/${collection.id}`"
+          class="shrink-0 w-64 sm:w-80 h-36 sm:h-44 rounded-2xl snap-start cursor-pointer flex flex-col justify-end shadow-md relative overflow-hidden bg-surface-2 border border-border group">
+          <AppImage :src="collection.poster_url" type="collection" class="absolute inset-0 w-full h-full opacity-80 group-hover:opacity-100 transition-all duration-700" />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+          <div class="relative z-10 p-4">
+            <h3 class="font-heading font-bold text-white text-lg sm:text-xl line-clamp-1 drop-shadow-md">{{ collection.name }}</h3>
+            <p class="text-white/80 text-sm font-medium mt-1">{{ collection.item_count }} items</p>
+          </div>
+        </RouterLink>
+      </div>
     </div>
 
     <!-- Genres -->
@@ -182,8 +217,10 @@ import { useGenresStore } from '@/stores/genresStore'
 import { useLanguagesStore } from '@/stores/languagesStore'
 import { useAuthStore } from '@/stores/authStore'
 import { usePreferencesStore } from '@/stores/preferencesStore'
+import { useCollectionsStore } from '@/stores/collectionsStore'
 import toastHandler from '@/composables/toastHandeler'
 import HeroCarousel from '@/components/HeroCarousel.vue'
+import AppImage from '@/components/AppImage.vue'
 import MediaCarousel from '@/components/MediaCarousel.vue'
 import MediaCard from '@/components/MediaCard.vue'
 import MediaDrawer from '@/components/MediaDrawer.vue'
@@ -196,6 +233,7 @@ const genresStore = useGenresStore()
 const languagesStore = useLanguagesStore()
 const authStore = useAuthStore()
 const preferencesStore = usePreferencesStore()
+const collectionsStore = useCollectionsStore()
 const showToast = toastHandler().showToast
 
 const recentMovies = computed(() => moviesStore.movies?.slice(0, 10))
@@ -287,6 +325,8 @@ onMounted(() => {
 
   if (!genresStore.genres?.length) genresStore.fetchGenres().catch(console.error)
   if (!languagesStore.languages?.length) languagesStore.fetchLanguages().catch(console.error)
+
+  if (!collectionsStore.communityCollections?.length) collectionsStore.fetchCommunityCollections().catch(console.error)
 
   if (authStore.isAuthenticated && !watchlistStore.items?.length) {
     watchlistStore.fetchWatchlist().catch(console.error)

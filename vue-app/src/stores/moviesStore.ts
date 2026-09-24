@@ -338,7 +338,6 @@ export const useMoviesStore = defineStore('moviesStore', () => {
       (m) =>
         m.title.toLowerCase().includes(lowerQuery) ||
         m.description?.toLowerCase().includes(lowerQuery) ||
-        m.director?.toLowerCase().includes(lowerQuery) ||
         m.tagline?.toLowerCase().includes(lowerQuery) ||
         m.genres.some((g) => g.name.toLowerCase().includes(lowerQuery)) ||
         m.cast.some((c) => c.name.toLowerCase().includes(lowerQuery)),

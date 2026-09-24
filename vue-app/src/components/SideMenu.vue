@@ -1,7 +1,8 @@
 <template>
   <div>
     <Drawer v-model:visible="mainStore.showSideMenu" @hide="mainStore.showSideMenu = false" :dismissable="true"
-      position="right" class="w-full! md:w-3xl! rounded-none! md:rounded-l-xl! bg-surface-1! text-text! font-content">
+      position="right"
+      class="w-full! md:w-3xl! border-none! rounded-none! md:rounded-l-xl! bg-surface-1! text-text! font-content">
       <template #header>
         <div class="flex justify-between items-center w-full font-heading">
           <h3 class="text-lg sm:text-xl md:text-2xl text-text font-heading">Menu</h3>
@@ -10,7 +11,7 @@
 
       <div class="w-full font-content">
         <div class="flex flex-col">
-          <div class="w-full flex flex-col rounded-xl bg-surface-2 p-4 border border-border">
+          <div class="w-full flex flex-col rounded-2xl bg-surface-2 p-4">
             <!-- Theme selector -->
             <div :class="buttonStyles">
               <Palette :size="16" class="text-text-muted" />
@@ -25,6 +26,13 @@
 
             <div class="mx-2 my-1 h-px bg-border" />
 
+            <RouterLink :class="buttonStyles" to="/search" @click="mainStore.showSideMenu = false">
+              <Search :size="16" class="text-text-muted" />
+              <span>Search</span>
+            </RouterLink>
+
+            <div class="mx-2 my-1 h-px bg-border" />
+
             <RouterLink :class="buttonStyles" to="/watchlist" @click="mainStore.showSideMenu = false">
               <List :size="16" class="text-text-muted" />
               <span>Watchlist</span>
@@ -32,7 +40,7 @@
             <template v-if="preferencesStore.showMovies">
               <div class="mx-2 my-1 h-px bg-border" />
               <RouterLink :class="buttonStyles" to="/movies" @click="mainStore.showSideMenu = false">
-                <Blocks :size="16" class="text-text-muted" />
+                <Film :size="16" class="text-text-muted" />
                 <span>Movies</span>
               </RouterLink>
             </template>
@@ -81,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { Blocks, Languages, List, Palette, UserCircle, UserSquare, Wrench } from 'lucide-vue-next'
+import { Blocks, Film, Languages, List, Palette, Search, UserCircle, UserSquare, Wrench } from 'lucide-vue-next'
 import { Drawer, Select } from 'primevue'
 import { useMainStore } from '@/stores/mainStore'
 import { usePreferencesStore } from '@/stores/preferencesStore'

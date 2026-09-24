@@ -2,9 +2,14 @@
   <div class="w-full h-full flex flex-col gap-y-6 md:gap-y-8 overflow-y-auto">
     <!-- Header -->
     <div class="flex items-center justify-between">
-      <div>
-        <h1 class="font-heading text-2xl sm:text-3xl text-text">Languages</h1>
-        <p class="font-content text-text-muted">Browse your collection by language</p>
+      <div class="flex items-center gap-x-3">
+        <div class=" z-20">
+          <GoBackButton class="text-white! hover:bg-white/20! bg-black/20!" />
+        </div>
+        <div>
+          <h1 class="font-heading text-2xl sm:text-3xl text-text">Languages</h1>
+          <p class="font-content text-text-muted">Browse your collection by language</p>
+        </div>
       </div>
       <button @click="showAddDialog = true" class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm">
         + Add Language
@@ -41,7 +46,7 @@
         </div>
         <div class="flex flex-nowrap gap-3 overflow-x-auto pb-1">
           <RouterLink v-for="movie in (languagesStore.moviesByLanguage.get(lang.code) ?? []).slice(0, 10)"
-            :key="movie.id" :to="`/movies/${movie.id}`"
+            :key="movie.uuid" :to="`/movies/${movie.uuid}`"
             class="shrink-0 w-36 flex flex-col gap-1.5 cursor-pointer group">
             <div v-if="movie.poster_url"
               class="w-full h-52 rounded-xl bg-surface-3 group-hover:ring-2 group-hover:ring-primary transition-all"
@@ -97,6 +102,7 @@ import { RouterLink } from 'vue-router'
 import { useLanguagesStore } from '@/stores/languagesStore'
 import { getErrorMessage } from '@/services/errorUtils'
 import toastHandler from '@/composables/toastHandeler'
+import GoBackButton from '@/components/GoBackButton.vue'
 
 const languagesStore = useLanguagesStore()
 

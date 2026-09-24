@@ -46,7 +46,7 @@ describe('genresStore', () => {
     
     // Check computed properties
     expect(store.visibleGenres).toHaveLength(1)
-    expect(store.visibleGenres[0].name).toBe('Action')
+    expect(store.visibleGenres[0]!.name).toBe('Action')
     expect(store.genreMap.get(1)?.name).toBe('Action')
     expect(store.genreBySlug.get('horror')?.name).toBe('Horror')
   })

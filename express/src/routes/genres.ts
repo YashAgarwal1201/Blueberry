@@ -1,6 +1,7 @@
 // src/routes/genres.ts
 import express, { Request, Response, Router } from "express";
 import db from "../db";
+import { resolveImage } from "../utils/imageUtils";
 import type {
   Genre,
   Movie,
@@ -94,8 +95,8 @@ function toMovieCards(movies: Movie[]): MovieCard[] {
     uuid: m.uuid,
     type: 'movie',
     title: m.title,
-    poster_url: m.poster_url,
-    backdrop_url: m.backdrop_url,
+    poster_url: resolveImage((m as any).tmdb_poster_path, (m as any).local_poster_url) || m.poster_url,
+    backdrop_url: resolveImage((m as any).tmdb_backdrop_path, (m as any).local_backdrop_url, 'w780') || m.backdrop_url,
     release_year: m.release_year,
     runtime: m.runtime,
     rating_imdb: m.rating_imdb,
@@ -151,6 +152,54 @@ router.get("/", (_req: Request, res: Response) => {
         error: "Failed to fetch genres",
         message: err.message,
       });
+  }
+});
+
+// ── GET /genres/:slug/sections ──────────────────────────────────────────────────
+// IMPORTANT: must be declared BEFORE /:slug/movies and /:slug
+router.get("/:slug/sections", (req: Request, res: Response) => {
+  try {
+    const genre = selectGenreBySlugStmt.get(req.params.slug) as Genre | undefined;
+    if (!genre)
+      return res.status(404).json({ success: false, error: "Genre not found" });
+
+    const rawMovies = db
+      .prepare(
+        `SELECT m.*
+         FROM movies m
+         JOIN movie_genres mg ON m.id = mg.movie_id
+         WHERE mg.genre_id = ?
+         ORDER BY m.created_at DESC`
+      )
+      .all(genre.id) as Movie[];
+
+    const movies = toMovieCards(rawMovies);
+
+    // Group by language
+    const sectionMap = new Map<string, {
+      language: { id: number; name: string; code: string; native_script?: string | null };
+      movies: typeof movies;
+    }>();
+
+    for (const movie of movies) {
+      for (const lang of movie.languages) {
+        if (!sectionMap.has(lang.code)) {
+          sectionMap.set(lang.code, { language: lang, movies: [] });
+        }
+        sectionMap.get(lang.code)!.movies.push(movie);
+      }
+    }
+
+    const sections = [...sectionMap.values()]
+      .sort((a, b) => b.movies.length - a.movies.length);
+
+    res.json({ success: true, data: { genre, sections } });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch genre sections",
+      message: err.message,
+    });
   }
 });
 

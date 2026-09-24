@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import apiClient from '@/services/apiInterceptors'
-import type { Language, MovieWithDetails } from "shared-types"
+import type { Language, MovieWithDetails, LanguageSection } from "shared-types"
 import { getErrorMessage } from '@/services/errorUtils'
 import { usePreferencesStore } from './preferencesStore'
 
@@ -14,6 +14,9 @@ export const useLanguagesStore = defineStore('languagesStore', () => {
   // Map keyed by language code — holds movies for multiple languages simultaneously
   const moviesByLanguage = ref<Map<string, MovieWithDetails[]>>(new Map())
   const moviesLoadingMap = ref<Map<string, boolean>>(new Map())
+
+  const sectionsByLanguage = ref<Map<string, LanguageSection[]>>(new Map())
+  const sectionsLoadingMap = ref<Map<string, boolean>>(new Map())
 
   const preferencesStore = usePreferencesStore()
 
@@ -87,6 +90,22 @@ export const useLanguagesStore = defineStore('languagesStore', () => {
     }
   }
 
+  const fetchLanguageSections = async (code: string) => {
+    sectionsLoadingMap.value.set(code, true)
+    try {
+      const response = await apiClient.get(`/languages/${code}/sections`)
+      const sections: LanguageSection[] = response.data.data.sections || []
+      sectionsByLanguage.value.set(code, sections)
+      return sections
+    } catch (err: unknown) {
+      console.error(`Error fetching sections for language ${code}:`, err)
+      sectionsByLanguage.value.set(code, [])
+      throw err
+    } finally {
+      sectionsLoadingMap.value.set(code, false)
+    }
+  }
+
   return {
     languages,
     visibleLanguages,
@@ -94,11 +113,14 @@ export const useLanguagesStore = defineStore('languagesStore', () => {
     error,
     moviesByLanguage,
     moviesLoadingMap,
+    sectionsByLanguage,
+    sectionsLoadingMap,
     languageMap,
     languageByCode,
     getLanguageName,
     fetchLanguages,
     addLanguage,
     fetchMoviesByLanguage,
+    fetchLanguageSections,
   }
 })

@@ -80,7 +80,7 @@ describe('moviesStore', () => {
     const result = await store.updateMovie('1', { title: 'New Title' })
     
     expect(apiClient.put).toHaveBeenCalledWith('movies/1', { title: 'New Title' })
-    expect(store.movies[0].title).toBe('New Title')
+    expect(store.movies[0]!.title).toBe('New Title')
     expect(result).toEqual(updatedMovie)
   })
 
@@ -106,6 +106,6 @@ describe('moviesStore', () => {
     
     const result = store.searchLocal('bat')
     expect(result).toHaveLength(1)
-    expect(result[0].title).toBe('Batman')
+    expect(result[0]!.title).toBe('Batman')
   })
 })

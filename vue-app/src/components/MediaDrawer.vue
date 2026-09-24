@@ -7,8 +7,8 @@
     <div v-if="media" class="relative w-full flex flex-col pb-6 group">
       <!-- Backdrop Hero -->
       <div class="relative w-full aspect-video bg-surface-3 overflow-hidden">
-        <img v-if="media.backdrop_url" :src="media.backdrop_url" :alt="media.title"
-          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
+        <AppImage :src="media.backdrop_url" :alt="media.title" :type="media.type"
+          class="w-full h-full" />
         <div class="absolute inset-0 bg-linear-to-t from-surface-1 via-transparent to-transparent"></div>
 
         <!-- Close button overlaid -->
@@ -51,31 +51,48 @@
             <Info :size="18" />
             More Details
           </RouterLink>
+          
+          <div class="flex gap-2 w-full">
+            <button v-if="!isInWatchlist" @click="handleWatchlist"
+              class="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-primary text-on-primary font-semibold hover:opacity-90 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all duration-200">
+              <Bookmark :size="18" class="animate-pulse" />
+              Watchlist
+            </button>
+            <button v-else @click="handleRemoveWatchlist"
+              class="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-surface-3 text-primary font-semibold hover:bg-surface-4 hover:-translate-y-0.5 active:scale-95 transition-all duration-200">
+              <Check :size="18" />
+              In Watchlist
+            </button>
 
-          <button v-if="!isInWatchlist" @click="handleWatchlist"
-            class="flex items-center justify-center gap-2 py-3 rounded-2xl bg-primary text-on-primary font-semibold hover:opacity-90 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all duration-200">
-            <Bookmark :size="18" class="animate-pulse" />
-            Watchlist
-          </button>
-
-          <button v-else @click="handleRemoveWatchlist"
-            class="flex items-center justify-center gap-2 py-3 rounded-2xl bg-surface-3 text-primary font-semibold hover:bg-surface-4 hover:-translate-y-0.5 active:scale-95 transition-all duration-200">
-            <Check :size="18" />
-            In Watchlist
-          </button>
+            <!-- Save to Collection -->
+            <button @click="showCollectionModal = true"
+              class="flex-shrink-0 w-12 flex items-center justify-center rounded-2xl bg-surface-3 text-text hover:bg-surface-4 hover:text-primary hover:-translate-y-0.5 active:scale-95 transition-all duration-200"
+              title="Save to Collection">
+              <FolderPlus :size="18" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </Drawer>
+  
+  <SaveToCollectionModal 
+    v-if="media"
+    :visible="showCollectionModal" 
+    @update:visible="showCollectionModal = $event"
+    :media="media"
+  />
 </template>
 
 <script setup lang="ts">
-import { X, Info, Bookmark, Check } from 'lucide-vue-next'
+import { X, Info, Bookmark, Check, FolderPlus } from 'lucide-vue-next'
 import Drawer from 'primevue/drawer'
+import AppImage from '@/components/AppImage.vue'
 import type { MediaCard } from 'shared-types'
 import { RouterLink } from 'vue-router'
 import { useWatchlistStore } from '@/stores/watchListStore'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import SaveToCollectionModal from './SaveToCollectionModal.vue'
 
 const props = defineProps<{
   visible: boolean
@@ -85,6 +102,7 @@ const props = defineProps<{
 const emit = defineEmits(['update:visible', 'watchlistAction', 'removeWatchlistAction'])
 
 const watchlistStore = useWatchlistStore()
+const showCollectionModal = ref(false)
 
 const isInWatchlist = computed(() => {
   if (!props.media) return false

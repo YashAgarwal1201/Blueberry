@@ -75,11 +75,11 @@
         />
         <!-- Preview -->
         <div v-if="form.profile_url" class="mt-2">
-          <img
+          <AppImage
             :src="form.profile_url"
             alt="Profile preview"
-            class="w-20 h-20 object-cover rounded-full ring-1 ring-border"
-            @error="($event.target as HTMLImageElement).style.display = 'none'"
+            type="person"
+            class="w-20 h-20 rounded-full ring-1 ring-border"
           />
         </div>
       </div>
@@ -134,6 +134,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { Dialog, InputText, Textarea, InputNumber, Button } from 'primevue'
+import AppImage from '@/components/AppImage.vue'
 import type { CreatePersonRequest } from "shared-types"
 
 const props = defineProps<{

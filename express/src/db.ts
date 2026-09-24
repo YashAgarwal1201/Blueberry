@@ -145,20 +145,26 @@ db.exec(`
   -- ── Collections ───────────────────────────────────────────────────────────
   CREATE TABLE IF NOT EXISTS collections (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    name        TEXT NOT NULL UNIQUE,
-    slug        TEXT NOT NULL UNIQUE,
+    user_id     TEXT NOT NULL REFERENCES "user" ("id") ON DELETE CASCADE,
+    name        TEXT NOT NULL,
+    slug        TEXT NOT NULL,
     description TEXT,
     poster_url  TEXT,
-    created_at  TEXT DEFAULT (datetime('now'))
+    privacy     TEXT NOT NULL DEFAULT 'private' CHECK(privacy IN ('private', 'public', 'unlisted')),
+    created_at  TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, slug)
   );
 
 
-  CREATE TABLE IF NOT EXISTS collection_movies (
+  CREATE TABLE IF NOT EXISTS collection_items (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     collection_id INTEGER NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
-    movie_id      INTEGER NOT NULL REFERENCES movies(id)      ON DELETE CASCADE,
+    movie_id      INTEGER REFERENCES movies(id) ON DELETE CASCADE,
+    show_id       INTEGER REFERENCES tv_shows(id) ON DELETE CASCADE,
     display_order INTEGER NOT NULL DEFAULT 0,
-    UNIQUE(collection_id, movie_id)
+    CHECK (movie_id IS NOT NULL OR show_id IS NOT NULL),
+    UNIQUE(collection_id, movie_id),
+    UNIQUE(collection_id, show_id)
   );
 
   -- ── TV Shows ─────────────────────────────────────────────────────────────
@@ -211,6 +217,39 @@ db.exec(`
     UNIQUE(season_id, episode_number)
   );
 
+  CREATE TABLE IF NOT EXISTS tv_genres (
+    show_id   INTEGER NOT NULL REFERENCES tv_shows(id) ON DELETE CASCADE,
+    genre_id  INTEGER NOT NULL REFERENCES genres(id)   ON DELETE CASCADE,
+    PRIMARY KEY (show_id, genre_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS tv_languages (
+    show_id     INTEGER NOT NULL REFERENCES tv_shows(id)    ON DELETE CASCADE,
+    language_id INTEGER NOT NULL REFERENCES languages(id) ON DELETE CASCADE,
+    PRIMARY KEY (show_id, language_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS tv_cast (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    show_id       INTEGER NOT NULL REFERENCES tv_shows(id) ON DELETE CASCADE,
+    person_id     INTEGER NOT NULL REFERENCES people(id)   ON DELETE CASCADE,
+    role          TEXT NOT NULL DEFAULT 'actor'
+                  CHECK(role IN ('actor','director','writer','producer',
+                                 'cinematographer','composer','editor','creator')),
+    character     TEXT,
+    display_order INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(show_id, person_id, role)
+  );
+
+  CREATE TABLE IF NOT EXISTS tv_companies (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    show_id    INTEGER NOT NULL REFERENCES tv_shows(id)    ON DELETE CASCADE,
+    company_id INTEGER NOT NULL REFERENCES companies(id)   ON DELETE CASCADE,
+    role       TEXT NOT NULL DEFAULT 'production'
+               CHECK(role IN ('production','distribution','streaming')),
+    UNIQUE(show_id, company_id, role)
+  );
+
 
   -- ── Indexes ───────────────────────────────────────────────────────────────
   CREATE INDEX IF NOT EXISTS idx_movie_languages_movie        ON movie_languages(movie_id);
@@ -223,8 +262,16 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_movie_cast_movie             ON movie_cast(movie_id);
   CREATE INDEX IF NOT EXISTS idx_movie_cast_person            ON movie_cast(person_id);
   CREATE INDEX IF NOT EXISTS idx_movie_companies_movie        ON movie_companies(movie_id);
-  CREATE INDEX IF NOT EXISTS idx_collection_movies_collection ON collection_movies(collection_id);
-  CREATE INDEX IF NOT EXISTS idx_collection_movies_movie      ON collection_movies(movie_id);
+  CREATE INDEX IF NOT EXISTS idx_tv_genres_show               ON tv_genres(show_id);
+  CREATE INDEX IF NOT EXISTS idx_tv_genres_genre              ON tv_genres(genre_id);
+  CREATE INDEX IF NOT EXISTS idx_tv_languages_show            ON tv_languages(show_id);
+  CREATE INDEX IF NOT EXISTS idx_tv_languages_language        ON tv_languages(language_id);
+  CREATE INDEX IF NOT EXISTS idx_tv_cast_show                 ON tv_cast(show_id);
+  CREATE INDEX IF NOT EXISTS idx_tv_cast_person               ON tv_cast(person_id);
+  CREATE INDEX IF NOT EXISTS idx_tv_companies_show            ON tv_companies(show_id);
+  CREATE INDEX IF NOT EXISTS idx_collection_items_collection ON collection_items(collection_id);
+  CREATE INDEX IF NOT EXISTS idx_collection_items_movie      ON collection_items(movie_id);
+  CREATE INDEX IF NOT EXISTS idx_collection_items_show       ON collection_items(show_id);
 
   CREATE INDEX IF NOT EXISTS "session_userId_idx" on "session" ("userId");
   CREATE INDEX IF NOT EXISTS "account_userId_idx" on "account" ("userId");
@@ -316,6 +363,47 @@ addColumnIfMissing("movies", "trailer_url", "TEXT");
 addColumnIfMissing("movies", "backdrop_url", "TEXT");
 addColumnIfMissing("movies", "uuid", "TEXT");
 addColumnIfMissing("movies", "letterboxd_id", "TEXT");
+addColumnIfMissing("movies", "wikidata_id", "TEXT");
+addColumnIfMissing("movies", "rottentomatoes_id", "TEXT");
+addColumnIfMissing("movies", "spoken_languages", "TEXT");
+addColumnIfMissing("movies", "production_countries", "TEXT");
+addColumnIfMissing("movies", "keywords", "TEXT");
+addColumnIfMissing("movies", "content_advisory", "TEXT");
+
+addColumnIfMissing("tv_shows", "tagline", "TEXT");
+addColumnIfMissing("tv_shows", "origin_country", "TEXT");
+addColumnIfMissing("tv_shows", "original_language", "TEXT");
+addColumnIfMissing("tv_shows", "age_rating", "TEXT");
+addColumnIfMissing("tv_shows", "keywords", "TEXT");
+addColumnIfMissing("tv_shows", "wikidata_id", "TEXT");
+addColumnIfMissing("tv_shows", "rating_imdb", "REAL");
+addColumnIfMissing("tv_shows", "rating_rt", "INTEGER");
+addColumnIfMissing("tv_shows", "rating_metacritic", "INTEGER");
+addColumnIfMissing("tv_shows", "episode_count", "INTEGER DEFAULT 0");
+addColumnIfMissing("tv_shows", "season_count", "INTEGER DEFAULT 0");
+addColumnIfMissing("tv_shows", "runtime_per_episode", "INTEGER");
+addColumnIfMissing("tv_shows", "budget", "INTEGER");
+addColumnIfMissing("tv_shows", "box_office", "INTEGER");
+
+addColumnIfMissing("movies", "tmdb_poster_path", "TEXT");
+addColumnIfMissing("movies", "tmdb_backdrop_path", "TEXT");
+addColumnIfMissing("movies", "tmdb_trailer_key", "TEXT");
+addColumnIfMissing("movies", "local_poster_url", "TEXT");
+addColumnIfMissing("movies", "local_backdrop_url", "TEXT");
+addColumnIfMissing("movies", "image_source", "TEXT DEFAULT 'local' CHECK(image_source IN ('tmdb', 'local', 'custom'))");
+
+addColumnIfMissing("people", "tmdb_profile_path", "TEXT");
+addColumnIfMissing("people", "local_profile_url", "TEXT");
+
+addColumnIfMissing("companies", "tmdb_logo_path", "TEXT");
+
+addColumnIfMissing("tv_shows", "tmdb_poster_path", "TEXT");
+addColumnIfMissing("tv_shows", "tmdb_backdrop_path", "TEXT");
+addColumnIfMissing("tv_shows", "image_source", "TEXT DEFAULT 'local' CHECK(image_source IN ('tmdb', 'local', 'custom'))");
+
+addColumnIfMissing("tv_seasons", "tmdb_poster_path", "TEXT");
+
+addColumnIfMissing("tv_episodes", "tmdb_still_path", "TEXT");
 
 addColumnIfMissing("people", "uuid", "TEXT");
 
@@ -342,9 +430,33 @@ db.transaction(() => {
   }
 })();
 
+// people metadata columns
+addColumnIfMissing("people", "death_date", "TEXT");
+addColumnIfMissing("people", "gender", "TEXT CHECK(gender IN ('male','female','non_binary','not_specified') OR gender IS NULL)");
+addColumnIfMissing("people", "known_for_department", "TEXT");
+addColumnIfMissing("people", "wikidata_id", "TEXT");
+addColumnIfMissing("people", "homepage", "TEXT");
+addColumnIfMissing("people", "popularity", "REAL");
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS person_known_for (
+  person_id INTEGER NOT NULL REFERENCES people(id) ON DELETE CASCADE,
+  movie_id INTEGER REFERENCES movies(id) ON DELETE SET NULL,
+  show_id INTEGER REFERENCES tv_shows(id) ON DELETE SET NULL,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (person_id, movie_id, show_id)
+)
+`);
+
 // watchlist columns added after initial schema
 addColumnIfMissing("watchlist", "notes", "TEXT");
 addColumnIfMissing("watchlist", "updated_at", "TEXT");
+addColumnIfMissing("watchlist", "user_rating", "INTEGER CHECK(user_rating IS NULL OR (user_rating >= 1 AND user_rating <= 10))");
+addColumnIfMissing("watchlist", "liked", "INTEGER DEFAULT 0");
+addColumnIfMissing("watchlist", "review_text", "TEXT");
+addColumnIfMissing("watchlist", "watch_count", "INTEGER DEFAULT 0");
+addColumnIfMissing("watchlist", "last_watched_at", "TEXT");
+addColumnIfMissing("watchlist", "source", "TEXT");
 db.exec(`UPDATE watchlist SET updated_at = added_at WHERE updated_at IS NULL`);
 
 // better-auth missing columns
@@ -359,7 +471,16 @@ db.exec(
   `CREATE UNIQUE INDEX IF NOT EXISTS uniq_movies_tmdb_id      ON movies(tmdb_id)`,
 );
 db.exec(
+  `CREATE UNIQUE INDEX IF NOT EXISTS uniq_movies_wikidata_id  ON movies(wikidata_id) WHERE wikidata_id IS NOT NULL`,
+);
+db.exec(
   `CREATE        INDEX IF NOT EXISTS idx_watchlist_updated_at  ON watchlist(updated_at)`,
+);
+db.exec(
+  `CREATE UNIQUE INDEX IF NOT EXISTS uniq_tv_shows_wikidata_id ON tv_shows(wikidata_id) WHERE wikidata_id IS NOT NULL`,
+);
+db.exec(
+  `CREATE UNIQUE INDEX IF NOT EXISTS uniq_people_wikidata_id ON people(wikidata_id) WHERE wikidata_id IS NOT NULL`,
 );
 
 console.log("✅ Database ready");

@@ -34,8 +34,8 @@ describe('MovieFormPage.vue', () => {
     const languagesStore = useLanguagesStore()
     const genresStore = useGenresStore()
     
-    languagesStore.languages = [{ id: 1, name: 'English', slug: 'english' }]
-    genresStore.genres = [{ id: 1, name: 'Action', slug: 'action' }]
+    languagesStore.languages = [{ id: 1, name: 'English', code: 'en' }]
+    genresStore.genres = [{ id: 1, name: 'Action', slug: 'action', created_at: '2023-01-01' }]
     
     languagesStore.fetchLanguages = vi.fn().mockResolvedValue({})
     genresStore.fetchGenres = vi.fn().mockResolvedValue({})
@@ -61,8 +61,8 @@ describe('MovieFormPage.vue', () => {
     const genresStore = useGenresStore()
     const moviesStore = useMoviesStore()
     
-    languagesStore.languages = [{ id: 1, name: 'English', slug: 'english' }]
-    genresStore.genres = [{ id: 1, name: 'Action', slug: 'action' }]
+    languagesStore.languages = [{ id: 1, name: 'English', code: 'en' }]
+    genresStore.genres = [{ id: 1, name: 'Action', slug: 'action', created_at: '2023-01-01' }]
     
     languagesStore.fetchLanguages = vi.fn().mockResolvedValue({})
     genresStore.fetchGenres = vi.fn().mockResolvedValue({})
@@ -99,8 +99,8 @@ describe('MovieFormPage.vue', () => {
     const genresStore = useGenresStore()
     const moviesStore = useMoviesStore()
     
-    languagesStore.languages = [{ id: 1, name: 'English', slug: 'english' }]
-    genresStore.genres = [{ id: 1, name: 'Action', slug: 'action' }]
+    languagesStore.languages = [{ id: 1, name: 'English', code: 'en' }]
+    genresStore.genres = [{ id: 1, name: 'Action', slug: 'action', created_at: '2023-01-01' }]
     
     languagesStore.fetchLanguages = vi.fn().mockResolvedValue({})
     genresStore.fetchGenres = vi.fn().mockResolvedValue({})

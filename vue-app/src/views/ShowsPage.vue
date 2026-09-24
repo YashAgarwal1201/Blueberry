@@ -10,9 +10,11 @@
       <div class="flex items-center justify-between gap-3 px-2">
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Continue Watching</h2>
       </div>
-      <MediaCarousel>
-        <MediaCard v-for="show in watchlistStore.watchingShows" :key="show.uuid" :title="show.title" :poster-url="show.poster_url"
-          :year="show.release_year" :type="show.type" @click="openDrawer(show)" />
+      <MediaCarousel :items="watchlistStore.watchingShows">
+        <template #default="{ item: show }">
+          <MediaCard :title="show.title" :poster-url="show.poster_url"
+            :year="show.release_year" :type="show.type" @click="openDrawer(show)" />
+        </template>
       </MediaCarousel>
     </div>
 
@@ -23,9 +25,11 @@
       </div>
 
       <div v-if="tvStore.loading" class="px-2 text-text-muted">Loading tv shows...</div>
-      <MediaCarousel v-else>
-        <MediaCard v-for="show in tvStore.topRatedShows" :key="show.uuid" :title="show.title"
-          :poster-url="show.poster_url" :year="show.release_year" :type="show.type" @click="openDrawer(show)" />
+      <MediaCarousel v-else :items="tvStore.topRatedShows || []">
+        <template #default="{ item: show }">
+          <MediaCard :title="show.title"
+            :poster-url="show.poster_url" :year="show.release_year" :type="show.type" @click="openDrawer(show)" />
+        </template>
       </MediaCarousel>
     </div>
 
@@ -36,9 +40,11 @@
       </div>
 
       <div v-if="tvStore.loading" class="px-2 text-text-muted">Loading tv shows...</div>
-      <MediaCarousel v-else>
-        <MediaCard v-for="show in tvStore.recentShows" :key="show.uuid" :title="show.title"
-          :poster-url="show.poster_url" :year="show.release_year" :type="show.type" @click="openDrawer(show)" />
+      <MediaCarousel v-else :items="tvStore.recentShows || []">
+        <template #default="{ item: show }">
+          <MediaCard :title="show.title"
+            :poster-url="show.poster_url" :year="show.release_year" :type="show.type" @click="openDrawer(show)" />
+        </template>
       </MediaCarousel>
     </div>
 

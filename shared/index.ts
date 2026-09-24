@@ -26,7 +26,8 @@ export type CastRole =
   | "producer"
   | "cinematographer"
   | "composer"
-  | "editor";
+  | "editor"
+  | "creator";
 export type CompanyType = "production" | "distribution" | "streaming";
 export type MovieStatus =
   | "released"
@@ -69,6 +70,14 @@ export interface Person {
   profile_url?: string;
   tmdb_id?: number;
   imdb_id?: string;
+  death_date?: string;
+  gender?: 'male' | 'female' | 'non_binary' | 'not_specified';
+  known_for_department?: string;
+  wikidata_id?: string;
+  homepage?: string;
+  popularity?: number;
+  tmdb_profile_path?: string;
+  local_profile_url?: string;
   created_at: string;
 }
 
@@ -85,6 +94,7 @@ export interface Company {
   logo_url?: string;
   country?: string;
   tmdb_id?: number;
+  tmdb_logo_path?: string;
   created_at: string;
 }
 
@@ -102,12 +112,13 @@ export interface MediaCard {
   uuid: string;
   type: MediaType;
   title: string;
+  description?: string;
   poster_url?: string;
   backdrop_url?: string;
   release_year?: number;
   age_rating?: string;
   runtime?: number;
-  status: string;
+  status: MovieStatus | TVStatus;
   tmdb_id?: number;
   in_watchlist: boolean;
   genres?: Pick<Genre, "id" | "name" | "slug">[];
@@ -145,10 +156,11 @@ export interface Movie {
   origin_country?: string;
   original_language?: string;
   age_rating?: string;
-  director?: string;
   imdb_id?: string;
   tmdb_id?: number;
   letterboxd_id?: string;
+  wikidata_id?: string;
+  rottentomatoes_id?: string;
   poster_url?: string;
   backdrop_url?: string;
   trailer_url?: string;
@@ -157,6 +169,16 @@ export interface Movie {
   rating_imdb?: number;
   rating_rt?: number;
   rating_metacritic?: number;
+  tmdb_poster_path?: string;
+  tmdb_backdrop_path?: string;
+  tmdb_trailer_key?: string;
+  local_poster_url?: string;
+  local_backdrop_url?: string;
+  image_source?: 'tmdb' | 'local' | 'custom';
+  spoken_languages?: string[];
+  production_countries?: string[];
+  keywords?: string[];
+  content_advisory?: string;
   created_at: string;
   updated_at: string;
 }
@@ -186,6 +208,23 @@ export interface TVShow {
   imdb_id?: string;
   letterboxd_id?: string;
   network?: string;
+  tagline?: string;
+  origin_country?: string;
+  original_language?: string;
+  age_rating?: string;
+  keywords?: string[];
+  wikidata_id?: string;
+  rating_imdb?: number;
+  rating_rt?: number;
+  rating_metacritic?: number;
+  episode_count?: number;
+  season_count?: number;
+  runtime_per_episode?: number;
+  budget?: number;
+  box_office?: number;
+  tmdb_poster_path?: string;
+  tmdb_backdrop_path?: string;
+  image_source?: 'tmdb' | 'local' | 'custom';
   created_at: string;
   updated_at: string;
 }
@@ -201,6 +240,7 @@ export interface TVSeason {
   episode_count: number;
   air_date?: string;
   tmdb_id?: number;
+  tmdb_poster_path?: string;
 }
 
 export interface TVEpisode {
@@ -216,12 +256,16 @@ export interface TVEpisode {
   still_url?: string;
   tmdb_id?: number;
   imdb_id?: string;
+  tmdb_still_path?: string;
 }
 
 export interface TVShowWithDetails extends TVShow {
   in_watchlist: boolean;
   seasons: TVSeason[];
+  languages: Language[];
+  genres: Genre[];
   cast: CastMember[];
+  companies: Company[];
 }
 
 
@@ -251,6 +295,12 @@ export interface WatchlistItem {
   updated_at: string;
   watched_at?: string;
   notes?: string;
+  user_rating?: number;
+  liked?: boolean;
+  review_text?: string;
+  watch_count: number;
+  last_watched_at?: string;
+  source?: 'manual' | 'recommendation' | 'search' | 'collection';
 }
 
 export interface WatchlistItemWithMovie extends WatchlistItem {
@@ -289,19 +339,22 @@ export interface PersonDetail extends Person {
   roles: { role: CastRole; count: number }[];
 }
 
-// ── Collections ───────────────────────────────────────────────────────────────
+export type CollectionPrivacy = 'private' | 'public' | 'unlisted';
+
 export interface Collection {
   id: number;
+  user_id: string;
   name: string;
   slug: string;
   description?: string;
   poster_url?: string;
-  movie_count: number;
+  privacy: CollectionPrivacy;
+  item_count: number;
   created_at: string;
 }
 
 export interface CollectionDetail extends Collection {
-  movies: MovieCard[];
+  items: MediaCard[];
 }
 
 // ── Home payload (for /home) ──────────────────────────────────────────────────
@@ -345,10 +398,11 @@ export interface CreateMovieRequest {
   origin_country?: string;
   original_language?: string;
   age_rating?: string;
-  director?: string;
   imdb_id?: string;
   tmdb_id?: number;
   letterboxd_id?: string;
+  wikidata_id?: string;
+  rottentomatoes_id?: string;
   poster_url?: string;
   backdrop_url?: string;
   trailer_url?: string;
@@ -359,6 +413,10 @@ export interface CreateMovieRequest {
   rating_metacritic?: number;
   language_ids?: number[];
   genre_ids?: number[];
+  spoken_languages?: string[];
+  production_countries?: string[];
+  keywords?: string[];
+  content_advisory?: string;
   cast?: CastMemberRequest[];
   companies?: CompanyRequest[];
 }
@@ -370,13 +428,59 @@ export interface AddToWatchlistRequest {
   show_id?: number;
   status?: WatchlistStatus;
   notes?: string;
+  user_rating?: number;
+  liked?: boolean;
+  review_text?: string;
+  watch_count?: number;
+  last_watched_at?: string;
+  source?: 'manual' | 'recommendation' | 'search' | 'collection';
 }
 
 export interface UpdateWatchlistRequest {
   status?: WatchlistStatus;
   notes?: string;
   watched_at?: string;
+  user_rating?: number;
+  liked?: boolean;
+  review_text?: string;
+  watch_count?: number;
+  last_watched_at?: string;
+  source?: 'manual' | 'recommendation' | 'search' | 'collection';
 }
+
+export interface CreateTVShowRequest {
+  title: string;
+  tagline?: string;
+  description?: string;
+  status?: TVStatus;
+  first_air_date?: string;
+  last_air_date?: string;
+  network?: string;
+  origin_country?: string;
+  original_language?: string;
+  age_rating?: string;
+  imdb_id?: string;
+  tmdb_id?: number;
+  letterboxd_id?: string;
+  wikidata_id?: string;
+  poster_url?: string;
+  backdrop_url?: string;
+  budget?: number;
+  box_office?: number;
+  rating_imdb?: number;
+  rating_rt?: number;
+  rating_metacritic?: number;
+  episode_count?: number;
+  season_count?: number;
+  runtime_per_episode?: number;
+  language_ids?: number[];
+  genre_ids?: number[];
+  keywords?: string[];
+  cast?: CastMemberRequest[];
+  companies?: CompanyRequest[];
+}
+
+export type UpdateTVShowRequest = Partial<CreateTVShowRequest>;
 
 export interface CreatePersonRequest {
   name: string;
@@ -387,6 +491,13 @@ export interface CreatePersonRequest {
   profile_url?: string;
   tmdb_id?: number;
   imdb_id?: string;
+  death_date?: string;
+  gender?: 'male' | 'female' | 'non_binary' | 'not_specified';
+  known_for_department?: string;
+  wikidata_id?: string;
+  homepage?: string;
+  popularity?: number;
+  known_for?: { movie_id?: number; show_id?: number; display_order?: number }[];
 }
 
 export interface CreateCompanyRequest {
@@ -408,6 +519,7 @@ export interface CreateCollectionRequest {
   slug: string;
   description?: string;
   poster_url?: string;
+  privacy?: CollectionPrivacy;
 }
 
 export type UpdateCollectionRequest = Partial<CreateCollectionRequest>;
@@ -428,6 +540,133 @@ export interface PaginationQuery {
   limit?: string;
 }
 
+// A single language-grouped row inside a genre page
+export interface GenreSection {
+  language: {
+    id: number
+    name: string
+    code: string
+    native_script?: string | null
+  }
+  movies: MovieCard[]
+}
+
+// A single genre-grouped row inside a language page
+export interface LanguageSection {
+  genre: {
+    id: number
+    name: string
+    slug: string
+    description?: string | null
+  }
+  movies: MovieCard[]
+}
+
 export interface PeopleMoviesQuery extends PaginationQuery {
   role?: CastRole;
+}
+
+// ── Plugin Contract ───────────────────────────────────────────────────────────
+export interface PluginCastPayload {
+  name: string
+  tmdb_id?: number
+  imdb_id?: string
+  role: CastRole
+  character?: string
+  display_order?: number
+  tmdb_profile_path?: string
+}
+
+export interface PluginCompanyPayload {
+  name: string
+  tmdb_id?: number
+  role: CompanyType
+}
+
+export interface PluginMoviePayload {
+  // Identity
+  title: string
+  original_title?: string
+  tmdb_id?: number
+  imdb_id?: string
+  wikidata_id?: string
+  letterboxd_id?: string
+
+  // Metadata
+  release_year?: number
+  runtime?: number
+  tagline?: string
+  description?: string
+  status?: MovieStatus
+  age_rating?: string
+  origin_country?: string
+  original_language?: string
+  keywords?: string[]
+  budget?: number
+  box_office?: number
+
+  // Ratings
+  rating_imdb?: number
+  rating_rt?: number
+  rating_metacritic?: number
+
+  // Assets (paths, not full URLs)
+  tmdb_poster_path?: string
+  tmdb_backdrop_path?: string
+  tmdb_trailer_key?: string   // YouTube video key
+
+  // Relationships
+  genre_slugs?: string[]      // resolved against genres table
+  language_codes?: string[]   // resolved against languages table
+  cast?: PluginCastPayload[]
+  companies?: PluginCompanyPayload[]
+}
+
+export interface PluginTVPayload {
+  // Identity
+  title: string
+  original_title?: string
+  tmdb_id?: number
+  imdb_id?: string
+  wikidata_id?: string
+
+  // Metadata
+  tagline?: string
+  description?: string
+  status?: TVStatus
+  first_air_date?: string
+  last_air_date?: string
+  network?: string
+  origin_country?: string
+  original_language?: string
+  age_rating?: string
+  keywords?: string[]
+  episode_count?: number
+  season_count?: number
+  runtime_per_episode?: number
+  budget?: number
+  box_office?: number
+
+  // Ratings
+  rating_imdb?: number
+  rating_rt?: number
+  rating_metacritic?: number
+
+  // Assets (TMDB paths)
+  tmdb_poster_path?: string
+  tmdb_backdrop_path?: string
+
+  // Relationships
+  genre_slugs?: string[]
+  language_codes?: string[]
+  cast?: PluginCastPayload[]
+  companies?: PluginCompanyPayload[]
+}
+
+export interface IngestResult {
+  action: 'created' | 'updated' | 'skipped'
+  id: number
+  uuid: string
+  title: string
+  media_type: MediaType
 }
