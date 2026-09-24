@@ -53,7 +53,7 @@
           <!-- Poster -->
           <div v-if="movie.poster_url"
             class="w-32 md:w-56 aspect-2/3 rounded-2xl shadow-2xl shrink-0 overflow-hidden border-2 border-white/10 bg-surface-3">
-            <img :src="movie.poster_url" class="w-full h-full object-cover" />
+            <AppImage :src="movie.poster_url" type="movie" class="w-full h-full" />
           </div>
 
           <!-- Info -->
@@ -193,8 +193,8 @@
               <div
                 class="w-full aspect-video rounded-2xl bg-surface-2 overflow-hidden border-2 border-transparent group-hover:border-primary/50 shadow-md group-hover:shadow-xl transition-all relative">
                 <!-- Thumbnail -->
-                <img :src="video.thumbnail_url"
-                  class="w-full h-full object-cover" />
+                <AppImage :src="video.thumbnail_url" type="movie"
+                  class="w-full h-full" />
                 <div
                   class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
                   <div
@@ -220,8 +220,7 @@
               class="flex flex-col items-center gap-3 w-28 md:w-32 shrink-0 snap-start group cursor-pointer">
               <div
                 class="w-24 h-24 md:w-28 md:h-28 rounded-full bg-surface-2 overflow-hidden border-2 border-transparent group-hover:border-primary/50 shadow-md group-hover:shadow-xl transition-all flex items-center justify-center relative">
-                <img v-if="member.profile_url" :src="member.profile_url" class="w-full h-full object-cover" />
-                <User v-else class="text-text-muted/50" :size="48" />
+                <AppImage :src="member.profile_url" type="person" class="w-full h-full" />
                 <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></div>
               </div>
               <div class="text-center w-full">
@@ -240,7 +239,7 @@
           <div class="grid grid-cols-2 md:grid-cols-4 gap-6 p-6 md:p-8 rounded-3xl bg-surface-1 border border-white/5">
             <div class="flex flex-col gap-1">
               <span class="text-xs font-bold text-text-muted uppercase tracking-widest">Director</span>
-              <span class="text-base font-medium text-white">{{ movie.director || 'Unknown' }}</span>
+              <span class="text-base font-medium text-white">{{ directorName || 'Unknown' }}</span>
             </div>
             <div class="flex flex-col gap-1">
               <span class="text-xs font-bold text-text-muted uppercase tracking-widest">Language</span>
@@ -304,6 +303,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, onBeforeUnmount } from 'vue'
+import AppImage from '@/components/AppImage.vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useMoviesStore } from '@/stores/moviesStore'
 import { useWatchlistStore } from '@/stores/watchListStore'
@@ -321,6 +321,12 @@ const watchlistStore = useWatchlistStore()
 const authStore = useAuthStore()
 const preferencesStore = usePreferencesStore()
 const showToast = toastHandler().showToast
+
+const directorName = computed(() => {
+  if (!movie.value) return ''
+  const dir = movie.value.cast?.find((c) => c.role === 'director')
+  return dir?.name || ''
+})
 
 const movie = ref<MovieWithDetails | null>(null)
 const loading = ref(true)

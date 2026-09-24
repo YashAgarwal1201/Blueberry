@@ -24,8 +24,7 @@
           class="flex items-center justify-between p-3 rounded-xl hover:bg-surface-2 cursor-pointer transition-colors group">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-lg bg-surface-3 flex items-center justify-center overflow-hidden shrink-0">
-               <img v-if="collection.poster_url" :src="collection.poster_url" class="w-full h-full object-cover" />
-               <Folder v-else class="text-text-muted" :size="20" />
+               <AppImage :src="collection.poster_url" type="collection" class="w-full h-full" />
             </div>
             <div class="flex flex-col">
               <span class="font-medium text-text group-hover:text-primary transition-colors">{{ collection.name }}</span>
@@ -60,6 +59,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import Dialog from 'primevue/dialog'
+import AppImage from '@/components/AppImage.vue'
 import { Check, Plus, Folder, FolderPlus, Loader2 } from 'lucide-vue-next'
 import { useCollectionsStore } from '@/stores/collectionsStore'
 import { useToast } from 'primevue/usetoast'

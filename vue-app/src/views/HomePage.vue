@@ -149,7 +149,7 @@
         <RouterLink v-for="collection in collectionsStore.communityCollections.slice(0, 8)" :key="collection.id"
           :to="`/profile/collections/${collection.id}`"
           class="shrink-0 w-64 sm:w-80 h-36 sm:h-44 rounded-2xl snap-start cursor-pointer flex flex-col justify-end shadow-md relative overflow-hidden bg-surface-2 border border-border group">
-          <img v-if="collection.poster_url" :src="collection.poster_url" class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all duration-700" />
+          <AppImage :src="collection.poster_url" type="collection" class="absolute inset-0 w-full h-full opacity-80 group-hover:opacity-100 transition-all duration-700" />
           <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
           <div class="relative z-10 p-4">
             <h3 class="font-heading font-bold text-white text-lg sm:text-xl line-clamp-1 drop-shadow-md">{{ collection.name }}</h3>
@@ -220,6 +220,7 @@ import { usePreferencesStore } from '@/stores/preferencesStore'
 import { useCollectionsStore } from '@/stores/collectionsStore'
 import toastHandler from '@/composables/toastHandeler'
 import HeroCarousel from '@/components/HeroCarousel.vue'
+import AppImage from '@/components/AppImage.vue'
 import MediaCarousel from '@/components/MediaCarousel.vue'
 import MediaCard from '@/components/MediaCard.vue'
 import MediaDrawer from '@/components/MediaDrawer.vue'

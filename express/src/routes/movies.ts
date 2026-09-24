@@ -3,6 +3,7 @@ import express, { Request, Response, Router } from "express";
 import db from "../db";
 import { optionalAuth } from "../middleware/authMiddleware";
 import { getBlockConditions } from "../utils/preferences";
+import { resolveImage, tmdbYoutube } from "../utils/imageUtils";
 import type {
   Movie,
   MovieCard,
@@ -128,8 +129,8 @@ function toMovieCards(movies: Movie[], watchlistSet: Set<number>): MovieCard[] {
     uuid: m.uuid,
     type: "movie",
     title: m.title,
-    poster_url: m.poster_url,
-    backdrop_url: m.backdrop_url,
+    poster_url: resolveImage(m.tmdb_poster_path, m.local_poster_url) || m.poster_url,
+    backdrop_url: resolveImage(m.tmdb_backdrop_path, m.local_backdrop_url, 'w780') || m.backdrop_url,
     release_year: m.release_year,
     runtime: m.runtime,
     rating_imdb: m.rating_imdb,
@@ -176,6 +177,7 @@ function getMovieWithDetails(identifier: string | number): MovieWithDetails | un
   const cast = db
     .prepare(
       `SELECT p.id, p.name, p.also_known_as, p.profile_url, p.tmdb_id, p.imdb_id,
+              p.tmdb_profile_path, p.local_profile_url,
               mc.role, mc.character, mc.display_order
        FROM people p
        JOIN movie_cast mc ON p.id = mc.person_id
@@ -186,7 +188,7 @@ function getMovieWithDetails(identifier: string | number): MovieWithDetails | un
 
   const companies = db
     .prepare(
-      `SELECT c.id, c.name, c.type, c.logo_url, c.country, c.tmdb_id, mco.role
+      `SELECT c.id, c.name, c.type, c.logo_url, c.country, c.tmdb_id, c.tmdb_logo_path, mco.role
        FROM companies c
        JOIN movie_companies mco ON c.id = mco.company_id
        WHERE mco.movie_id = ?
@@ -196,11 +198,23 @@ function getMovieWithDetails(identifier: string | number): MovieWithDetails | un
 
   return {
     ...movie,
+    spoken_languages: movie.spoken_languages ? JSON.parse(movie.spoken_languages as unknown as string) : undefined,
+    production_countries: movie.production_countries ? JSON.parse(movie.production_countries as unknown as string) : undefined,
+    keywords: movie.keywords ? JSON.parse(movie.keywords as unknown as string) : undefined,
+    poster_url: resolveImage(movie.tmdb_poster_path, movie.local_poster_url) || movie.poster_url,
+    backdrop_url: resolveImage(movie.tmdb_backdrop_path, movie.local_backdrop_url, 'original') || movie.backdrop_url,
+    trailer_url: tmdbYoutube(movie.tmdb_trailer_key) || movie.trailer_url,
     in_watchlist: inWatchlist,
     languages,
     genres,
-    cast,
-    companies,
+    cast: cast.map((c: any) => ({
+      ...c,
+      profile_url: resolveImage(c.tmdb_profile_path, c.local_profile_url, 'w185') || c.profile_url
+    })),
+    companies: companies.map((c: any) => ({
+      ...c,
+      logo_url: resolveImage(c.tmdb_logo_path, null, 'w185') || c.logo_url
+    })),
   };
 }
 
@@ -499,10 +513,12 @@ router.post("/", (req: Request, res: Response) => {
         .prepare(
           `INSERT INTO movies (
             uuid, title, tagline, description, status, release_year, runtime,
-            origin_country, original_language, age_rating, director,
-            imdb_id, tmdb_id, letterboxd_id, poster_url, backdrop_url, trailer_url,
-            budget, box_office, rating_imdb, rating_rt, rating_metacritic
-          ) VALUES (lower(hex(randomblob(16))),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+            origin_country, original_language, age_rating,
+            imdb_id, tmdb_id, letterboxd_id, wikidata_id, rottentomatoes_id,
+            poster_url, backdrop_url, trailer_url,
+            budget, box_office, rating_imdb, rating_rt, rating_metacritic,
+            spoken_languages, production_countries, keywords, content_advisory
+          ) VALUES (lower(hex(randomblob(16))),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         )
         .run(
           body.title.trim(),
@@ -514,10 +530,11 @@ router.post("/", (req: Request, res: Response) => {
           clean(body.origin_country),
           clean(body.original_language),
           clean(body.age_rating),
-          clean(body.director),
           clean(body.imdb_id),
           body.tmdb_id ?? null,
           clean(body.letterboxd_id),
+          clean(body.wikidata_id),
+          clean(body.rottentomatoes_id),
           clean(body.poster_url),
           clean(body.backdrop_url),
           clean(body.trailer_url),
@@ -526,6 +543,10 @@ router.post("/", (req: Request, res: Response) => {
           body.rating_imdb ?? null,
           body.rating_rt ?? null,
           body.rating_metacritic ?? null,
+          body.spoken_languages ? JSON.stringify(body.spoken_languages) : null,
+          body.production_countries ? JSON.stringify(body.production_countries) : null,
+          body.keywords ? JSON.stringify(body.keywords) : null,
+          clean(body.content_advisory),
         );
       const movieId = info.lastInsertRowid as number;
 
@@ -607,10 +628,11 @@ router.put("/:uuid", (req: Request<UuidParam>, res: Response) => {
         `UPDATE movies SET
           title = ?, tagline = ?, description = ?, status = ?,
           release_year = ?, runtime = ?, origin_country = ?,
-          original_language = ?, age_rating = ?, director = ?,
-          imdb_id = ?, tmdb_id = ?, letterboxd_id = ?, poster_url = ?, backdrop_url = ?,
-          trailer_url = ?, budget = ?, box_office = ?,
-          rating_imdb = ?, rating_rt = ?, rating_metacritic = ?,
+          original_language = ?, age_rating = ?,
+          imdb_id = ?, tmdb_id = ?, letterboxd_id = ?, wikidata_id = ?, rottentomatoes_id = ?,
+          poster_url = ?, backdrop_url = ?, trailer_url = ?,
+          budget = ?, box_office = ?, rating_imdb = ?, rating_rt = ?, rating_metacritic = ?,
+          spoken_languages = ?, production_countries = ?, keywords = ?, content_advisory = ?,
           updated_at = datetime('now')
          WHERE id = ?`,
       ).run(
@@ -623,10 +645,11 @@ router.put("/:uuid", (req: Request<UuidParam>, res: Response) => {
         clean(body.origin_country ?? existing.origin_country),
         clean(body.original_language ?? existing.original_language),
         clean(body.age_rating ?? existing.age_rating),
-        clean(body.director ?? existing.director),
         clean(body.imdb_id ?? existing.imdb_id),
         body.tmdb_id ?? existing.tmdb_id ?? null,
         clean(body.letterboxd_id ?? existing.letterboxd_id),
+        clean(body.wikidata_id ?? (existing as any).wikidata_id),
+        clean(body.rottentomatoes_id ?? (existing as any).rottentomatoes_id),
         clean(body.poster_url ?? existing.poster_url),
         clean(body.backdrop_url ?? existing.backdrop_url),
         clean(body.trailer_url ?? existing.trailer_url),
@@ -635,6 +658,10 @@ router.put("/:uuid", (req: Request<UuidParam>, res: Response) => {
         body.rating_imdb ?? existing.rating_imdb ?? null,
         body.rating_rt ?? existing.rating_rt ?? null,
         body.rating_metacritic ?? existing.rating_metacritic ?? null,
+        body.spoken_languages ? JSON.stringify(body.spoken_languages) : (existing as any).spoken_languages ?? null,
+        body.production_countries ? JSON.stringify(body.production_countries) : (existing as any).production_countries ?? null,
+        body.keywords ? JSON.stringify(body.keywords) : (existing as any).keywords ?? null,
+        clean(body.content_advisory ?? (existing as any).content_advisory),
         id,
       );
 

@@ -261,6 +261,8 @@ function openMovieDrawer(movie: MovieWithDetails) {
     description: movie.description,
     runtime: movie.runtime,
     age_rating: movie.age_rating,
+    status: movie.status || 'released',
+    in_watchlist: movie.in_watchlist || false
   }
   isMediaDrawerOpen.value = true
 }
@@ -279,6 +281,8 @@ function openShowDrawer(show: TVShowCard) {
     description: (show as any).description,
     runtime: (show as any).runtime,
     age_rating: (show as any).age_rating,
+    status: show.status || 'released',
+    in_watchlist: show.in_watchlist || false
   }
   isMediaDrawerOpen.value = true
 }

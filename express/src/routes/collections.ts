@@ -1,7 +1,7 @@
-// src/routes/collections.ts
 import express, { Request, Response, Router } from "express";
 import db from "../db";
 import { requireAuth, optionalAuth } from "../middleware/authMiddleware";
+import { resolveImage } from "../utils/imageUtils";
 import type {
   Collection,
   CollectionDetail,
@@ -51,7 +51,7 @@ function getMediaCardsForCollection(collectionId: number): MediaCard[] {
   // Fetch Movies
   if (movieIds.length > 0) {
     const ph = movieIds.map(() => "?").join(",");
-    const movies = db.prepare(`SELECT id, uuid, title, poster_url, backdrop_url, release_year, runtime, rating_imdb, age_rating, status FROM movies WHERE id IN (${ph})`).all(...movieIds) as any[];
+    const movies = db.prepare(`SELECT id, uuid, title, poster_url, tmdb_poster_path, local_poster_url, backdrop_url, tmdb_backdrop_path, local_backdrop_url, release_year, runtime, rating_imdb, age_rating, status FROM movies WHERE id IN (${ph})`).all(...movieIds) as any[];
     
     // Watchlist checks
     const watchlistIds = new Set(
@@ -77,6 +77,8 @@ function getMediaCardsForCollection(collectionId: number): MediaCard[] {
       movieMap.set(m.id, {
         ...m,
         type: 'movie',
+        poster_url: resolveImage(m.tmdb_poster_path, m.local_poster_url) || m.poster_url,
+        backdrop_url: resolveImage(m.tmdb_backdrop_path, m.local_backdrop_url, 'w780') || m.backdrop_url,
         status: m.status ?? "released",
         in_watchlist: watchlistIds.has(m.id),
         languages: langMap.get(m.id) ?? [],
@@ -88,7 +90,7 @@ function getMediaCardsForCollection(collectionId: number): MediaCard[] {
   // Fetch Shows
   if (showIds.length > 0) {
     const ph = showIds.map(() => "?").join(",");
-    const shows = db.prepare(`SELECT id, uuid, title, poster_url, backdrop_url, first_air_date, network, status FROM tv_shows WHERE id IN (${ph})`).all(...showIds) as any[];
+    const shows = db.prepare(`SELECT id, uuid, title, poster_url, tmdb_poster_path, backdrop_url, tmdb_backdrop_path, first_air_date, network, status FROM tv_shows WHERE id IN (${ph})`).all(...showIds) as any[];
     
     // Watchlist checks
     const watchlistIds = new Set(
@@ -98,6 +100,8 @@ function getMediaCardsForCollection(collectionId: number): MediaCard[] {
     shows.forEach(s => {
       showMap.set(s.id, {
         ...s,
+        poster_url: resolveImage(s.tmdb_poster_path, null) || s.poster_url,
+        backdrop_url: resolveImage(s.tmdb_backdrop_path, null, 'w780') || s.backdrop_url,
         type: 'tv',
         release_year: s.first_air_date ? parseInt(s.first_air_date.substring(0,4)) : undefined,
         in_watchlist: watchlistIds.has(s.id),

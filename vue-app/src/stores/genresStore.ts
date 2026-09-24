@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import apiClient from '@/services/apiInterceptors'
-import type { Genre, MovieWithDetails } from "shared-types"
+import type { Genre, MovieWithDetails, GenreSection } from "shared-types"
 import { getErrorMessage } from '@/services/errorUtils'
 import { usePreferencesStore } from './preferencesStore'
 
@@ -13,6 +13,9 @@ export const useGenresStore = defineStore('genresStore', () => {
   // Map keyed by slug — holds movies for multiple genres simultaneously
   const moviesByGenre = ref<Map<string, MovieWithDetails[]>>(new Map())
   const moviesLoadingMap = ref<Map<string, boolean>>(new Map())
+  
+  const sectionsByGenre = ref<Map<string, GenreSection[]>>(new Map())
+  const sectionsLoadingMap = ref<Map<string, boolean>>(new Map())
 
   const preferencesStore = usePreferencesStore()
 
@@ -83,6 +86,22 @@ export const useGenresStore = defineStore('genresStore', () => {
     }
   }
 
+  const fetchGenreSections = async (slug: string) => {
+    sectionsLoadingMap.value.set(slug, true)
+    try {
+      const response = await apiClient.get(`/genres/${slug}/sections`)
+      const sections: GenreSection[] = response.data.data.sections || []
+      sectionsByGenre.value.set(slug, sections)
+      return sections
+    } catch (err: unknown) {
+      console.error(`Error fetching sections for genre ${slug}:`, err)
+      sectionsByGenre.value.set(slug, [])
+      throw err
+    } finally {
+      sectionsLoadingMap.value.set(slug, false)
+    }
+  }
+
   return {
     genres,
     visibleGenres,
@@ -90,10 +109,13 @@ export const useGenresStore = defineStore('genresStore', () => {
     error,
     moviesByGenre,
     moviesLoadingMap,
+    sectionsByGenre,
+    sectionsLoadingMap,
     genreMap,
     genreBySlug,
     fetchGenres,
     addGenre,
     fetchMoviesByGenre,
+    fetchGenreSections,
   }
 })

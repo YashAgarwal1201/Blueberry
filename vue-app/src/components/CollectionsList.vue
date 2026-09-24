@@ -29,10 +29,7 @@
         
         <!-- Collage Cover -->
         <div class="relative w-full aspect-video rounded-2xl overflow-hidden bg-surface-2 border border-border shadow-sm group-hover:shadow-md group-hover:border-primary/50 transition-all duration-300">
-          <img v-if="collection.poster_url" :src="collection.poster_url" class="w-full h-full object-cover" />
-          <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-surface-2 to-surface-3">
-            <Folder class="text-surface-4" :size="48" />
-          </div>
+          <AppImage :src="collection.poster_url" type="collection" class="w-full h-full" />
           
           <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
           
@@ -85,6 +82,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { Plus, FolderPlus, Folder, Lock, Globe, Link as LinkIcon, Loader2 } from 'lucide-vue-next'
+import AppImage from '@/components/AppImage.vue'
 import { useCollectionsStore } from '@/stores/collectionsStore'
 import { RouterLink } from 'vue-router'
 import Dialog from 'primevue/dialog'

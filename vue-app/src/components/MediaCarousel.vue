@@ -8,7 +8,7 @@
       :navigation="true"
       class="w-full pb-4"
     >
-      <swiper-slide v-for="item in items" :key="item.uuid || item.id || item" style="width: auto; height: auto;">
+      <swiper-slide v-for="item in items" :key="(item as any).uuid || (item as any).id || item" style="width: auto; height: auto;">
         <slot :item="item"></slot>
       </swiper-slide>
     </swiper>

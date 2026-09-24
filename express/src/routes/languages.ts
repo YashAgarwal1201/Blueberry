@@ -152,6 +152,56 @@ router.get("/", (req: Request, res: Response) => {
   }
 });
 
+// ── GET /languages/:code/sections ─────────────────────────────────────────────
+// Declared BEFORE /:code/movies and /:id
+router.get("/:code/sections", (req: Request, res: Response) => {
+  try {
+    const codeStr = typeof req.params.code === 'string' ? req.params.code : String(req.params.code);
+    const language = selectLanguageByCodeStmt.get(codeStr.toLowerCase()) as Language | undefined;
+    if (!language)
+      return res.status(404).json({ success: false, error: "Language not found" });
+
+    const rawMovies = db
+      .prepare(
+        `SELECT m.*
+         FROM movies m
+         JOIN movie_languages ml ON m.id = ml.movie_id
+         WHERE ml.language_id = ?
+         ORDER BY m.created_at DESC`
+      )
+      .all(language.id) as any[];
+
+    const movies = attachDataToMovies(rawMovies);
+
+    // Group by genre
+    const sectionMap = new Map<string, {
+      genre: { id: number; name: string; slug: string; description?: string | null };
+      movies: typeof movies;
+    }>();
+
+    for (const movie of movies) {
+      for (const genre of movie.genres) {
+        if (!sectionMap.has(genre.slug)) {
+          sectionMap.set(genre.slug, { genre, movies: [] });
+        }
+        sectionMap.get(genre.slug)!.movies.push(movie);
+      }
+    }
+
+    const sections = [...sectionMap.values()]
+      .sort((a, b) => b.movies.length - a.movies.length);
+
+    res.json({ success: true, data: { language, sections } });
+  } catch (err: any) {
+    console.error("Error fetching language sections:", err);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch language sections",
+      message: err.message,
+    });
+  }
+});
+
 // ── GET /languages/:code/movies ───────────────────────────────────────────────
 // Declared BEFORE /:id to prevent Express matching /en/movies as /:id
 

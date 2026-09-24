@@ -1,4 +1,5 @@
 // src/index.ts
+import "dotenv/config";
 import express, { Request, Response, Application } from "express";
 import fs from "fs";
 import https from "https";
@@ -16,6 +17,7 @@ import peopleRouter from "./routes/people";
 import companiesRouter from "./routes/companies";
 import collectionsRouter from "./routes/collections";
 import preferencesRouter from "./routes/preferences";
+import ingestRouter from "./routes/ingest";
 import { auth } from "./auth";
 import { toNodeHandler } from "better-auth/node";
 import { requireAuth } from "./middleware/authMiddleware";
@@ -96,6 +98,7 @@ app.use("/people", peopleRouter);
 app.use("/companies", companiesRouter);
 app.use("/collections", collectionsRouter);
 app.use("/api/preferences", requireAuth, preferencesRouter);
+app.use("/ingest", ingestRouter);
 
 // Root endpoint
 app.get("/", (req: Request, res: Response) => {

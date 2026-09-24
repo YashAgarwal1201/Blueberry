@@ -7,8 +7,8 @@
     <div v-if="media" class="relative w-full flex flex-col pb-6 group">
       <!-- Backdrop Hero -->
       <div class="relative w-full aspect-video bg-surface-3 overflow-hidden">
-        <img v-if="media.backdrop_url" :src="media.backdrop_url" :alt="media.title"
-          class="w-full h-full object-cover" />
+        <AppImage :src="media.backdrop_url" :alt="media.title" :type="media.type"
+          class="w-full h-full" />
         <div class="absolute inset-0 bg-linear-to-t from-surface-1 via-transparent to-transparent"></div>
 
         <!-- Close button overlaid -->
@@ -87,6 +87,7 @@
 <script setup lang="ts">
 import { X, Info, Bookmark, Check, FolderPlus } from 'lucide-vue-next'
 import Drawer from 'primevue/drawer'
+import AppImage from '@/components/AppImage.vue'
 import type { MediaCard } from 'shared-types'
 import { RouterLink } from 'vue-router'
 import { useWatchlistStore } from '@/stores/watchListStore'

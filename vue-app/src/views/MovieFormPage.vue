@@ -104,16 +104,6 @@
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-sm font-medium text-text mb-1">Director</label>
-              <input
-                v-model="form.director"
-                type="text"
-                placeholder="Director name"
-                class="w-full px-3 py-2 rounded-lg border border-border bg-surface-1 text-text"
-              />
-            </div>
-
-            <div>
               <label class="block text-sm font-medium text-text mb-1">Original Language</label>
               <input
                 v-model="form.original_language"
@@ -347,7 +337,6 @@ const createInitialForm = (): CreateMovieRequest => ({
   origin_country: '',
   original_language: '',
   age_rating: '',
-  director: '',
   imdb_id: '',
   tmdb_id: undefined,
   poster_url: '',
@@ -377,7 +366,6 @@ function applyMovieToForm(movie: MovieWithDetails) {
     origin_country: movie.origin_country ?? '',
     original_language: movie.original_language ?? '',
     age_rating: movie.age_rating ?? '',
-    director: movie.director ?? '',
     imdb_id: movie.imdb_id ?? '',
     tmdb_id: movie.tmdb_id,
     poster_url: movie.poster_url ?? '',

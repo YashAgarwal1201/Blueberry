@@ -14,7 +14,7 @@
     <div v-else class="flex flex-col">
       <!-- Hero Header -->
       <div class="relative w-full h-[40vh] sm:h-[50vh] overflow-hidden bg-surface-1">
-        <img v-if="heroImage" :src="heroImage" class="absolute inset-0 w-full h-full object-cover blur-sm opacity-50" />
+        <AppImage :src="heroImage" class="absolute inset-0 w-full h-full object-cover blur-sm opacity-50" />
         <div class="absolute inset-0 bg-gradient-to-t from-surface-0 via-surface-0/80 to-transparent"></div>
         
         <button @click="router.back()" class="absolute top-6 left-6 z-20 w-11 h-11 flex items-center justify-center bg-black/30 hover:bg-black/50 text-white rounded-full backdrop-blur-md transition-all active:scale-95">
@@ -72,7 +72,7 @@
 
             <!-- Poster -->
             <div class="w-16 sm:w-20 aspect-[2/3] rounded-lg overflow-hidden bg-surface-3 shrink-0 cursor-pointer" @click="navigateToMedia(item)">
-              <img v-if="item.poster_url" :src="item.poster_url" class="w-full h-full object-cover" />
+              <AppImage :src="item.poster_url" :type="item.type" class="w-full h-full" />
             </div>
 
             <!-- Info -->
@@ -138,6 +138,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import AppImage from '@/components/AppImage.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCollectionsStore } from '@/stores/collectionsStore'
 import { useAuthStore } from '@/stores/authStore'

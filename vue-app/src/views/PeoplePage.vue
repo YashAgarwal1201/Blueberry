@@ -95,12 +95,8 @@
           class="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-1 border border-border hover:border-primary/50 hover:bg-surface-2 transition-colors text-left group w-full"
           @click="openProfile(person)">
           <!-- Avatar -->
-          <img v-if="person.profile_url" :src="person.profile_url" :alt="person.name"
+          <AppImage :src="person.profile_url" :alt="person.name" type="person"
             class="w-11 h-11 rounded-full object-cover shrink-0 ring-1 ring-border" />
-          <div v-else
-            class="w-11 h-11 rounded-full bg-surface-3 flex items-center justify-center shrink-0 ring-1 ring-border">
-            <User :size="18" class="text-text-muted" />
-          </div>
 
           <!-- Text -->
           <div class="flex flex-col min-w-0 flex-1">
@@ -143,6 +139,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import AppImage from '@/components/AppImage.vue'
 import { RouterLink } from 'vue-router'
 // import { Button } from 'primevue'
 import { useConfirm } from 'primevue/useconfirm'

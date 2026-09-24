@@ -53,7 +53,7 @@
           <!-- Poster -->
           <div v-if="show.poster_url"
             class="w-32 md:w-56 aspect-2/3 rounded-2xl shadow-2xl shrink-0 overflow-hidden border-2 border-white/10 bg-surface-3">
-            <img :src="show.poster_url" class="w-full h-full object-cover" />
+            <AppImage :src="show.poster_url" type="tv" class="w-full h-full" />
           </div>
 
           <!-- Info -->
@@ -166,8 +166,8 @@
               <div
                 class="w-full aspect-video rounded-2xl bg-surface-2 overflow-hidden border-2 border-transparent group-hover:border-primary/50 shadow-md group-hover:shadow-xl transition-all relative">
                 <!-- Thumbnail -->
-                <img :src="video.thumbnail_url"
-                  class="w-full h-full object-cover" />
+                <AppImage :src="video.thumbnail_url" type="movie"
+                  class="w-full h-full" />
                 <div
                   class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
                   <div
@@ -198,12 +198,7 @@
               class="flex flex-col gap-3 w-32 md:w-40 shrink-0 snap-start group cursor-pointer">
               <div
                 class="w-full aspect-2/3 rounded-2xl bg-surface-2 overflow-hidden border-2 border-transparent group-hover:border-primary/50 shadow-md group-hover:shadow-xl transition-all relative">
-                <img v-if="season.poster_url" :src="season.poster_url" class="w-full h-full object-cover" />
-                <div v-else
-                  class="w-full h-full flex items-center justify-center text-text-muted flex-col gap-2 p-4 text-center">
-                  <MonitorPlay :size="32" class="opacity-50" />
-                  <span class="text-xs">{{ season.title }}</span>
-                </div>
+                <AppImage :src="season.poster_url" type="tv" class="w-full h-full" />
               </div>
               <div class="flex flex-col w-full px-1">
                 <div class="text-sm md:text-base font-bold text-white leading-tight">{{ season.title }}</div>
@@ -229,8 +224,7 @@
               class="flex flex-col items-center gap-3 w-28 md:w-32 shrink-0 snap-start group cursor-pointer">
               <div
                 class="w-24 h-24 md:w-28 md:h-28 rounded-full bg-surface-2 overflow-hidden border-2 border-transparent group-hover:border-primary/50 shadow-md group-hover:shadow-xl transition-all flex items-center justify-center relative">
-                <img v-if="member.profile_url" :src="member.profile_url" class="w-full h-full object-cover" />
-                <User v-else class="text-text-muted/50" :size="48" />
+                <AppImage :src="member.profile_url" type="person" class="w-full h-full" />
                 <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></div>
               </div>
               <div class="text-center w-full">
@@ -289,6 +283,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, onBeforeUnmount } from 'vue'
+import AppImage from '@/components/AppImage.vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useTvStore } from '@/stores/tvStore'
 import { useWatchlistStore } from '@/stores/watchListStore'

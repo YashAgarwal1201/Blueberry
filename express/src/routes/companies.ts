@@ -2,6 +2,7 @@
 import express, { Request, Response, Router } from "express";
 import db from "../db";
 import type { Company, CreateCompanyRequest, IdParam } from "shared-types";
+import { resolveImage } from "../utils/imageUtils";
 
 const router: Router = express.Router();
 
@@ -30,7 +31,12 @@ router.get("/", (req: Request, res: Response) => {
       .prepare(`SELECT * FROM companies ${where} ORDER BY name ASC ${limit}`)
       .all(...params) as Company[];
 
-    res.json({ success: true, data: companies });
+    const resolved = companies.map((c) => ({
+      ...c,
+      logo_url: resolveImage(c.tmdb_logo_path, null, 'w185') || c.logo_url
+    }));
+
+    res.json({ success: true, data: resolved });
   } catch (err: any) {
     res.status(500).json({
       success: false,
@@ -57,15 +63,25 @@ router.get("/:id", (req: Request<IdParam>, res: Response) => {
 
     const movies = db
       .prepare(
-        `SELECT m.id, m.title, m.release_year, m.poster_url, mco.role
+        `SELECT m.id, m.title, m.release_year, m.poster_url, m.tmdb_poster_path, m.local_poster_url, mco.role
          FROM movies m
          JOIN movie_companies mco ON m.id = mco.movie_id
          WHERE mco.company_id = ?
          ORDER BY m.release_year DESC NULLS LAST`,
       )
-      .all(id);
+      .all(id) as any[];
 
-    res.json({ success: true, data: { ...company, movies } });
+    const resolvedCompany = {
+      ...company,
+      logo_url: resolveImage(company.tmdb_logo_path, null, 'w185') || company.logo_url
+    };
+
+    const resolvedMovies = movies.map((m) => ({
+      ...m,
+      poster_url: resolveImage(m.tmdb_poster_path, m.local_poster_url) || m.poster_url
+    }));
+
+    res.json({ success: true, data: { ...resolvedCompany, movies: resolvedMovies } });
   } catch (err: any) {
     res.status(500).json({
       success: false,

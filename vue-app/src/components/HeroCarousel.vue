@@ -9,8 +9,8 @@
       <swiper-slide v-for="item in items" :key="item.uuid" class="w-full h-full relative cursor-pointer"
         @click="$emit('clickItem', item)">
         <!-- Background Image -->
-        <img :src="item.backdrop_url || item.poster_url" :alt="item.title"
-          class="w-full h-full object-cover" />
+        <AppImage :src="item.backdrop_url || item.poster_url" :alt="item.title" :type="item.type"
+          class="w-full h-full" />
 
         <!-- Gradient Overlay -->
         <div class="absolute inset-0 bg-linear-to-t from-surface-1 via-surface-1/4 to-transparent"></div>
@@ -54,6 +54,7 @@ import { Swiper, SwiperSlide } from 'swiper/vue'
 import { Autoplay, Pagination } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/pagination'
+import AppImage from '@/components/AppImage.vue'
 
 defineProps<{
   items: MediaCard[]

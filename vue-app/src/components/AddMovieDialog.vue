@@ -33,13 +33,6 @@
         </div>
       </div>
 
-      <!-- Director -->
-      <div>
-        <label class="block text-sm font-medium mb-2 text-text"> Director </label>
-        <InputText v-model="form.director" placeholder="Enter director name"
-          class="w-full !bg-surface-2 !border-border" />
-      </div>
-
       <!-- Poster URL -->
       <div>
         <label class="block text-sm font-medium mb-2 text-text"> Poster URL </label>
@@ -47,7 +40,7 @@
           class="w-full !bg-surface-2 !border-border" />
         <!-- Poster Preview -->
         <div v-if="form.poster_url" class="mt-2">
-          <img loading="lazy" :src="form.poster_url" alt="Poster preview" class="w-32 h-48 object-cover rounded-lg"
+          <AppImage :src="form.poster_url" alt="Poster preview" type="movie" class="w-32 h-48 rounded-lg"
             @error="posterError = true" />
           <small v-if="posterError" class="text-orange-500">
             Failed to load image. Check the URL.
@@ -84,6 +77,7 @@ import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import InputNumber from 'primevue/inputnumber'
 import MultiSelect from 'primevue/multiselect'
+import AppImage from '@/components/AppImage.vue'
 import Button from 'primevue/button'
 import { useMoviesStore } from '@/stores/moviesStore'
 import { useLanguagesStore } from '@/stores/languagesStore'
@@ -120,7 +114,6 @@ const form = ref<CreateMovieRequest | UpdateMovieRequest>({
   title: '',
   description: '',
   release_year: undefined,
-  director: '',
   poster_url: '',
   runtime: undefined,
   language_ids: [],
@@ -138,7 +131,6 @@ watch(
         title: movie.title,
         description: movie.description || '',
         release_year: movie.release_year,
-        director: movie.director || '',
         poster_url: movie.poster_url || '',
         runtime: movie.runtime,
         language_ids: movie.languages.map((l) => l.id),
@@ -164,7 +156,6 @@ function resetForm() {
     title: '',
     description: '',
     release_year: undefined,
-    director: '',
     poster_url: '',
     runtime: undefined,
     language_ids: [],
