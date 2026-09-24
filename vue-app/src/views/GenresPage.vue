@@ -45,7 +45,7 @@
         </div>
         <div class="flex flex-nowrap gap-3 overflow-x-auto pb-1">
           <RouterLink v-for="movie in (genresStore.moviesByGenre.get(genre.slug) ?? []).slice(0, 10)" :key="movie.id"
-            :to="`/movies/${movie.id}`" class="shrink-0 w-36 flex flex-col gap-1.5 cursor-pointer group">
+            :to="`/movies/${movie.uuid}`" class="shrink-0 w-36 flex flex-col gap-1.5 cursor-pointer group">
             <div v-if="movie.poster_url"
               class="w-full h-52 rounded-xl bg-surface-3 group-hover:ring-2 group-hover:ring-primary transition-all"
               :style="{

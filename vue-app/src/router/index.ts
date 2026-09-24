@@ -11,9 +11,19 @@ const router = createRouter({
       component: HomePage,
     },
     {
+      path: '/search',
+      name: 'Search',
+      component: () => import('../views/SearchPage.vue'),
+    },
+    {
       path: '/profile',
       name: 'Profile',
       component: () => import('../views/ProfilePage.vue'),
+    },
+    {
+      path: '/profile/collections/:id',
+      name: 'CollectionDetail',
+      component: () => import('../views/CollectionDetailsPage.vue'),
     },
     {
       path: '/login',

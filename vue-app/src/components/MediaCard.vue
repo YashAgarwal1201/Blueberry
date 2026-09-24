@@ -4,7 +4,7 @@
     :class="fluid ? 'w-full' : 'w-36 sm:w-44'"
     @click="$emit('click')">
     <div v-if="posterUrl" class="w-full aspect-2/3 bg-surface-3 relative overflow-hidden">
-      <img :src="posterUrl" :alt="title" class="w-full h-full object-cover select-none group-hover/card:scale-110 transition-transform duration-500" loading="lazy" />
+      <img :src="posterUrl" :alt="title" class="w-full h-full object-cover select-none" loading="lazy" />
       
       <!-- Gradient Overlay for hover effect -->
       <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 pointer-events-none"></div>

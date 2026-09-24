@@ -167,11 +167,11 @@
                 class="w-full aspect-video rounded-2xl bg-surface-2 overflow-hidden border-2 border-transparent group-hover:border-primary/50 shadow-md group-hover:shadow-xl transition-all relative">
                 <!-- Thumbnail -->
                 <img :src="video.thumbnail_url"
-                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  class="w-full h-full object-cover" />
                 <div
                   class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
                   <div
-                    class="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white group-hover:scale-110 transition-transform shadow-lg">
+                    class="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white shadow-lg">
                     <Play :size="20" fill="currentColor" class="ml-1" />
                   </div>
                 </div>

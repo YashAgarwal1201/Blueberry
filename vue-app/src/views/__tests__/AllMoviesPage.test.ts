@@ -92,7 +92,7 @@ describe('AllMoviesPage.vue', () => {
     })
 
     const selectSort = wrapper.findAll('select')[2] // third select is Sort by
-    await selectSort.setValue('title')
+    await selectSort!.setValue('title')
     
     expect(moviesStore.fetchMovies).toHaveBeenCalledWith({ sort: 'title' })
   })

@@ -116,7 +116,7 @@ describe('ProfilePage.vue', () => {
       }
     })
 
-    const signOutBtn = wrapper.find('button', { text: 'Sign Out' })
+
     // In actual template, it is a button with "Sign Out"
     const buttons = wrapper.findAll('button')
     const btn = buttons.find(b => b.text().includes('Sign Out'))

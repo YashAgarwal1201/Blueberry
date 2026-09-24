@@ -169,7 +169,7 @@
         <RouterLink
           v-for="movie in displayedMovies"
           :key="movie.id"
-          :to="`/movies/${movie.id}`"
+          :to="`/movies/${movie.uuid}`"
           class="flex flex-col gap-1.5 group cursor-pointer"
         >
           <!-- Poster -->

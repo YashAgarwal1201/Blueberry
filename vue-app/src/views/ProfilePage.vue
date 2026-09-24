@@ -87,10 +87,23 @@
             <CheckCircle :size="18" />
             Watched
           </button>
+          
+          <div class="w-px h-6 bg-border mx-2"></div>
+          
+          <button @click="activeTab = 'collections'" 
+            :class="activeTab === 'collections' ? 'border-primary text-primary' : 'border-transparent text-text-muted hover:text-text'" 
+            class="pb-3 border-b-2 font-semibold transition-colors flex items-center gap-2 whitespace-nowrap">
+            <Folder :size="18" />
+            My Collections
+          </button>
         </div>
 
         <div v-if="watchlistStore.loading" class="flex justify-center py-10">
           <div class="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+        </div>
+
+        <div v-else-if="activeTab === 'collections'" class="w-full">
+          <CollectionsList />
         </div>
         
         <div v-else-if="currentWatchlist.length === 0" class="flex flex-col items-center justify-center py-16 text-center bg-surface-1/50 rounded-2xl border border-dashed border-border">
@@ -129,15 +142,16 @@ import { useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useWatchlistStore } from '@/stores/watchListStore'
 import { authClient } from '@/lib/auth-client'
-import { UserCircle, LogOut, Bookmark, CheckCircle, PlayCircle } from 'lucide-vue-next'
+import { UserCircle, LogOut, Bookmark, CheckCircle, PlayCircle, Folder } from 'lucide-vue-next'
 import MediaCard from '@/components/MediaCard.vue'
+import CollectionsList from '@/components/CollectionsList.vue'
 import type { MediaCard as MediaCardType, WatchlistPopulatedItem } from 'shared-types'
 
 const authStore = useAuthStore()
 const watchlistStore = useWatchlistStore()
 const router = useRouter()
 
-const activeTab = ref<'want_to_watch' | 'watching' | 'watched'>('want_to_watch')
+const activeTab = ref<'want_to_watch' | 'watching' | 'watched' | 'collections'>('want_to_watch')
 
 const currentWatchlist = computed(() => {
   if (activeTab.value === 'want_to_watch') return watchlistStore.wantToWatch

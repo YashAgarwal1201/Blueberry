@@ -126,7 +126,7 @@
             <RouterLink
               v-for="film in filmography"
               :key="`${film.id}-${film.role}`"
-              :to="`/movies/${film.id}`"
+              :to="`/movies/${film.uuid}`"
               class="flex flex-col gap-1.5 group cursor-pointer"
               @click="$emit('update:visible', false)"
             >
@@ -180,6 +180,7 @@ import type { Person } from "shared-types"
 
 type FilmographyEntry = {
   id: number
+  uuid: string
   title: string
   release_year: number | null
   poster_url: string | null

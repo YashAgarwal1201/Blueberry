@@ -289,19 +289,22 @@ export interface PersonDetail extends Person {
   roles: { role: CastRole; count: number }[];
 }
 
-// ── Collections ───────────────────────────────────────────────────────────────
+export type CollectionPrivacy = 'private' | 'public' | 'unlisted';
+
 export interface Collection {
   id: number;
+  user_id: string;
   name: string;
   slug: string;
   description?: string;
   poster_url?: string;
-  movie_count: number;
+  privacy: CollectionPrivacy;
+  item_count: number;
   created_at: string;
 }
 
 export interface CollectionDetail extends Collection {
-  movies: MovieCard[];
+  items: MediaCard[];
 }
 
 // ── Home payload (for /home) ──────────────────────────────────────────────────
@@ -408,6 +411,7 @@ export interface CreateCollectionRequest {
   slug: string;
   description?: string;
   poster_url?: string;
+  privacy?: CollectionPrivacy;
 }
 
 export type UpdateCollectionRequest = Partial<CreateCollectionRequest>;

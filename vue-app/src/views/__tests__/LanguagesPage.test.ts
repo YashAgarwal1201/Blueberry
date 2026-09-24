@@ -121,8 +121,8 @@ describe('LanguagesPage.vue', () => {
     
     // Fill in inputs
     const inputs = wrapper.findAll('input')
-    await inputs[0].setValue('French')
-    await inputs[1].setValue('fr')
+    await inputs[0]!.setValue('French')
+    await inputs[1]!.setValue('fr')
     
     // Submit
     const dialogButtons = wrapper.findAll('button')

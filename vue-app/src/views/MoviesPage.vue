@@ -10,9 +10,11 @@
       <div class="flex items-center justify-between gap-3 px-2">
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Continue Watching</h2>
       </div>
-      <MediaCarousel>
-        <MediaCard v-for="movie in watchlistStore.watchingMovies" :key="movie.uuid" :title="movie.title" :poster-url="movie.poster_url"
-          :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+      <MediaCarousel :items="watchlistStore.watchingMovies">
+        <template #default="{ item: movie }">
+          <MediaCard :title="movie.title" :poster-url="movie.poster_url"
+            :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+        </template>
       </MediaCarousel>
     </div>
 
@@ -22,9 +24,11 @@
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Trending Movies</h2>
       </div>
       <div v-if="moviesStore.loadingHot" class="px-2 text-text-muted">Loading trending movies...</div>
-      <MediaCarousel v-else>
-        <MediaCard v-for="movie in moviesStore.hotMovies" :key="movie.uuid" :title="movie.title" :poster-url="movie.poster_url"
-          :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+      <MediaCarousel v-else :items="moviesStore.hotMovies || []">
+        <template #default="{ item: movie }">
+          <MediaCard :title="movie.title" :poster-url="movie.poster_url"
+            :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+        </template>
       </MediaCarousel>
     </div>
 
@@ -35,9 +39,11 @@
       </div>
 
       <div v-if="moviesStore.loading" class="px-2 text-text-muted">Loading movies...</div>
-      <MediaCarousel v-else>
-        <MediaCard v-for="movie in recentMovies" :key="movie.uuid" :title="movie.title" :poster-url="movie.poster_url"
-          :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+      <MediaCarousel v-else :items="recentMovies || []">
+        <template #default="{ item: movie }">
+          <MediaCard :title="movie.title" :poster-url="movie.poster_url"
+            :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+        </template>
       </MediaCarousel>
     </div>
 
@@ -47,9 +53,11 @@
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Top Rated Movies</h2>
       </div>
       <div v-if="moviesStore.loadingTopRated" class="px-2 text-text-muted">Loading top rated movies...</div>
-      <MediaCarousel v-else>
-        <MediaCard v-for="movie in moviesStore.topRatedMovies" :key="movie.uuid" :title="movie.title" :poster-url="movie.poster_url"
-          :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+      <MediaCarousel v-else :items="moviesStore.topRatedMovies || []">
+        <template #default="{ item: movie }">
+          <MediaCard :title="movie.title" :poster-url="movie.poster_url"
+            :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+        </template>
       </MediaCarousel>
     </div>
 

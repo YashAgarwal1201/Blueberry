@@ -145,20 +145,26 @@ db.exec(`
   -- ── Collections ───────────────────────────────────────────────────────────
   CREATE TABLE IF NOT EXISTS collections (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    name        TEXT NOT NULL UNIQUE,
-    slug        TEXT NOT NULL UNIQUE,
+    user_id     TEXT NOT NULL REFERENCES "user" ("id") ON DELETE CASCADE,
+    name        TEXT NOT NULL,
+    slug        TEXT NOT NULL,
     description TEXT,
     poster_url  TEXT,
-    created_at  TEXT DEFAULT (datetime('now'))
+    privacy     TEXT NOT NULL DEFAULT 'private' CHECK(privacy IN ('private', 'public', 'unlisted')),
+    created_at  TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, slug)
   );
 
 
-  CREATE TABLE IF NOT EXISTS collection_movies (
+  CREATE TABLE IF NOT EXISTS collection_items (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     collection_id INTEGER NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
-    movie_id      INTEGER NOT NULL REFERENCES movies(id)      ON DELETE CASCADE,
+    movie_id      INTEGER REFERENCES movies(id) ON DELETE CASCADE,
+    show_id       INTEGER REFERENCES tv_shows(id) ON DELETE CASCADE,
     display_order INTEGER NOT NULL DEFAULT 0,
-    UNIQUE(collection_id, movie_id)
+    CHECK (movie_id IS NOT NULL OR show_id IS NOT NULL),
+    UNIQUE(collection_id, movie_id),
+    UNIQUE(collection_id, show_id)
   );
 
   -- ── TV Shows ─────────────────────────────────────────────────────────────
@@ -223,8 +229,9 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_movie_cast_movie             ON movie_cast(movie_id);
   CREATE INDEX IF NOT EXISTS idx_movie_cast_person            ON movie_cast(person_id);
   CREATE INDEX IF NOT EXISTS idx_movie_companies_movie        ON movie_companies(movie_id);
-  CREATE INDEX IF NOT EXISTS idx_collection_movies_collection ON collection_movies(collection_id);
-  CREATE INDEX IF NOT EXISTS idx_collection_movies_movie      ON collection_movies(movie_id);
+  CREATE INDEX IF NOT EXISTS idx_collection_items_collection ON collection_items(collection_id);
+  CREATE INDEX IF NOT EXISTS idx_collection_items_movie      ON collection_items(movie_id);
+  CREATE INDEX IF NOT EXISTS idx_collection_items_show       ON collection_items(show_id);
 
   CREATE INDEX IF NOT EXISTS "session_userId_idx" on "session" ("userId");
   CREATE INDEX IF NOT EXISTS "account_userId_idx" on "account" ("userId");

@@ -237,6 +237,7 @@ const selectedPerson = ref<Person | null>(null)
 
 type FilmographyEntry = {
   id: number
+  uuid: string
   title: string
   release_year: number | null
   poster_url: string | null

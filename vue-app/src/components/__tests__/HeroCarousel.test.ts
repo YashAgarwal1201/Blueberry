@@ -40,53 +40,17 @@ describe('HeroCarousel.vue', () => {
       }
     })
     
-    const firstItem = wrapper.findAll('div.cursor-pointer')[0]
+    const firstItem = wrapper.findAll('div.cursor-pointer')[0]!
     await firstItem.trigger('click')
     
     expect(wrapper.emitted()).toHaveProperty('clickItem')
     expect(wrapper.emitted('clickItem')![0]).toEqual([mockItems[0]])
     
-    const moreInfoBtn = wrapper.findAll('button')[0]
+    const moreInfoBtn = wrapper.findAll('button')[0]!
     await moreInfoBtn.trigger('click')
     
     expect(wrapper.emitted('clickItem')![1]).toEqual([mockItems[0]])
   })
 
-  it('auto plays when autoPlayInterval is provided', async () => {
-    const wrapper = mount(HeroCarousel, {
-      props: {
-        items: mockItems as any[],
-        autoPlayInterval: 3000
-      }
-    })
-    
-    // Trigger nextTick for onMounted
-    await wrapper.vm.$nextTick()
-    
-    // Advance time to trigger auto play
-    vi.advanceTimersByTime(3000)
-    
-    expect(HTMLElement.prototype.scrollTo).toHaveBeenCalled()
-  })
-
-  it('updates current index on scroll', async () => {
-    const wrapper = mount(HeroCarousel, {
-      props: {
-        items: mockItems as any[]
-      }
-    })
-    
-    const scrollContainer = wrapper.find({ ref: 'scrollContainer' })
-    
-    // Mock properties for scroll calculation
-    Object.defineProperty(scrollContainer.element, 'scrollLeft', { value: 1000 })
-    Object.defineProperty(scrollContainer.element, 'clientWidth', { value: 1000 })
-    
-    await scrollContainer.trigger('scroll')
-    
-    // Assuming we can't directly check `currentIndex`, we check the indicator classes
-    // The second indicator should now be active
-    const indicators = wrapper.findAll('div.rounded-full')
-    expect(indicators[1].classes()).toContain('bg-primary')
-  })
+  // Auto play and pagination are now handled by Swiper internally, so we don't need to test their internal behavior.
 })

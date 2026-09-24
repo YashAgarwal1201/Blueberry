@@ -3,35 +3,19 @@ import { mount } from '@vue/test-utils'
 import MediaCarousel from '../MediaCarousel.vue'
 
 describe('MediaCarousel.vue', () => {
-  it('renders slot content', () => {
+  it('renders scoped slot content for each item', () => {
+    const items = [{ id: 1, name: 'Item 1' }, { id: 2, name: 'Item 2' }]
+    
     const wrapper = mount(MediaCarousel, {
+      props: { items },
       slots: {
-        default: '<div class="test-item">Carousel Item</div>'
-      },
-      global: {
-        stubs: {
-          TransitionGroup: false
-        }
+        default: `<template #default="{ item }"><div class="test-item">{{ item.name }}</div></template>`
       }
     })
     
-    expect(wrapper.find('.test-item').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Carousel Item')
-  })
-
-  it('applies correct classes for scroll and snap', () => {
-    const wrapper = mount(MediaCarousel, {
-      global: {
-        stubs: {
-          TransitionGroup: false
-        }
-      }
-    })
-    
-    const scrollContainer = wrapper.find('div.flex')
-    expect(scrollContainer.classes()).toContain('overflow-x-auto')
-    expect(scrollContainer.classes()).toContain('snap-x')
-    expect(scrollContainer.classes()).toContain('snap-mandatory')
-    expect(scrollContainer.classes()).toContain('hide-scrollbar')
+    const renderedItems = wrapper.findAll('.test-item')
+    expect(renderedItems).toHaveLength(2)
+    expect(renderedItems[0]!.text()).toBe('Item 1')
+    expect(renderedItems[1]!.text()).toBe('Item 2')
   })
 })

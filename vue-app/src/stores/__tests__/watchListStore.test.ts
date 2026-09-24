@@ -71,7 +71,7 @@ describe('watchlistStore', () => {
     const result = await store.updateStatus(1, 'watched')
     
     expect(apiClient.patch).toHaveBeenCalledWith('/watchlist/1', { status: 'watched' })
-    expect(store.items[0].status).toBe('watched')
+    expect(store.items[0]!.status).toBe('watched')
     expect(result).toEqual(updatedItem)
   })
 

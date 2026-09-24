@@ -61,6 +61,32 @@ router.get("/top-rated", (_req: Request, res: Response) => {
   }
 });
 
+// ── GET /tv ───────────────────────────────────────────────────────────────────
+router.get("/", (req: Request, res: Response) => {
+  try {
+    const search = req.query.search as string | undefined;
+    let query = "SELECT * FROM tv_shows";
+    let params: any[] = [];
+    
+    if (search?.trim()) {
+      query += " WHERE title LIKE ?";
+      params.push(`%${search.trim()}%`);
+    }
+    
+    query += " ORDER BY title ASC LIMIT 50";
+    
+    const shows = db.prepare(query).all(...params) as TVShow[];
+    const cards = toTVShowCards(shows, getWatchlistSet());
+    res.json({ success: true, data: cards });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch TV shows",
+      message: err.message,
+    });
+  }
+});
+
 // ── GET /tv/:uuid ──────────────────────────────────────────────────────────────
 router.get("/:uuid", (req: Request<UuidParam>, res: Response) => {
   try {

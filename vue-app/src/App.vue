@@ -16,7 +16,7 @@ const route = useRoute()
     </div>
 
     <!-- Floating Pills for Mobile -->
-    <div v-if="!route.meta.hideSidebar"
+    <div v-if="route.name === 'Home'"
       class="md:hidden absolute bottom-20 w-full flex justify-center gap-4 pointer-events-none z-50">
       <RouterLink to="/movies"
         class="pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md bg-surface-2/80 text-text font-medium shadow-lg hover:bg-surface-3 transition-colors border border-border/50"
