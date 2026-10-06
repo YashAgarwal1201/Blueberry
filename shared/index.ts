@@ -321,6 +321,23 @@ export interface WatchlistStats {
   total_runtime_watched: number;
 }
 
+export interface UserWatchedEpisode {
+  id: number;
+  user_id: string;
+  show_id: number;
+  season_id: number;
+  episode_id: number;
+  season_number: number;
+  episode_number: number;
+  watched_at: string;
+}
+
+export interface ContinueWatchingItem {
+  show: TVShow;
+  nextEpisode: TVEpisode;
+  progressPercentage: number;
+}
+
 // ── Genre with movies (for /genres/browse) ────────────────────────────────────
 export interface GenreWithMovies extends Genre {
   movie_count: number;

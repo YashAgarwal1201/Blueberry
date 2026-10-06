@@ -250,8 +250,21 @@ db.exec(`
     UNIQUE(show_id, company_id, role)
   );
 
+  CREATE TABLE IF NOT EXISTS user_watched_episodes (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id          TEXT NOT NULL REFERENCES "user"("id") ON DELETE CASCADE,
+    show_id          INTEGER NOT NULL REFERENCES tv_shows(id) ON DELETE CASCADE,
+    season_id        INTEGER REFERENCES tv_seasons(id) ON DELETE CASCADE,
+    episode_id       INTEGER NOT NULL REFERENCES tv_episodes(id) ON DELETE CASCADE,
+    season_number    INTEGER NOT NULL,
+    episode_number   INTEGER NOT NULL,
+    watched_at       TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, episode_id)
+  );
+
 
   -- ── Indexes ───────────────────────────────────────────────────────────────
+  CREATE INDEX IF NOT EXISTS idx_user_watched_show            ON user_watched_episodes(user_id, show_id);
   CREATE INDEX IF NOT EXISTS idx_movie_languages_movie        ON movie_languages(movie_id);
   CREATE INDEX IF NOT EXISTS idx_movie_languages_language     ON movie_languages(language_id);
   CREATE INDEX IF NOT EXISTS idx_watchlist_movie              ON watchlist(movie_id);

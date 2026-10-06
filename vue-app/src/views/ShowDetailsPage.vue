@@ -195,10 +195,17 @@
           </h2>
           <div class="flex overflow-x-auto gap-4 md:gap-6 pb-6 pt-2 snap-x hide-scrollbar">
             <div v-for="season in displaySeasons" :key="season.id"
-              class="flex flex-col gap-3 w-32 md:w-40 shrink-0 snap-start group cursor-pointer">
+              class="flex flex-col gap-3 w-32 md:w-40 shrink-0 snap-start group cursor-pointer relative">
               <div
                 class="w-full aspect-2/3 rounded-2xl bg-surface-2 overflow-hidden border-2 border-transparent group-hover:border-primary/50 shadow-md group-hover:shadow-xl transition-all relative">
                 <AppImage :src="season.poster_url" type="tv" class="w-full h-full" />
+                
+                <!-- Overlay for Marking Watched -->
+                <div v-if="authStore.isAuthenticated && !isDummySeasons" class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all z-20 backdrop-blur-sm">
+                   <button @click.stop="markSeasonWatched(season.id, season.title)" class="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all" title="Mark Season Watched">
+                     <CheckCircle2 size="20" />
+                   </button>
+                </div>
               </div>
               <div class="flex flex-col w-full px-1">
                 <div class="text-sm md:text-base font-bold text-white leading-tight">{{ season.title }}</div>
@@ -356,6 +363,16 @@ async function updateStatus(status: WatchlistStatus) {
     showToast('success', 'Updated', 'Watchlist status updated')
   } catch (err: unknown) {
     showToast('error', 'Error', getErrorMessage(err, 'Failed to update status'))
+  }
+}
+
+async function markSeasonWatched(seasonId: number, seasonTitle: string) {
+  if (!show.value) return
+  try {
+    await watchlistStore.markSeasonWatched(show.value.id, seasonId)
+    showToast('success', 'Season Watched', `${seasonTitle} of ${show.value.title} marked as watched.`)
+  } catch (err: unknown) {
+    showToast('error', 'Error', getErrorMessage(err, 'Failed to mark season watched'))
   }
 }
 

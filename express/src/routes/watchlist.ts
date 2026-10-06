@@ -376,4 +376,168 @@ router.delete("/:id", (req: Request<IdParam>, res: Response) => {
   }
 });
 
+// ── Continue Watching (TV) ───────────────────────────────────────────────────
+
+router.get("/tv/continue-watching", (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    
+    // 1. Get shows the user has watched episodes of, with their max season and episode
+    const progressStmt = db.prepare(`
+      SELECT 
+        show_id, 
+        MAX(season_number) as max_season, 
+        MAX(episode_number) as max_episode
+      FROM user_watched_episodes 
+      WHERE user_id = ?
+      GROUP BY show_id
+    `);
+    const progress = progressStmt.all(userId) as any[];
+
+    if (!progress.length) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const nextEpisodes = [];
+    
+    for (const p of progress) {
+      // Find the next chronological episode for this show.
+      // Easiest logic: find the first episode that is > max_episode in max_season,
+      // OR season > max_season, ordered by season_number ASC, episode_number ASC LIMIT 1
+      const nextEpStmt = db.prepare(`
+        SELECT e.* 
+        FROM tv_episodes e
+        JOIN tv_seasons s ON e.season_id = s.id
+        WHERE e.show_id = ? 
+          AND (
+            (s.season_number = ? AND e.episode_number > ?)
+            OR (s.season_number > ?)
+          )
+        ORDER BY s.season_number ASC, e.episode_number ASC
+        LIMIT 1
+      `);
+      
+      const nextEp = nextEpStmt.get(p.show_id, p.max_season, p.max_episode, p.max_season) as any;
+      
+      if (nextEp) {
+        // Fetch show details
+        const show = db.prepare(`SELECT * FROM tv_shows WHERE id = ?`).get(p.show_id) as any;
+        
+        // resolve images
+        show.poster_url = resolveImage(show.tmdb_poster_path, null) || show.poster_url;
+        show.backdrop_url = resolveImage(show.tmdb_backdrop_path, null, 'w780') || show.backdrop_url;
+        
+        nextEp.still_url = resolveImage(nextEp.tmdb_still_path, null) || nextEp.still_url;
+
+        nextEpisodes.push({
+          show,
+          nextEpisode: nextEp,
+          progressPercentage: 0 
+        });
+      }
+    }
+    
+    res.json({ success: true, data: nextEpisodes });
+  } catch (err: any) {
+    console.error("Error fetching continue watching:", err);
+    res.status(500).json({ success: false, error: "Failed to fetch continue watching feed" });
+  }
+});
+
+router.post("/tv/:showId/episodes/:episodeId/watched", (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const showId = parseInt(req.params.showId as string);
+    const episodeId = parseInt(req.params.episodeId as string);
+
+    // Get episode info
+    const episode = db.prepare(`
+      SELECT e.episode_number, s.season_number, s.id as season_id
+      FROM tv_episodes e
+      JOIN tv_seasons s ON e.season_id = s.id
+      WHERE e.id = ? AND e.show_id = ?
+    `).get(episodeId, showId) as any;
+
+    if (!episode) return res.status(404).json({ success: false, error: "Episode not found" });
+
+    // Insert into user_watched_episodes
+    db.prepare(`
+      INSERT OR IGNORE INTO user_watched_episodes (user_id, show_id, season_id, episode_id, season_number, episode_number)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(userId, showId, episode.season_id, episodeId, episode.season_number, episode.episode_number);
+
+    // Also update watchlist status to 'watching' if not already there
+    db.prepare(`
+      INSERT INTO watchlist (show_id, status, source)
+      VALUES (?, 'watching', 'manual')
+      ON CONFLICT(show_id) DO UPDATE SET status = 'watching' WHERE status = 'want_to_watch'
+    `).run(showId);
+
+    res.json({ success: true, message: "Episode marked as watched" });
+  } catch (err: any) {
+    console.error("Error marking episode watched:", err);
+    res.status(500).json({ success: false, error: "Failed to mark episode watched" });
+  }
+});
+
+router.delete("/tv/:showId/episodes/:episodeId/watched", (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const episodeId = parseInt(req.params.episodeId as string);
+
+    db.prepare(`
+      DELETE FROM user_watched_episodes 
+      WHERE user_id = ? AND episode_id = ?
+    `).run(userId, episodeId);
+
+    res.json({ success: true, message: "Episode unmarked as watched" });
+  } catch (err: any) {
+    console.error("Error unmarking episode:", err);
+    res.status(500).json({ success: false, error: "Failed to unmark episode" });
+  }
+});
+
+router.post("/tv/:showId/seasons/:seasonId/watched", (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const showId = parseInt(req.params.showId as string);
+    const seasonId = parseInt(req.params.seasonId as string);
+
+    // Get all episodes for this season
+    const episodes = db.prepare(`
+      SELECT e.id as episode_id, e.episode_number, s.season_number
+      FROM tv_episodes e
+      JOIN tv_seasons s ON e.season_id = s.id
+      WHERE s.id = ? AND e.show_id = ?
+    `).all(seasonId, showId) as any[];
+
+    if (!episodes.length) {
+       return res.status(404).json({ success: false, error: "Season or episodes not found" });
+    }
+
+    const insertStmt = db.prepare(`
+      INSERT OR IGNORE INTO user_watched_episodes (user_id, show_id, season_id, episode_id, season_number, episode_number)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+
+    db.transaction(() => {
+      for (const ep of episodes) {
+        insertStmt.run(userId, showId, seasonId, ep.episode_id, ep.season_number, ep.episode_number);
+      }
+      
+      // Update watchlist
+      db.prepare(`
+        INSERT INTO watchlist (show_id, status, source)
+        VALUES (?, 'watching', 'manual')
+        ON CONFLICT(show_id) DO UPDATE SET status = 'watching' WHERE status = 'want_to_watch'
+      `).run(showId);
+    })();
+
+    res.json({ success: true, message: "Season marked as watched" });
+  } catch (err: any) {
+    console.error("Error marking season watched:", err);
+    res.status(500).json({ success: false, error: "Failed to mark season watched" });
+  }
+});
+
 export default router;

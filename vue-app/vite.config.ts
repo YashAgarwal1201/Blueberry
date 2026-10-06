@@ -27,7 +27,7 @@ export default defineConfig(({ command }) => {
     plugins: [
       vue(),
       vueJsx(),
-      vueDevTools(),
+      vueDevTools({ componentInspector: false }),
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',

@@ -6,19 +6,7 @@
       :items="moviesStore.movies.slice(0, 5)" :auto-play-interval="4000" @clickItem="openDrawer" />
 
     <!-- Continue Watching -->
-    <div v-if="watchlistStore.watchingMedia.length > 0" class="flex flex-col gap-y-4">
-      <div class="flex items-center justify-between gap-3 px-2">
-        <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Continue Watching</h2>
-      </div>
-      <MediaCarousel :items="watchlistStore.watchingMedia as MediaCardType[]">
-        <template #default="{ item: media }">
-          <MediaCard :title="media.title"
-            :poster-url="media.poster_url"
-            :year="media.release_year"
-            :type="media.type" @click="openDrawer(media)" />
-        </template>
-      </MediaCarousel>
-    </div>
+    <ContinueWatchingCarousel v-if="authStore.isAuthenticated" @clickItem="openDrawer" />
 
     <!-- Trending Movies -->
     <div v-if="preferencesStore.showMovies && (moviesStore.loadingHot || moviesStore.hotMovies?.length)" class="flex flex-col gap-y-4">
@@ -220,6 +208,7 @@ import { usePreferencesStore } from '@/stores/preferencesStore'
 import { useCollectionsStore } from '@/stores/collectionsStore'
 import toastHandler from '@/composables/toastHandeler'
 import HeroCarousel from '@/components/HeroCarousel.vue'
+import ContinueWatchingCarousel from '@/components/ContinueWatchingCarousel.vue'
 import AppImage from '@/components/AppImage.vue'
 import MediaCarousel from '@/components/MediaCarousel.vue'
 import MediaCard from '@/components/MediaCard.vue'
