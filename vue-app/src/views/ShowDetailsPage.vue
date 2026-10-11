@@ -423,12 +423,52 @@ const moreOptionsRef = ref<HTMLElement | null>(null)
 const seasonDropdownRef = ref<HTMLElement | null>(null)
 const episodesContainerRef = ref<HTMLElement | null>(null)
 
-const activeTab = ref<'overview' | 'episodes' | 'cast' | 'related'>('overview')
+const VALID_TABS = ['overview', 'episodes', 'cast', 'related'] as const
+type TabType = typeof VALID_TABS[number]
+
+function getInitialTab(): TabType {
+  const queryTab = route.query?.tab as string
+  if (queryTab && VALID_TABS.includes(queryTab as TabType)) {
+    return queryTab as TabType
+  }
+  return 'overview'
+}
+
+const activeTab = ref<TabType>(getInitialTab())
 const activeSeasonId = ref<number | null>(null)
 const activeSeasonEpisodes = ref<any[]>([])
 const similarShows = ref<any[]>([])
 const loadingEpisodes = ref(false)
 const activeSeason = computed(() => displaySeasons.value.find(s => s.id === activeSeasonId.value))
+
+watch(activeTab, (newTab) => {
+  const currentTab = (route.query?.tab as string) || 'overview'
+  if (newTab !== currentTab) {
+    const query = { ...route.query }
+    if (newTab === 'overview') {
+      delete query.tab
+    } else {
+      query.tab = newTab
+    }
+    if (newTab !== 'episodes') {
+      delete query.season
+    } else if (activeSeason.value && activeSeason.value.season_number > 1) {
+      query.season = String(activeSeason.value.season_number)
+    }
+    if (router.replace) {
+      Promise.resolve(router.replace({ query })).catch(() => {})
+    }
+  }
+})
+
+watch(() => route.query?.tab, (newQueryTab) => {
+  const targetTab = (newQueryTab && VALID_TABS.includes(newQueryTab as TabType))
+    ? (newQueryTab as TabType)
+    : 'overview'
+  if (activeTab.value !== targetTab) {
+    activeTab.value = targetTab
+  }
+})
 
 // Watchlist Tracking
 const watchedEpisodesSet = ref<Set<number>>(new Set())
@@ -513,6 +553,17 @@ async function toggleEpisodeWatched(episode: any) {
 
 async function selectSeason(season: TVSeason) {
   activeSeasonId.value = season.id
+  if (activeTab.value === 'episodes' && router.replace) {
+    const query = { ...route.query }
+    if (season.season_number > 1) {
+      query.season = String(season.season_number)
+    } else {
+      delete query.season
+    }
+    if (route.query?.season !== query.season) {
+      Promise.resolve(router.replace({ query })).catch(() => {})
+    }
+  }
   if (!show.value) return
   loadingEpisodes.value = true
   try {
@@ -622,10 +673,14 @@ async function loadShow() {
       }
     }
     
-    // Select first season by default
+    // Select season from query if available, otherwise first season
     if (displaySeasons.value.length > 0) {
-      const firstSeason = displaySeasons.value[0];
-      if (firstSeason) selectSeason(firstSeason)
+      const seasonQuery = route.query?.season
+      const targetSeason = seasonQuery
+        ? displaySeasons.value.find(s => String(s.season_number) === String(seasonQuery) || String(s.id) === String(seasonQuery))
+        : null
+      const selected = targetSeason || displaySeasons.value[0]
+      if (selected) selectSeason(selected)
     }
     
   } catch (err: unknown) {
@@ -658,10 +713,10 @@ onBeforeUnmount(() => {
 })
 
 watch(() => route.params.uuid, (newUuid, oldUuid) => {
-  if (newUuid && newUuid !== oldUuid && route.name === 'show-detail') {
+  if (newUuid && newUuid !== oldUuid && (route.name === 'show-detail' || route.name === 'show-details')) {
     const container = document.querySelector('.hide-scrollbar')
     if (container) container.scrollTop = 0
-    activeTab.value = 'overview'
+    activeTab.value = getInitialTab()
     loadShow()
   }
 })

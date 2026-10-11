@@ -137,8 +137,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter, RouterLink } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useWatchlistStore } from '@/stores/watchListStore'
 import { authClient } from '@/lib/auth-client'
@@ -150,8 +150,44 @@ import type { MediaCard as MediaCardType, WatchlistPopulatedItem } from 'shared-
 const authStore = useAuthStore()
 const watchlistStore = useWatchlistStore()
 const router = useRouter()
+const route = useRoute()
 
-const activeTab = ref<'want_to_watch' | 'watching' | 'watched' | 'collections'>('want_to_watch')
+const VALID_TABS = ['want_to_watch', 'watching', 'watched', 'collections'] as const
+type ProfileTabType = typeof VALID_TABS[number]
+
+function getInitialTab(): ProfileTabType {
+  const queryTab = route.query?.tab as string
+  if (queryTab && VALID_TABS.includes(queryTab as ProfileTabType)) {
+    return queryTab as ProfileTabType
+  }
+  return 'want_to_watch'
+}
+
+const activeTab = ref<ProfileTabType>(getInitialTab())
+
+watch(activeTab, (newTab) => {
+  const currentTab = (route.query?.tab as string) || 'want_to_watch'
+  if (newTab !== currentTab) {
+    const query = { ...route.query }
+    if (newTab === 'want_to_watch') {
+      delete query.tab
+    } else {
+      query.tab = newTab
+    }
+    if (router.replace) {
+      Promise.resolve(router.replace({ query })).catch(() => {})
+    }
+  }
+})
+
+watch(() => route.query?.tab, (newQueryTab) => {
+  const targetTab = (newQueryTab && VALID_TABS.includes(newQueryTab as ProfileTabType))
+    ? (newQueryTab as ProfileTabType)
+    : 'want_to_watch'
+  if (activeTab.value !== targetTab) {
+    activeTab.value = targetTab
+  }
+})
 
 const currentWatchlist = computed(() => {
   if (activeTab.value === 'want_to_watch') return watchlistStore.wantToWatch

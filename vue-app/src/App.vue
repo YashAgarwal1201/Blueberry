@@ -3,6 +3,7 @@ import { RouterView, useRoute } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import { Toast } from 'primevue'
 import SideMenu from './components/SideMenu.vue'
+import ScrollToTop from './components/ScrollToTop.vue'
 import { Film, Tv } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -42,6 +43,7 @@ const route = useRoute()
     </div>
 
     <SideMenu v-if="!route.meta.hideSidebar" />
+    <ScrollToTop />
   </div>
 </template>
 

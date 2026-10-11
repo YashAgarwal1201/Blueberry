@@ -360,7 +360,42 @@ const moreOptionsOpen = ref(false)
 const watchlistDropdownRef = ref<HTMLElement | null>(null)
 const moreOptionsRef = ref<HTMLElement | null>(null)
 
-const activeTab = ref<'overview' | 'cast' | 'related'>('overview')
+const VALID_TABS = ['overview', 'cast', 'related'] as const
+type TabType = typeof VALID_TABS[number]
+
+function getInitialTab(): TabType {
+  const queryTab = route.query?.tab as string
+  if (queryTab && VALID_TABS.includes(queryTab as TabType)) {
+    return queryTab as TabType
+  }
+  return 'overview'
+}
+
+const activeTab = ref<TabType>(getInitialTab())
+
+watch(activeTab, (newTab) => {
+  const currentTab = (route.query?.tab as string) || 'overview'
+  if (newTab !== currentTab) {
+    const query = { ...route.query }
+    if (newTab === 'overview') {
+      delete query.tab
+    } else {
+      query.tab = newTab
+    }
+    if (router.replace) {
+      Promise.resolve(router.replace({ query })).catch(() => {})
+    }
+  }
+})
+
+watch(() => route.query?.tab, (newQueryTab) => {
+  const targetTab = (newQueryTab && VALID_TABS.includes(newQueryTab as TabType))
+    ? (newQueryTab as TabType)
+    : 'overview'
+  if (activeTab.value !== targetTab) {
+    activeTab.value = targetTab
+  }
+})
 
 // --- Dummy Trailers ---
 const displayTrailers = computed(() => {
@@ -479,10 +514,10 @@ async function loadMovie() {
 }
 
 watch(() => route.params.uuid, (newUuid, oldUuid) => {
-  if (newUuid && newUuid !== oldUuid && route.name === 'movie-detail') {
+  if (newUuid && newUuid !== oldUuid && (route.name === 'movie-detail' || route.name === 'movie-details')) {
     const container = document.querySelector('.hide-scrollbar')
     if (container) container.scrollTop = 0
-    activeTab.value = 'overview'
+    activeTab.value = getInitialTab()
     loadMovie()
   }
 })

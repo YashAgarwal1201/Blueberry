@@ -7,8 +7,8 @@ import { useWatchlistStore } from '@/stores/watchListStore'
 import { useAuthStore } from '@/stores/authStore'
 import { usePreferencesStore } from '@/stores/preferencesStore'
 
-const mockRoute = { params: { uuid: '123-abc' }, name: 'movie-details' }
-const mockRouter = { push: vi.fn(), back: vi.fn() }
+const mockRoute = { params: { uuid: '123-abc' }, query: {} as Record<string, any>, name: 'movie-details' }
+const mockRouter = { push: vi.fn(), replace: vi.fn(), back: vi.fn() }
 
 vi.mock('vue-router', () => ({
   useRoute: () => mockRoute,
