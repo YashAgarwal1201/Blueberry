@@ -50,6 +50,6 @@ watch(() => props.src, () => {
 
 <script lang="ts">
 export default {
-  inheritAttrs: false
+  name: 'AppImage'
 }
 </script>

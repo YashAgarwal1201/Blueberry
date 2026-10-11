@@ -12,4 +12,7 @@ data/
 *.db-shm
 *.sqlite
 
+# Dev / Scratch scripts
+scripts/seed-tv.ts
+
 blueberry-api-architecture.md

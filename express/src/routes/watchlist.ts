@@ -444,6 +444,27 @@ router.get("/tv/continue-watching", (req: Request, res: Response) => {
   }
 });
 
+router.get("/tv/:showId/watched-episodes", (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId) return res.status(401).json({ success: false, error: "Unauthorized" });
+
+    const showId = parseInt(req.params.showId as string);
+    if (isNaN(showId)) return res.status(400).json({ success: false, error: "Invalid show ID" });
+
+    const episodes = db.prepare(`
+      SELECT episode_id 
+      FROM user_watched_episodes 
+      WHERE user_id = ? AND show_id = ?
+    `).all(userId, showId) as { episode_id: number }[];
+
+    res.json({ success: true, data: episodes.map(e => e.episode_id) });
+  } catch (err: any) {
+    console.error("Error fetching watched episodes:", err);
+    res.status(500).json({ success: false, error: "Failed to fetch watched episodes" });
+  }
+});
+
 router.post("/tv/:showId/episodes/:episodeId/watched", (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;

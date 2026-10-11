@@ -181,6 +181,16 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
     }
   }
 
+  const fetchWatchedEpisodes = async (showId: number) => {
+    try {
+      const response = await apiClient.get(`/watchlist/tv/${showId}/watched-episodes`)
+      return response.data.data as number[]
+    } catch (err: unknown) {
+      console.error('Error fetching watched episodes:', err)
+      return []
+    }
+  }
+
   const markEpisodeWatched = async (showId: number, episodeId: number) => {
     try {
       await apiClient.post(`/watchlist/tv/${showId}/episodes/${episodeId}/watched`)
@@ -229,6 +239,7 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
     getItemByShowId,
     fetchWatchlist,
     fetchContinueWatching,
+    fetchWatchedEpisodes,
     markEpisodeWatched,
     unmarkEpisodeWatched,
     markSeasonWatched,

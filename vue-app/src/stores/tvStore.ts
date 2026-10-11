@@ -60,6 +60,32 @@ export const useTvStore = defineStore('tvStore', () => {
     }
   }
 
+  const fetchSimilarShows = async (uuid: string) => {
+    try {
+      const response = await apiClient.get(`tv/${uuid}/similar`)
+      return response.data.data as TVShowCard[]
+    } catch (err: unknown) {
+      console.error('Error fetching similar shows:', err)
+      throw err
+    }
+  }
+
+  const fetchSeasonEpisodes = async (uuid: string, seasonId: number) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await apiClient.get(`tv/${uuid}/seasons/${seasonId}/episodes`)
+      return response.data.data // Returns an array of episodes
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error fetching season episodes')
+      console.error('Error fetching season episodes:', err)
+      error.value = message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const removeShowLocally = (uuid: string) => {
     recentShows.value = recentShows.value.filter(s => s.uuid !== uuid)
     topRatedShows.value = topRatedShows.value.filter(s => s.uuid !== uuid)
@@ -73,6 +99,8 @@ export const useTvStore = defineStore('tvStore', () => {
     fetchRecentShows,
     fetchTopRatedShows,
     fetchShowById,
+    fetchSimilarShows,
+    fetchSeasonEpisodes,
     removeShowLocally,
   }
 })

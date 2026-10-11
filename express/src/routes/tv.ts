@@ -70,6 +70,8 @@ function toTVShowCards(shows: TVShow[], watchlistSet: Set<number>): TVShowCard[]
     tmdb_id: s.tmdb_id,
     in_watchlist: watchlistSet.has(s.id),
     genres: genreMap.get(s.id) ?? [],
+    description: s.description,
+    tagline: s.tagline,
   }));
 }
 
@@ -251,6 +253,55 @@ router.get("/:uuid", (req: Request<UuidParam>, res: Response) => {
     res.json({ success: true, data: showWithDetails });
   } catch (err: any) {
     res.status(500).json({ success: false, error: "Failed to fetch TV show", message: err.message });
+  }
+});
+
+// ── GET /tv/:uuid/similar ──────────────────────────────────────────────────────
+router.get("/:uuid/similar", (req: Request<UuidParam>, res: Response) => {
+  try {
+    const uuid = req.params.uuid;
+    const user = (req as any).user;
+    
+    const show = db.prepare(`SELECT id FROM tv_shows WHERE uuid = ?`).get(uuid) as { id: number } | undefined;
+    if (!show) return res.status(404).json({ success: false, error: "TV Show not found" });
+
+    const similar = db.prepare(`
+      SELECT s.*, COUNT(tg.genre_id) as shared_genres
+      FROM tv_shows s
+      JOIN tv_genres tg ON s.id = tg.show_id
+      WHERE tg.genre_id IN (SELECT genre_id FROM tv_genres WHERE show_id = ?)
+        AND s.id != ?
+      GROUP BY s.id
+      ORDER BY shared_genres DESC, s.first_air_date DESC
+      LIMIT 15
+    `).all(show.id, show.id) as TVShow[];
+    
+    const cards = toTVShowCards(similar, getWatchlistSet());
+    res.json({ success: true, data: cards });
+  } catch(err: any) {
+    res.status(500).json({ success: false, error: "Failed to fetch similar tv shows", message: err.message });
+  }
+});
+
+// ── GET /tv/:uuid/seasons/:seasonId/episodes ──────────────────────────────
+router.get("/:uuid/seasons/:seasonId/episodes", (req: Request, res: Response) => {
+  try {
+    const seasonId = parseInt(req.params.seasonId as string);
+    if (isNaN(seasonId)) {
+      return res.status(400).json({ success: false, error: "Invalid season ID" });
+    }
+    const episodes = db
+      .prepare(`SELECT * FROM tv_episodes WHERE season_id = ? ORDER BY episode_number ASC`)
+      .all(seasonId) as any[];
+    
+    const mapped = episodes.map(e => ({
+      ...e,
+      still_url: resolveImage(e.tmdb_still_path, null, 'w300') || e.still_url
+    }));
+
+    res.json({ success: true, data: mapped });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: "Failed to fetch episodes", message: err.message });
   }
 });
 

@@ -5,8 +5,8 @@
 
 /* ── Step 1: @theme inline — aliases only, NO hard-coded values ── */
 @theme inline {
-  --font-heading: 'Space Mono', monospace;
-  --font-content: 'Work Sans', sans-serif;
+  --font-heading: 'Outfit', sans-serif;
+  --font-content: 'Inter', sans-serif;
 
   --breakpoint-3xl: 110rem;
 

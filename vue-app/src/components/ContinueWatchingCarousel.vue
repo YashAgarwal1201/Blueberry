@@ -16,7 +16,7 @@
         
         <!-- Mark Watched Button overlay -->
         <button @click.stop="markWatched(item)" class="absolute top-2 right-2 w-8 h-8 sm:w-10 sm:h-10 bg-black/40 hover:bg-primary/90 text-white rounded-full flex items-center justify-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all z-20" title="Mark Watched">
-           <Check size="18" />
+           <Check :size="18" />
         </button>
         <!-- Progress Bar -->
         <div class="absolute bottom-0 left-0 h-1.5 bg-surface/50 w-full">

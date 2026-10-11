@@ -271,6 +271,16 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     }
   }
 
+  const fetchSimilarMovies = async (uuid: string) => {
+    try {
+      const response = await apiClient.get(`movies/${uuid}/similar`)
+      return response.data.data as MovieWithDetails[]
+    } catch (err: unknown) {
+      console.error('Error fetching similar movies:', err)
+      throw err
+    }
+  }
+
   const addMovie = async (movieData: CreateMovieRequest) => {
     loading.value = true
     error.value = null
@@ -359,6 +369,7 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     fetchTopRatedMovies,
     fetchHotMovies,
     fetchMovieById,
+    fetchSimilarMovies,
     addMovie,
     updateMovie,
     deleteMovie,

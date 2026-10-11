@@ -139,6 +139,8 @@ function toMovieCards(movies: Movie[], watchlistSet: Set<number>): MovieCard[] {
     in_watchlist: watchlistSet.has(m.id),
     languages: langMap.get(m.id) ?? [],
     genres: genreMap.get(m.id) ?? [],
+    description: m.description,
+    tagline: m.tagline,
   }));
 }
 
@@ -496,6 +498,35 @@ router.get("/:uuid", (req: Request<UuidParam>, res: Response) => {
         error: "Failed to fetch movie",
         message: err.message,
       });
+  }
+});
+
+// ── GET /movies/:uuid/similar ───────────────────────────────────────────────────
+router.get("/:uuid/similar", optionalAuth, (req: Request, res: Response) => {
+  try {
+    const uuid = req.params.uuid;
+    const user = (req as any).user;
+    const { andClause, params } = getBlockConditions(user?.id);
+    
+    const movie = db.prepare(`SELECT id FROM movies WHERE uuid = ?`).get(uuid) as { id: number } | undefined;
+    if (!movie) return res.status(404).json({ success: false, error: "Movie not found" });
+
+    const similar = db.prepare(`
+      SELECT m.*, COUNT(mg.genre_id) as shared_genres
+      FROM movies m
+      JOIN movie_genres mg ON m.id = mg.movie_id
+      WHERE mg.genre_id IN (SELECT genre_id FROM movie_genres WHERE movie_id = ?)
+        AND m.id != ?
+        ${andClause}
+      GROUP BY m.id
+      ORDER BY shared_genres DESC, m.release_year DESC
+      LIMIT 15
+    `).all(movie.id, movie.id, ...params) as Movie[];
+    
+    const cards = toMovieCards(similar, getWatchlistSet());
+    res.json({ success: true, data: cards });
+  } catch(err: any) {
+    res.status(500).json({ success: false, error: "Failed to fetch similar movies", message: err.message });
   }
 });
 

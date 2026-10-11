@@ -247,6 +247,7 @@ export interface TVEpisode {
   id: number;
   uuid: string;
   season_id: number;
+  season_number?: number;
   show_id: number;
   episode_number: number;
   title: string;
