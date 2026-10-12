@@ -32,3 +32,6 @@ test*.js
 .vscode/
 !.vscode/extensions.json
 .idea/
+
+# Repomix
+repomix-output.*

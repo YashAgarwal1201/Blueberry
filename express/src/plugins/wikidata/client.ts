@@ -64,12 +64,17 @@ export const wikidataClient = {
       throw new Error(`Wikidata API error: ${res.status} ${res.statusText}`);
     }
 
-    const data = await res.json() as any;
+    interface WikidataRawSearchResponse {
+      search?: WikidataSearchResult[];
+      error?: { info: string };
+    }
+
+    const data = (await res.json()) as WikidataRawSearchResponse;
     if (data.error) {
       throw new Error(`Wikidata API error: ${data.error.info}`);
     }
 
-    return (data.search || []).map((item: any) => ({
+    return (data.search || []).map((item) => ({
       id: item.id,
       title: item.title,
       label: item.label,

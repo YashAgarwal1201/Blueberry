@@ -2,6 +2,8 @@
 import express, { Request, Response, Router } from "express";
 import db from "../db";
 import { resolveImage } from "../utils/imageUtils";
+import { getMovieWatchlistSet } from "../utils/watchlistCache";
+import { getErrorMessage } from "../utils/errors";
 import type {
   Genre,
   Movie,
@@ -11,6 +13,13 @@ import type {
 } from "shared-types";
 
 const router: Router = express.Router();
+
+const MOVIE_CARD_COLUMNS = `
+  m.id, m.uuid, m.title, m.tagline, m.description, m.status,
+  m.release_year, m.runtime, m.age_rating, m.tmdb_id,
+  m.poster_url, m.backdrop_url, m.local_poster_url, m.local_backdrop_url,
+  m.tmdb_poster_path, m.tmdb_backdrop_path, m.rating_imdb
+`.replace(/\s+/g, " ").trim();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -82,21 +91,15 @@ function toMovieCards(movies: Movie[]): MovieCard[] {
     genreMap.get(movie_id)!.push(g);
   });
 
-  const watchlist = new Set(
-    (
-      db.prepare(`SELECT movie_id FROM watchlist`).all() as {
-        movie_id: number;
-      }[]
-    ).map((r) => r.movie_id),
-  );
+  const watchlist = getMovieWatchlistSet();
 
   return movies.map((m) => ({
     id: m.id,
     uuid: m.uuid,
     type: 'movie',
     title: m.title,
-    poster_url: resolveImage((m as any).tmdb_poster_path, (m as any).local_poster_url) || m.poster_url,
-    backdrop_url: resolveImage((m as any).tmdb_backdrop_path, (m as any).local_backdrop_url, 'w780') || m.backdrop_url,
+    poster_url: resolveImage(m.tmdb_poster_path, m.local_poster_url) || m.poster_url,
+    backdrop_url: resolveImage(m.tmdb_backdrop_path, m.local_backdrop_url, 'w780') || m.backdrop_url,
     release_year: m.release_year,
     runtime: m.runtime,
     rating_imdb: m.rating_imdb,
@@ -144,13 +147,13 @@ router.get("/", (_req: Request, res: Response) => {
       Genre & { movie_count: number }
     >;
     res.json({ success: true, data: genres });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res
       .status(500)
       .json({
         success: false,
         error: "Failed to fetch genres",
-        message: err.message,
+        message: getErrorMessage(err),
       });
   }
 });
@@ -165,7 +168,7 @@ router.get("/:slug/sections", (req: Request, res: Response) => {
 
     const rawMovies = db
       .prepare(
-        `SELECT m.*
+        `SELECT ${MOVIE_CARD_COLUMNS}
          FROM movies m
          JOIN movie_genres mg ON m.id = mg.movie_id
          WHERE mg.genre_id = ?
@@ -194,11 +197,11 @@ router.get("/:slug/sections", (req: Request, res: Response) => {
       .sort((a, b) => b.movies.length - a.movies.length);
 
     res.json({ success: true, data: { genre, sections } });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res.status(500).json({
       success: false,
       error: "Failed to fetch genre sections",
-      message: err.message,
+      message: getErrorMessage(err),
     });
   }
 });
@@ -245,7 +248,7 @@ router.get("/:slug/movies", (req: Request, res: Response) => {
 
     const movies = db
       .prepare(
-        `SELECT m.*
+        `SELECT ${MOVIE_CARD_COLUMNS}
          FROM movies m
          JOIN movie_genres mg ON m.id = mg.movie_id
          WHERE ${where}
@@ -269,13 +272,13 @@ router.get("/:slug/movies", (req: Request, res: Response) => {
         hasPrev: page > 1,
       },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res
       .status(500)
       .json({
         success: false,
         error: "Failed to fetch movies for genre",
-        message: err.message,
+        message: getErrorMessage(err),
       });
   }
 });
@@ -289,13 +292,13 @@ router.get("/:slug", (req: Request, res: Response) => {
     if (!genre)
       return res.status(404).json({ success: false, error: "Genre not found" });
     res.json({ success: true, data: genre });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res
       .status(500)
       .json({
         success: false,
         error: "Failed to fetch genre",
-        message: err.message,
+        message: getErrorMessage(err),
       });
   }
 });
@@ -326,8 +329,9 @@ router.post("/", (req: Request, res: Response) => {
         message: "Genre created successfully",
         data: genre,
       });
-  } catch (err: any) {
-    if (err.message.includes("UNIQUE constraint failed"))
+  } catch (err: unknown) {
+    const msg = getErrorMessage(err);
+    if (msg.includes("UNIQUE constraint failed"))
       return res
         .status(409)
         .json({ success: false, error: "Genre name or slug already exists" });
@@ -336,7 +340,7 @@ router.post("/", (req: Request, res: Response) => {
       .json({
         success: false,
         error: "Failed to create genre",
-        message: err.message,
+        message: msg,
       });
   }
 });
@@ -370,8 +374,9 @@ router.put("/:slug", (req: Request, res: Response) => {
       message: "Genre updated successfully",
       data: genre,
     });
-  } catch (err: any) {
-    if (err.message.includes("UNIQUE constraint failed"))
+  } catch (err: unknown) {
+    const msg = getErrorMessage(err);
+    if (msg.includes("UNIQUE constraint failed"))
       return res
         .status(409)
         .json({ success: false, error: "Genre name or slug already exists" });
@@ -380,7 +385,7 @@ router.put("/:slug", (req: Request, res: Response) => {
       .json({
         success: false,
         error: "Failed to update genre",
-        message: err.message,
+        message: msg,
       });
   }
 });
@@ -408,13 +413,13 @@ router.delete("/:slug", (req: Request, res: Response) => {
       message: "Genre deleted successfully",
       data: { id: genre.id, name: genre.name },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res
       .status(500)
       .json({
         success: false,
         error: "Failed to delete genre",
-        message: err.message,
+        message: getErrorMessage(err),
       });
   }
 });

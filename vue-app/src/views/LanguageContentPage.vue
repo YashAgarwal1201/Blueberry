@@ -77,7 +77,7 @@ import MediaDrawer from '@/components/MediaDrawer.vue'
 import { useLanguagesStore } from '@/stores/languagesStore'
 import { useWatchlistStore } from '@/stores/watchListStore'
 import { useAuthStore } from '@/stores/authStore'
-import toastHandler from '@/composables/toastHandeler'
+import toastHandler from '@/composables/toastHandler'
 import type { MediaCard as MediaCardType, MovieCard } from 'shared-types'
 
 const route = useRoute()
@@ -120,7 +120,7 @@ function openDrawer(movie: MovieCard) {
     backdrop_url: movie.backdrop_url,
     type: 'movie',
     genres: movie.genres,
-    description: (movie as any).description,
+    description: movie.description,
     runtime: movie.runtime,
     age_rating: movie.age_rating,
     status: movie.status || 'released',

@@ -496,6 +496,29 @@ db.exec(
   `CREATE UNIQUE INDEX IF NOT EXISTS uniq_people_wikidata_id ON people(wikidata_id) WHERE wikidata_id IS NOT NULL`,
 );
 
+// Sorting & list query indexes
+db.exec(
+  `CREATE        INDEX IF NOT EXISTS idx_movies_rating_imdb    ON movies(rating_imdb DESC)`,
+);
+db.exec(
+  `CREATE        INDEX IF NOT EXISTS idx_movies_release_year   ON movies(release_year DESC)`,
+);
+db.exec(
+  `CREATE        INDEX IF NOT EXISTS idx_movies_created_at     ON movies(created_at DESC)`,
+);
+db.exec(
+  `CREATE        INDEX IF NOT EXISTS idx_tv_rating             ON tv_shows(rating_imdb DESC)`,
+);
+db.exec(
+  `CREATE        INDEX IF NOT EXISTS idx_tv_air_date           ON tv_shows(first_air_date DESC)`,
+);
+db.exec(
+  `CREATE        INDEX IF NOT EXISTS idx_tv_status             ON tv_shows(status)`,
+);
+db.exec(
+  `CREATE        INDEX IF NOT EXISTS idx_tv_episode_count      ON tv_shows(episode_count DESC)`,
+);
+
 console.log("✅ Database ready");
 
 export default db;

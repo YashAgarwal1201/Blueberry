@@ -2,6 +2,16 @@ import { Request, Response, NextFunction } from "express";
 import { auth } from "../auth";
 import { fromNodeHeaders } from "better-auth/node";
 
+export type AuthUser = typeof auth.$Infer.Session.user;
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: AuthUser;
+    }
+  }
+}
+
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const session = await auth.api.getSession({
@@ -14,7 +24,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     }
 
     // Attach user to request for downstream handlers
-    (req as any).user = session.user;
+    req.user = session.user;
     next();
   } catch (error) {
     console.error("Auth middleware error:", error);
@@ -29,7 +39,7 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
     });
 
     if (session) {
-      (req as any).user = session.user;
+      req.user = session.user;
     }
     next();
   } catch (error) {
@@ -37,3 +47,4 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
     next();
   }
 };
+

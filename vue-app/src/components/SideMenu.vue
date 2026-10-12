@@ -44,6 +44,13 @@
                 <span>Movies</span>
               </RouterLink>
             </template>
+            <template v-if="preferencesStore.showShows">
+              <div class="mx-2 my-1 h-px bg-border" />
+              <RouterLink :class="buttonStyles" to="/shows" @click="mainStore.showSideMenu = false">
+                <Tv :size="16" class="text-text-muted" />
+                <span>Shows</span>
+              </RouterLink>
+            </template>
 
             <div class="mx-2 my-1 h-px bg-border" />
 
@@ -55,21 +62,21 @@
             <div class="mx-2 my-1 h-px bg-border" />
 
             <RouterLink :class="buttonStyles" to="/genres" @click="mainStore.showSideMenu = false">
-              <Blocks :size="16" class="text-text-muted" />
+              <Clapperboard :size="16" class="text-text-muted" />
               <span>Genres</span>
             </RouterLink>
 
             <template v-if="preferencesStore.showPeople">
               <div class="mx-2 my-1 h-px bg-border" />
               <RouterLink :class="buttonStyles" to="/people" @click="mainStore.showSideMenu = false">
-                <UserSquare :size="16" class="text-text-muted" />
+                <Users :size="16" class="text-text-muted" />
                 <span>People</span>
               </RouterLink>
             </template>
             <div class="mx-2 my-1 h-px bg-border" />
 
             <RouterLink :class="buttonStyles" to="/settings" @click="mainStore.showSideMenu = false">
-              <Wrench :size="16" class="text-text-muted" />
+              <Settings :size="16" class="text-text-muted" />
               <span>Settings</span>
             </RouterLink>
 
@@ -89,11 +96,11 @@
 </template>
 
 <script setup lang="ts">
-import { Blocks, Film, Languages, List, Palette, Search, UserCircle, UserSquare, Wrench } from 'lucide-vue-next'
+import { Clapperboard, Film, Languages, List, Palette, Search, Settings, Tv, UserCircle, Users } from 'lucide-vue-next'
 import { Drawer, Select } from 'primevue'
 import { useMainStore } from '@/stores/mainStore'
 import { usePreferencesStore } from '@/stores/preferencesStore'
-import toastHandler from '@/composables/toastHandeler'
+import toastHandler from '@/composables/toastHandler'
 import { DEVELOPER_PROFILE } from '@/services/constants'
 import { useTheme } from '@/composables/theme'
 

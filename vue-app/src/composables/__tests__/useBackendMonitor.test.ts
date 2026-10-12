@@ -12,7 +12,7 @@ vi.mock('vue-router', () => ({
 }))
 
 const mockShowToast = vi.fn()
-vi.mock('@/composables/toastHandeler', () => ({
+vi.mock('@/composables/toastHandler', () => ({
   default: () => ({ showToast: mockShowToast })
 }))
 

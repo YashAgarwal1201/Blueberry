@@ -39,8 +39,8 @@
           </span>
         </div>
 
-        <div class="text-sm text-text-muted leading-relaxed line-clamp-3" v-if="(media as any).description">
-          {{ (media as any).description }}
+        <div class="text-sm text-text-muted leading-relaxed line-clamp-3" v-if="media.description">
+          {{ media.description }}
         </div>
 
         <!-- Action Buttons -->

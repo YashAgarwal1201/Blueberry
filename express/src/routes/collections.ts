@@ -2,15 +2,21 @@ import express, { Request, Response, Router } from "express";
 import db from "../db";
 import { requireAuth, optionalAuth } from "../middleware/authMiddleware";
 import { resolveImage } from "../utils/imageUtils";
+import { clean } from "../utils/stringUtils";
 import type {
   Collection,
   CollectionDetail,
   MediaCard,
+  MovieCard,
+  TVShowCard,
+  Movie,
+  TVShow,
   Language,
   Genre,
   CreateCollectionRequest,
   UpdateCollectionRequest,
 } from "shared-types";
+import { getErrorMessage } from "../utils/errors";
 
 const router: Router = express.Router();
 
@@ -24,11 +30,7 @@ function slugify(name: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
-function clean(str?: string | null): string | null {
-  if (str === undefined || str === null) return null;
-  const t = str.trim();
-  return t === "" ? null : t;
-}
+
 
 /** Fetch MediaCard[] for a collection (bulk, mixed media) */
 function getMediaCardsForCollection(collectionId: number): MediaCard[] {
@@ -45,40 +47,46 @@ function getMediaCardsForCollection(collectionId: number): MediaCard[] {
   const movieIds = items.map(i => i.movie_id).filter(Boolean) as number[];
   const showIds = items.map(i => i.show_id).filter(Boolean) as number[];
 
-  const movieMap = new Map<number, any>();
-  const showMap = new Map<number, any>();
+  const movieMap = new Map<number, MovieCard>();
+  const showMap = new Map<number, TVShowCard>();
 
   // Fetch Movies
   if (movieIds.length > 0) {
     const ph = movieIds.map(() => "?").join(",");
-    const movies = db.prepare(`SELECT id, uuid, title, poster_url, tmdb_poster_path, local_poster_url, backdrop_url, tmdb_backdrop_path, local_backdrop_url, release_year, runtime, rating_imdb, age_rating, status FROM movies WHERE id IN (${ph})`).all(...movieIds) as any[];
+    const movies = db.prepare(`SELECT id, uuid, title, poster_url, tmdb_poster_path, local_poster_url, backdrop_url, tmdb_backdrop_path, local_backdrop_url, release_year, runtime, rating_imdb, age_rating, status FROM movies WHERE id IN (${ph})`).all(...movieIds) as Movie[];
     
     // Watchlist checks
     const watchlistIds = new Set(
       (db.prepare(`SELECT movie_id FROM watchlist WHERE movie_id IN (${ph})`).all(...movieIds) as { movie_id: number }[]).map((r) => r.movie_id)
     );
 
-    const allLangs = db.prepare(`SELECT ml.movie_id, l.id, l.name, l.code FROM languages l JOIN movie_languages ml ON l.id = ml.language_id WHERE ml.movie_id IN (${ph})`).all(...movieIds) as any[];
-    const allGenres = db.prepare(`SELECT mg.movie_id, g.id, g.name, g.slug FROM genres g JOIN movie_genres mg ON g.id = mg.genre_id WHERE mg.movie_id IN (${ph})`).all(...movieIds) as any[];
+    const allLangs = db.prepare(`SELECT ml.movie_id, l.id, l.name, l.code FROM languages l JOIN movie_languages ml ON l.id = ml.language_id WHERE ml.movie_id IN (${ph})`).all(...movieIds) as Array<Language & { movie_id: number }>;
+    const allGenres = db.prepare(`SELECT mg.movie_id, g.id, g.name, g.slug FROM genres g JOIN movie_genres mg ON g.id = mg.genre_id WHERE mg.movie_id IN (${ph})`).all(...movieIds) as Array<Genre & { movie_id: number }>;
 
-    const langMap = new Map<number, any[]>();
+    const langMap = new Map<number, Language[]>();
     allLangs.forEach(({ movie_id, ...l }) => {
       if (!langMap.has(movie_id)) langMap.set(movie_id, []);
-      langMap.get(movie_id)!.push(l);
+      langMap.get(movie_id)!.push(l as Language);
     });
 
-    const genreMap = new Map<number, any[]>();
+    const genreMap = new Map<number, Genre[]>();
     allGenres.forEach(({ movie_id, ...g }) => {
       if (!genreMap.has(movie_id)) genreMap.set(movie_id, []);
-      genreMap.get(movie_id)!.push(g);
+      genreMap.get(movie_id)!.push(g as Genre);
     });
 
     movies.forEach(m => {
       movieMap.set(m.id, {
-        ...m,
-        type: 'movie',
+        id: m.id,
+        uuid: m.uuid,
+        title: m.title,
         poster_url: resolveImage(m.tmdb_poster_path, m.local_poster_url) || m.poster_url,
         backdrop_url: resolveImage(m.tmdb_backdrop_path, m.local_backdrop_url, 'w780') || m.backdrop_url,
+        release_year: m.release_year,
+        runtime: m.runtime,
+        rating_imdb: m.rating_imdb,
+        age_rating: m.age_rating,
+        type: 'movie',
         status: m.status ?? "released",
         in_watchlist: watchlistIds.has(m.id),
         languages: langMap.get(m.id) ?? [],
@@ -90,7 +98,7 @@ function getMediaCardsForCollection(collectionId: number): MediaCard[] {
   // Fetch Shows
   if (showIds.length > 0) {
     const ph = showIds.map(() => "?").join(",");
-    const shows = db.prepare(`SELECT id, uuid, title, poster_url, tmdb_poster_path, backdrop_url, tmdb_backdrop_path, first_air_date, network, status FROM tv_shows WHERE id IN (${ph})`).all(...showIds) as any[];
+    const shows = db.prepare(`SELECT id, uuid, title, poster_url, tmdb_poster_path, backdrop_url, tmdb_backdrop_path, first_air_date, network, status FROM tv_shows WHERE id IN (${ph})`).all(...showIds) as TVShow[];
     
     // Watchlist checks
     const watchlistIds = new Set(
@@ -99,13 +107,16 @@ function getMediaCardsForCollection(collectionId: number): MediaCard[] {
 
     shows.forEach(s => {
       showMap.set(s.id, {
-        ...s,
+        id: s.id,
+        uuid: s.uuid,
+        title: s.title,
         poster_url: resolveImage(s.tmdb_poster_path, null) || s.poster_url,
         backdrop_url: resolveImage(s.tmdb_backdrop_path, null, 'w780') || s.backdrop_url,
         type: 'tv',
-        release_year: s.first_air_date ? parseInt(s.first_air_date.substring(0,4)) : undefined,
+        release_year: s.first_air_date ? parseInt(s.first_air_date.substring(0, 4)) : undefined,
+        status: s.status ?? "returning_series",
         in_watchlist: watchlistIds.has(s.id),
-        genres: [], // Add genres logic for TV shows if implemented
+        genres: [],
       });
     });
   }
@@ -138,10 +149,10 @@ function getCollectionDetail(id: number): CollectionDetail | undefined {
 
 router.get("/", optionalAuth, (req: Request, res: Response) => {
   try {
-    const user = (req as any).user;
+    const user = req.user;
     
     let query = `SELECT * FROM collections WHERE privacy = 'public' ORDER BY created_at DESC`;
-    let params: any[] = [];
+    let params: (string | number)[] = [];
 
     if (user) {
       query = `SELECT * FROM collections WHERE user_id = ? ORDER BY created_at DESC`;
@@ -179,8 +190,8 @@ router.get("/", optionalAuth, (req: Request, res: Response) => {
     }));
 
     res.json({ success: true, data: collections });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to fetch collections", message: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to fetch collections", message: getErrorMessage(err) });
   }
 });
 
@@ -194,15 +205,15 @@ router.get("/:id", optionalAuth, (req: Request, res: Response) => {
     const collection = getCollectionDetail(id);
     if (!collection) return res.status(404).json({ success: false, error: "Collection not found" });
 
-    const user = (req as any).user;
+    const user = req.user;
     
     if (collection.privacy === 'private' && collection.user_id !== user?.id) {
        return res.status(403).json({ success: false, error: "This collection is private" });
     }
 
     res.json({ success: true, data: collection });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to fetch collection", message: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to fetch collection", message: getErrorMessage(err) });
   }
 });
 
@@ -210,7 +221,7 @@ router.get("/:id", optionalAuth, (req: Request, res: Response) => {
 
 router.post("/", requireAuth, (req: Request, res: Response) => {
   try {
-    const user = (req as any).user;
+    const user = req.user!;
     const body = req.body as CreateCollectionRequest;
 
     if (!body.name?.trim()) return res.status(400).json({ success: false, error: "Name is required" });
@@ -234,8 +245,8 @@ router.post("/", requireAuth, (req: Request, res: Response) => {
     const collection = getCollectionDetail(collectionId)!;
 
     res.status(201).json({ success: true, message: "Collection created successfully", data: collection });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to create collection", message: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to create collection", message: getErrorMessage(err) });
   }
 });
 
@@ -246,7 +257,7 @@ router.put("/:id", requireAuth, (req: Request, res: Response) => {
     const id = parseInt(req.params.id as string);
     if (isNaN(id)) return res.status(400).json({ success: false, error: "Invalid collection ID" });
 
-    const user = (req as any).user;
+    const user = req.user!;
     const existing = db.prepare(`SELECT * FROM collections WHERE id = ?`).get(id) as Omit<Collection, "item_count"> | undefined;
     if (!existing) return res.status(404).json({ success: false, error: "Collection not found" });
 
@@ -276,8 +287,8 @@ router.put("/:id", requireAuth, (req: Request, res: Response) => {
 
     const collection = getCollectionDetail(id)!;
     res.json({ success: true, message: "Collection updated successfully", data: collection });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to update collection", message: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to update collection", message: getErrorMessage(err) });
   }
 });
 
@@ -288,7 +299,7 @@ router.delete("/:id", requireAuth, (req: Request, res: Response) => {
     const id = parseInt(req.params.id as string);
     if (isNaN(id)) return res.status(400).json({ success: false, error: "Invalid collection ID" });
 
-    const user = (req as any).user;
+    const user = req.user!;
     const collection = db.prepare(`SELECT id, name, user_id FROM collections WHERE id = ?`).get(id) as Pick<Collection, "id" | "name" | "user_id"> | undefined;
     
     if (!collection) return res.status(404).json({ success: false, error: "Collection not found" });
@@ -296,8 +307,8 @@ router.delete("/:id", requireAuth, (req: Request, res: Response) => {
 
     db.prepare(`DELETE FROM collections WHERE id = ?`).run(id);
     res.json({ success: true, message: "Collection deleted successfully", data: { id: collection.id } });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to delete collection", message: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to delete collection", message: getErrorMessage(err) });
   }
 });
 
@@ -308,7 +319,7 @@ router.post("/:id/items", requireAuth, (req: Request, res: Response) => {
     const id = parseInt(req.params.id as string);
     if (isNaN(id)) return res.status(400).json({ success: false, error: "Invalid collection ID" });
 
-    const user = (req as any).user;
+    const user = req.user!;
     const { movie_id, show_id } = req.body as { movie_id?: number, show_id?: number };
     
     if (!movie_id && !show_id) return res.status(400).json({ success: false, error: "movie_id or show_id is required" });
@@ -335,8 +346,8 @@ router.post("/:id/items", requireAuth, (req: Request, res: Response) => {
 
     const collectionDetail = getCollectionDetail(id);
     res.json({ success: true, message: "Item added to collection", data: collectionDetail });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to add item to collection", message: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to add item to collection", message: getErrorMessage(err) });
   }
 });
 
@@ -347,7 +358,7 @@ router.delete("/:id/items", requireAuth, (req: Request, res: Response) => {
     const id = parseInt(req.params.id as string);
     if (isNaN(id)) return res.status(400).json({ success: false, error: "Invalid collection ID" });
 
-    const user = (req as any).user;
+    const user = req.user!;
     
     const mId = req.body.movie_id || parseInt(req.query.movie_id as string);
     const sId = req.body.show_id || parseInt(req.query.show_id as string);
@@ -369,8 +380,8 @@ router.delete("/:id/items", requireAuth, (req: Request, res: Response) => {
 
     const collectionDetail = getCollectionDetail(id);
     res.json({ success: true, message: "Item removed from collection", data: collectionDetail });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to remove item from collection", message: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to remove item from collection", message: getErrorMessage(err) });
   }
 });
 
@@ -381,7 +392,7 @@ router.put("/:id/reorder", requireAuth, (req: Request, res: Response) => {
     const id = parseInt(req.params.id as string);
     if (isNaN(id)) return res.status(400).json({ success: false, error: "Invalid collection ID" });
 
-    const user = (req as any).user;
+    const user = req.user!;
     const { items } = req.body as { items: { movie_id?: number, show_id?: number, display_order: number }[] };
 
     if (!Array.isArray(items)) return res.status(400).json({ success: false, error: "items array is required" });
@@ -404,8 +415,8 @@ router.put("/:id/reorder", requireAuth, (req: Request, res: Response) => {
 
     const collectionDetail = getCollectionDetail(id);
     res.json({ success: true, message: "Collection reordered", data: collectionDetail });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to reorder collection", message: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to reorder collection", message: getErrorMessage(err) });
   }
 });
 

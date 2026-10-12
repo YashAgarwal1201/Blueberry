@@ -117,7 +117,7 @@
             <div class="flex items-center gap-4">
               <div
                 class="w-10 h-10 rounded-full bg-surface-2 group-hover:bg-surface-3 flex items-center justify-center text-primary transition-colors">
-                <Contact :size="20" />
+                <Clapperboard :size="20" />
               </div>
               <div class="flex flex-col">
                 <span class="font-bold text-text">Show Cast & Crew</span>
@@ -188,12 +188,12 @@
 import { onMounted, ref, reactive, computed, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { MultiSelect } from 'primevue'
-import { UserCircle, Film, Tv, Users, Contact, Filter, Languages, Save, Loader2 } from 'lucide-vue-next'
+import { UserCircle, Film, Tv, Users, Clapperboard, Filter, Languages, Save, Loader2 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/authStore'
 import { usePreferencesStore } from '@/stores/preferencesStore'
 import { useGenresStore } from '@/stores/genresStore'
 import { useLanguagesStore } from '@/stores/languagesStore'
-import toastHandler from '@/composables/toastHandeler'
+import toastHandler from '@/composables/toastHandler'
 
 const authStore = useAuthStore()
 const preferencesStore = usePreferencesStore()

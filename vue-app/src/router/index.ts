@@ -1,4 +1,3 @@
-import HomePage from '@/views/HomePage.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -8,7 +7,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'Home',
-      component: HomePage,
+      component: () => import('@/views/HomePage.vue'),
     },
     {
       path: '/search',
@@ -49,11 +48,6 @@ const router = createRouter({
       component: () => import('../views/ResetPasswordPage.vue'),
       meta: { hideSidebar: true },
     },
-    // {
-    //   path: '/settings',
-    //   name: 'Settings',
-    //   component: () => import('./../views/SettingsPage.vue'),
-    // },
     {
       path: '/settings',
       component: () => import('../views/SettingsPage.vue'),

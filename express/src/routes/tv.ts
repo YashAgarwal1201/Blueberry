@@ -11,26 +11,36 @@ import type {
   CastMember,
   Company,
   TVSeason,
+  TVEpisode,
   CreateTVShowRequest,
   UpdateTVShowRequest,
   CastMemberRequest,
   CompanyRequest,
 } from "shared-types";
 import { resolveImage } from "../utils/imageUtils";
+import { getShowWatchlistSet } from "../utils/watchlistCache";
+import { clean } from "../utils/stringUtils";
+import { getErrorMessage } from "../utils/errors";
 
 const router: Router = express.Router();
 
-function clean(str?: string | null): string | null {
-  if (str === undefined || str === null) return null;
-  const t = str.trim();
-  return t === "" ? null : t;
-}
+const TV_CARD_COLUMNS = `
+  id, uuid, title, status, first_air_date,
+  poster_url, backdrop_url, tmdb_id,
+  tmdb_poster_path, tmdb_backdrop_path,
+  description, tagline, rating_imdb, episode_count
+`.replace(/\s+/g, " ").trim();
+
+const TV_CARD_COLUMNS_PREFIXED = `
+  s.id, s.uuid, s.title, s.status, s.first_air_date,
+  s.poster_url, s.backdrop_url, s.tmdb_id,
+  s.tmdb_poster_path, s.tmdb_backdrop_path,
+  s.description, s.tagline, s.rating_imdb, s.episode_count
+`.replace(/\s+/g, " ").trim();
+
 
 function getWatchlistSet(): Set<number> {
-  const rows = db.prepare(`SELECT show_id FROM watchlist WHERE show_id IS NOT NULL`).all() as {
-    show_id: number;
-  }[];
-  return new Set(rows.map((r) => r.show_id));
+  return getShowWatchlistSet();
 }
 
 function toTVShowCards(shows: TVShow[], watchlistSet: Set<number>): TVShowCard[] {
@@ -140,15 +150,15 @@ function getTVShowWithDetails(identifier: string | number): TVShowWithDetails | 
     in_watchlist: inWatchlist,
     languages,
     genres,
-    cast: cast.map((c: any) => ({
+    cast: cast.map((c) => ({
       ...c,
       profile_url: resolveImage(c.tmdb_profile_path, c.local_profile_url, 'w185') || c.profile_url
     })),
-    companies: companies.map((c: any) => ({
+    companies: companies.map((c) => ({
       ...c,
       logo_url: resolveImage(c.tmdb_logo_path, null, 'w185') || c.logo_url
     })),
-    seasons: seasons.map((s: any) => ({
+    seasons: seasons.map((s) => ({
       ...s,
       poster_url: resolveImage(s.tmdb_poster_path, null) || s.poster_url
     }))
@@ -197,12 +207,13 @@ function upsertCompany(req: CompanyRequest): number {
 router.get("/recent", (_req: Request, res: Response) => {
   try {
     const shows = db
-      .prepare(`SELECT * FROM tv_shows ORDER BY first_air_date DESC LIMIT 20`)
+      .prepare(`SELECT ${TV_CARD_COLUMNS} FROM tv_shows ORDER BY first_air_date DESC LIMIT 20`)
       .all() as TVShow[];
     const cards = toTVShowCards(shows, getWatchlistSet());
+    res.set("Cache-Control", "public, max-age=300");
     res.json({ success: true, data: cards });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to fetch recent TV shows", message: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to fetch recent TV shows", message: getErrorMessage(err) });
   }
 });
 
@@ -210,12 +221,41 @@ router.get("/recent", (_req: Request, res: Response) => {
 router.get("/top-rated", (_req: Request, res: Response) => {
   try {
     const shows = db
-      .prepare(`SELECT * FROM tv_shows ORDER BY rating_imdb DESC NULLS LAST, title ASC LIMIT 20`)
+      .prepare(`SELECT ${TV_CARD_COLUMNS} FROM tv_shows ORDER BY rating_imdb DESC NULLS LAST, title ASC LIMIT 20`)
       .all() as TVShow[];
     const cards = toTVShowCards(shows, getWatchlistSet());
+    res.set("Cache-Control", "public, max-age=300");
     res.json({ success: true, data: cards });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to fetch top-rated TV shows", message: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to fetch top-rated TV shows", message: getErrorMessage(err) });
+  }
+});
+
+// ── GET /tv/hot ─────────────────────────────────────────────────────────────
+router.get("/hot", (_req: Request, res: Response) => {
+  try {
+    const shows = db
+      .prepare(`SELECT ${TV_CARD_COLUMNS} FROM tv_shows ORDER BY rating_imdb DESC NULLS LAST, episode_count DESC LIMIT 20`)
+      .all() as TVShow[];
+    const cards = toTVShowCards(shows, getWatchlistSet());
+    res.set("Cache-Control", "public, max-age=300");
+    res.json({ success: true, data: cards });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to fetch hot TV shows", message: getErrorMessage(err) });
+  }
+});
+
+// ── GET /tv/completed ───────────────────────────────────────────────────────
+router.get("/completed", (_req: Request, res: Response) => {
+  try {
+    const shows = db
+      .prepare(`SELECT ${TV_CARD_COLUMNS} FROM tv_shows WHERE status = 'ended' ORDER BY rating_imdb DESC NULLS LAST LIMIT 20`)
+      .all() as TVShow[];
+    const cards = toTVShowCards(shows, getWatchlistSet());
+    res.set("Cache-Control", "public, max-age=300");
+    res.json({ success: true, data: cards });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to fetch completed TV shows", message: getErrorMessage(err) });
   }
 });
 
@@ -223,8 +263,8 @@ router.get("/top-rated", (_req: Request, res: Response) => {
 router.get("/", (req: Request, res: Response) => {
   try {
     const search = req.query.search as string | undefined;
-    let query = "SELECT * FROM tv_shows";
-    let params: any[] = [];
+    let query = `SELECT ${TV_CARD_COLUMNS} FROM tv_shows`;
+    let params: (string | number)[] = [];
     
     if (search?.trim()) {
       query += " WHERE title LIKE ?";
@@ -236,8 +276,8 @@ router.get("/", (req: Request, res: Response) => {
     const shows = db.prepare(query).all(...params) as TVShow[];
     const cards = toTVShowCards(shows, getWatchlistSet());
     res.json({ success: true, data: cards });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to fetch TV shows", message: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to fetch TV shows", message: getErrorMessage(err) });
   }
 });
 
@@ -251,8 +291,8 @@ router.get("/:uuid", (req: Request<UuidParam>, res: Response) => {
     }
 
     res.json({ success: true, data: showWithDetails });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to fetch TV show", message: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to fetch TV show", message: getErrorMessage(err) });
   }
 });
 
@@ -260,13 +300,12 @@ router.get("/:uuid", (req: Request<UuidParam>, res: Response) => {
 router.get("/:uuid/similar", (req: Request<UuidParam>, res: Response) => {
   try {
     const uuid = req.params.uuid;
-    const user = (req as any).user;
     
     const show = db.prepare(`SELECT id FROM tv_shows WHERE uuid = ?`).get(uuid) as { id: number } | undefined;
     if (!show) return res.status(404).json({ success: false, error: "TV Show not found" });
 
     const similar = db.prepare(`
-      SELECT s.*, COUNT(tg.genre_id) as shared_genres
+      SELECT ${TV_CARD_COLUMNS_PREFIXED}, COUNT(tg.genre_id) as shared_genres
       FROM tv_shows s
       JOIN tv_genres tg ON s.id = tg.show_id
       WHERE tg.genre_id IN (SELECT genre_id FROM tv_genres WHERE show_id = ?)
@@ -278,8 +317,8 @@ router.get("/:uuid/similar", (req: Request<UuidParam>, res: Response) => {
     
     const cards = toTVShowCards(similar, getWatchlistSet());
     res.json({ success: true, data: cards });
-  } catch(err: any) {
-    res.status(500).json({ success: false, error: "Failed to fetch similar tv shows", message: err.message });
+  } catch(err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to fetch similar tv shows", message: getErrorMessage(err) });
   }
 });
 
@@ -292,7 +331,7 @@ router.get("/:uuid/seasons/:seasonId/episodes", (req: Request, res: Response) =>
     }
     const episodes = db
       .prepare(`SELECT * FROM tv_episodes WHERE season_id = ? ORDER BY episode_number ASC`)
-      .all(seasonId) as any[];
+      .all(seasonId) as TVEpisode[];
     
     const mapped = episodes.map(e => ({
       ...e,
@@ -300,8 +339,8 @@ router.get("/:uuid/seasons/:seasonId/episodes", (req: Request, res: Response) =>
     }));
 
     res.json({ success: true, data: mapped });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to fetch episodes", message: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to fetch episodes", message: getErrorMessage(err) });
   }
 });
 
@@ -377,8 +416,8 @@ router.post("/", (req: Request, res: Response) => {
     })();
 
     res.status(201).json({ success: true, message: "TV Show created successfully", data: result });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to create TV show", message: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to create TV show", message: getErrorMessage(err) });
   }
 });
 
@@ -389,7 +428,9 @@ router.put("/:uuid", (req: Request<UuidParam>, res: Response) => {
     if (!uuid)
       return res.status(400).json({ success: false, error: "Invalid TV Show UUID" });
 
-    const existing = db.prepare(`SELECT * FROM tv_shows WHERE uuid = ?`).get(uuid) as TVShow | undefined;
+    const existing = db.prepare(`SELECT * FROM tv_shows WHERE uuid = ?`).get(uuid) as
+      | (TVShow & { keywords?: string })
+      | undefined;
     if (!existing)
       return res.status(404).json({ success: false, error: "TV Show not found" });
 
@@ -432,7 +473,7 @@ router.put("/:uuid", (req: Request<UuidParam>, res: Response) => {
         body.episode_count ?? existing.episode_count ?? 0,
         body.season_count ?? existing.season_count ?? 0,
         body.runtime_per_episode ?? existing.runtime_per_episode ?? null,
-        body.keywords ? JSON.stringify(body.keywords) : (existing as any).keywords ?? null,
+        body.keywords ? JSON.stringify(body.keywords) : existing.keywords ?? null,
         id,
       );
 
@@ -471,8 +512,8 @@ router.put("/:uuid", (req: Request<UuidParam>, res: Response) => {
     })();
 
     res.json({ success: true, message: "TV Show updated successfully", data: result });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to update TV show", message: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to update TV show", message: getErrorMessage(err) });
   }
 });
 
@@ -491,8 +532,8 @@ router.delete("/:uuid", (req: Request<UuidParam>, res: Response) => {
     })();
 
     res.json({ success: true, message: "TV Show deleted successfully", data: { id: existing.id } });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: "Failed to delete TV show", message: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to delete TV show", message: getErrorMessage(err) });
   }
 });
 

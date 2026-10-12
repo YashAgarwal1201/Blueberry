@@ -1,8 +1,9 @@
 // src/routes/people.ts
 import express, { Request, Response, Router } from "express";
 import db from "../db";
-import type { Person, CreatePersonRequest, IdParam } from "shared-types";
+import type { Person, CreatePersonRequest, IdParam, Movie } from "shared-types";
 import { resolveImage } from "../utils/imageUtils";
+import { getErrorMessage } from "../utils/errors";
 
 const router: Router = express.Router();
 
@@ -31,11 +32,11 @@ router.get("/", (req: Request, res: Response) => {
     }));
 
     res.json({ success: true, data: resolved });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res.status(500).json({
       success: false,
       error: "Failed to fetch people",
-      message: err.message,
+      message: getErrorMessage(err),
     });
   }
 });
@@ -64,7 +65,7 @@ router.get("/:id", (req: Request<IdParam>, res: Response) => {
          WHERE mc.person_id = ?
          ORDER BY m.release_year DESC NULLS LAST`,
       )
-      .all(id) as any[];
+      .all(id) as Array<Pick<Movie, "id" | "title" | "release_year" | "poster_url" | "tmdb_poster_path" | "local_poster_url"> & { role?: string; character?: string }>;
 
     const resolvedPerson = {
       ...person,
@@ -77,11 +78,11 @@ router.get("/:id", (req: Request<IdParam>, res: Response) => {
     }));
 
     res.json({ success: true, data: { ...resolvedPerson, filmography: resolvedFilmography } });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res.status(500).json({
       success: false,
       error: "Failed to fetch person",
-      message: err.message,
+      message: getErrorMessage(err),
     });
   }
 });
@@ -159,11 +160,11 @@ router.post("/", (req: Request, res: Response) => {
     res
       .status(201)
       .json({ success: true, message: "Person created successfully", data: person });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res.status(500).json({
       success: false,
       error: "Failed to create person",
-      message: err.message,
+      message: getErrorMessage(err),
     });
   }
 });
@@ -233,11 +234,11 @@ router.put("/:id", (req: Request<IdParam>, res: Response) => {
       message: "Person updated successfully",
       data: updated,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res.status(500).json({
       success: false,
       error: "Failed to update person",
-      message: err.message,
+      message: getErrorMessage(err),
     });
   }
 });
@@ -275,11 +276,11 @@ router.delete("/:id", (req: Request<IdParam>, res: Response) => {
       message: "Person deleted successfully",
       data: person,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res.status(500).json({
       success: false,
       error: "Failed to delete person",
-      message: err.message,
+      message: getErrorMessage(err),
     });
   }
 });

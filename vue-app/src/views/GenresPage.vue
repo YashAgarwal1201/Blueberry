@@ -98,7 +98,7 @@ import { ref, onMounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useGenresStore } from '@/stores/genresStore'
 import { getErrorMessage } from '@/services/errorUtils'
-import toastHandler from '@/composables/toastHandeler'
+import toastHandler from '@/composables/toastHandler'
 import GoBackButton from '@/components/GoBackButton.vue'
 
 const genresStore = useGenresStore()

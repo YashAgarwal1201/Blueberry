@@ -120,6 +120,7 @@ async function handleCreate() {
     newCol.value = { name: '', description: '', privacy: 'private' }
     toast.add({ severity: 'success', summary: 'Success', detail: 'Collection created', life: 2000 })
   } catch (err) {
+    console.error('Failed to create collection:', err)
     toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to create collection', life: 3000 })
   } finally {
     creating.value = false

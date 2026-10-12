@@ -1,8 +1,9 @@
 // src/routes/companies.ts
 import express, { Request, Response, Router } from "express";
 import db from "../db";
-import type { Company, CreateCompanyRequest, IdParam } from "shared-types";
+import type { Company, CreateCompanyRequest, IdParam, Movie } from "shared-types";
 import { resolveImage } from "../utils/imageUtils";
+import { getErrorMessage } from "../utils/errors";
 
 const router: Router = express.Router();
 
@@ -37,11 +38,11 @@ router.get("/", (req: Request, res: Response) => {
     }));
 
     res.json({ success: true, data: resolved });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res.status(500).json({
       success: false,
       error: "Failed to fetch companies",
-      message: err.message,
+      message: getErrorMessage(err),
     });
   }
 });
@@ -69,7 +70,7 @@ router.get("/:id", (req: Request<IdParam>, res: Response) => {
          WHERE mco.company_id = ?
          ORDER BY m.release_year DESC NULLS LAST`,
       )
-      .all(id) as any[];
+      .all(id) as Array<Pick<Movie, "id" | "title" | "release_year" | "poster_url" | "tmdb_poster_path" | "local_poster_url"> & { role?: string }>;
 
     const resolvedCompany = {
       ...company,
@@ -82,11 +83,11 @@ router.get("/:id", (req: Request<IdParam>, res: Response) => {
     }));
 
     res.json({ success: true, data: { ...resolvedCompany, movies: resolvedMovies } });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res.status(500).json({
       success: false,
       error: "Failed to fetch company",
-      message: err.message,
+      message: getErrorMessage(err),
     });
   }
 });
@@ -136,11 +137,11 @@ router.post("/", (req: Request, res: Response) => {
         message: "Company created successfully",
         data: company,
       });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res.status(500).json({
       success: false,
       error: "Failed to create company",
-      message: err.message,
+      message: getErrorMessage(err),
     });
   }
 });
@@ -182,11 +183,11 @@ router.put("/:id", (req: Request<IdParam>, res: Response) => {
       message: "Company updated successfully",
       data: updated,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res.status(500).json({
       success: false,
       error: "Failed to update company",
-      message: err.message,
+      message: getErrorMessage(err),
     });
   }
 });
@@ -225,11 +226,11 @@ router.delete("/:id", (req: Request<IdParam>, res: Response) => {
       message: "Company deleted successfully",
       data: company,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res.status(500).json({
       success: false,
       error: "Failed to delete company",
-      message: err.message,
+      message: getErrorMessage(err),
     });
   }
 });

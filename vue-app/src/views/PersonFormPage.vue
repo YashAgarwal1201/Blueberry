@@ -114,7 +114,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { usePeopleStore } from '@/stores/peopleStore'
 
 import apiClient from '@/services/apiInterceptors'
-import toastHandler from '@/composables/toastHandeler'
+import toastHandler from '@/composables/toastHandler'
 import type { CreatePersonRequest, Person } from "shared-types"
 import { getErrorMessage, getErrorStatus } from '@/services/errorUtils'
 

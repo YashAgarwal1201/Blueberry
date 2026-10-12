@@ -55,17 +55,21 @@
             size="small"
             severity="secondary"
             outlined
-            label="Edit"
-            icon="pi pi-pencil"
+            class="flex items-center gap-1.5"
             @click="$emit('edit')"
-          />
+          >
+            <Pencil :size="14" />
+            <span>Edit</span>
+          </Button>
           <Button
             size="small"
             severity="secondary"
             outlined
-            icon="pi pi-times"
+            class="w-8 h-8 p-0 flex items-center justify-center"
             @click="$emit('update:visible', false)"
-          />
+          >
+            <X :size="16" />
+          </Button>
         </div>
       </div>
 
@@ -141,14 +145,16 @@
         <!-- Delete -->
         <div class="pt-4 border-t border-border">
           <Button
-            label="Delete Person"
-            icon="pi pi-trash"
             severity="danger"
             outlined
             size="small"
+            class="flex items-center gap-1.5 text-red-400"
             :loading="deleting"
             @click="$emit('delete')"
-          />
+          >
+            <Trash2 :size="14" />
+            <span>Delete Person</span>
+          </Button>
         </div>
       </div>
     </template>
@@ -159,7 +165,7 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Drawer, Button, Tag, Skeleton } from 'primevue'
-import { Calendar, Film, MapPin, User } from 'lucide-vue-next'
+import { Calendar, Film, MapPin, User, Pencil, Trash2, X } from 'lucide-vue-next'
 import AppImage from '@/components/AppImage.vue'
 import type { Person } from "shared-types"
 

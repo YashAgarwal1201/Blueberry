@@ -1,12 +1,26 @@
 <script setup lang="ts">
+import { ref, onErrorCaptured } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import { Toast } from 'primevue'
 import SideMenu from './components/SideMenu.vue'
 import ScrollToTop from './components/ScrollToTop.vue'
-import { Film, Tv } from 'lucide-vue-next'
+import { Film, Tv, AlertTriangle } from 'lucide-vue-next'
+import { logger } from './services/logger'
 
 const route = useRoute()
+const appError = ref<Error | null>(null)
+
+onErrorCaptured((err, _instance, info) => {
+  logger.error('[Global Error Boundary]:', err, info)
+  appError.value = err instanceof Error ? err : new Error(String(err))
+  return false
+})
+
+function reloadApp() {
+  appError.value = null
+  window.location.reload()
+}
 </script>
 
 <template>
@@ -33,8 +47,31 @@ const route = useRoute()
       </RouterLink>
     </div>
 
-    <div class="h-full grow overflow-y-auto flex justify-center items-center"
-      :class="route.meta.hideSidebar ? '' : 'p-2 sm:p-3'">
+    <!-- Global Error Boundary Fallback -->
+    <div
+      v-if="appError"
+      class="h-full grow flex flex-col items-center justify-center p-6 text-center gap-4"
+    >
+      <div class="w-14 h-14 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center border border-red-500/20 shadow-lg">
+        <AlertTriangle :size="28" />
+      </div>
+      <h2 class="text-xl font-heading font-bold text-text">Something went wrong</h2>
+      <p class="text-text-muted text-sm max-w-md">
+        {{ appError.message || 'An unexpected error occurred while rendering the page.' }}
+      </p>
+      <button
+        @click="reloadApp"
+        class="px-5 py-2.5 bg-primary text-on-primary font-bold text-sm rounded-xl hover:bg-primary/90 transition-colors shadow-md"
+      >
+        Reload Page
+      </button>
+    </div>
+
+    <div
+      v-else
+      class="h-full grow overflow-y-auto flex justify-center items-center"
+      :class="route.meta.hideSidebar ? '' : 'p-2 sm:p-3'"
+    >
       <RouterView v-slot="{ Component }">
         <transition name="page-slide-fade" mode="out-in">
           <component :is="Component" />
@@ -46,5 +83,3 @@ const route = useRoute()
     <ScrollToTop />
   </div>
 </template>
-
-<style scoped lang="css" src="./styles/index.css"></style>

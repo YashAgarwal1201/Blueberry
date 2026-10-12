@@ -34,7 +34,7 @@ import { useAuthStore } from '@/stores/authStore'
 import AppImage from '@/components/AppImage.vue'
 import { Check } from 'lucide-vue-next'
 import type { ContinueWatchingItem } from 'shared-types'
-import toastHandler from '@/composables/toastHandeler'
+import toastHandler from '@/composables/toastHandler'
 
 const watchlistStore = useWatchlistStore()
 const authStore = useAuthStore()
@@ -49,6 +49,7 @@ const markWatched = async (item: ContinueWatchingItem) => {
     // Refresh the continue watching feed
     watchlistStore.fetchContinueWatching()
   } catch (err) {
+    console.error('Failed to mark episode as watched:', err)
     showToast('error', 'Failed', 'Could not mark episode as watched')
   }
 }
@@ -59,13 +60,3 @@ onMounted(() => {
   }
 })
 </script>
-
-<style scoped>
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-</style>

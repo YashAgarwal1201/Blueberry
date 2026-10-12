@@ -54,6 +54,19 @@ export default defineConfig(({ command }) => {
         },
       }),
     ],
+    build: {
+      chunkSizeWarningLimit: 700,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vue-core': ['vue', 'vue-router', 'pinia'],
+            'ui-lib': ['primevue', '@primeuix/themes'],
+            'swiper': ['swiper'],
+            'lucide': ['lucide-vue-next'],
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),

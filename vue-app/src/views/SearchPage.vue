@@ -186,9 +186,8 @@ import { useSearchStore, type SearchTab } from '@/stores/searchStore'
 import { useSearch } from '@/composables/useSearch'
 import { useWatchlistStore } from '@/stores/watchListStore'
 import { useAuthStore } from '@/stores/authStore'
-import { usePeopleStore } from '@/stores/peopleStore'
 import apiClient from '@/services/apiInterceptors'
-import toastHandler from '@/composables/toastHandeler'
+import toastHandler from '@/composables/toastHandler'
 import { getErrorMessage, getErrorStatus } from '@/services/errorUtils'
 
 import SearchEmptyState from '@/components/search/SearchEmptyState.vue'
@@ -204,7 +203,6 @@ const { query } = useSearch()
 
 const watchlistStore = useWatchlistStore()
 const authStore = useAuthStore()
-const peopleStore = usePeopleStore()
 
 const { showToast } = toastHandler()
 const confirm = useConfirm()
@@ -278,9 +276,9 @@ function openShowDrawer(show: TVShowCard) {
     backdrop_url: show.backdrop_url, // may be undefined but valid
     type: 'tv',
     genres: show.genres,
-    description: (show as any).description,
-    runtime: (show as any).runtime,
-    age_rating: (show as any).age_rating,
+    description: show.description,
+    runtime: show.runtime,
+    age_rating: show.age_rating,
     status: show.status || 'released',
     in_watchlist: show.in_watchlist || false
   }

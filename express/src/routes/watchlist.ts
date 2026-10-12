@@ -3,13 +3,23 @@
 import express, { Request, Response, Router } from "express";
 import db from "../db";
 import { resolveImage } from "../utils/imageUtils";
+import { invalidateWatchlistCache } from "../utils/watchlistCache";
 import type {
   WatchlistItem,
+  WatchlistPopulatedItem,
   AddToWatchlistRequest,
   UpdateWatchlistRequest,
   IdParam,
   MovieIdParam,
+  Movie,
+  TVShow,
+  MovieCard,
+  TVShowCard,
+  Language,
+  Genre,
+  TVEpisode,
 } from "shared-types";
+import { getErrorMessage } from "../utils/errors";
 
 // Need to declare a local type for ShowIdParam since it might not be in shared-types yet
 interface ShowIdParam {
@@ -77,42 +87,42 @@ const deleteWatchlistStmt = db.prepare(`
 
 function attachMediaToWatchlistItems(
   items: WatchlistItem[],
-): any[] {
+): WatchlistPopulatedItem[] {
   if (items.length === 0) return [];
 
   const movieIds = items.map((i) => i.movie_id).filter(Boolean) as number[];
   const showIds = items.map((i) => i.show_id).filter(Boolean) as number[];
   
-  const movieMap = new Map<number, any>();
-  const showMap = new Map<number, any>();
+  const movieMap = new Map<number, MovieCard>();
+  const showMap = new Map<number, TVShowCard>();
 
   // Fetch Movies
   if (movieIds.length > 0) {
     const ph = movieIds.map(() => "?").join(",");
-    const movies = db.prepare(`SELECT * FROM movies WHERE id IN (${ph})`).all(...movieIds) as any[];
+    const movies = db.prepare(`SELECT * FROM movies WHERE id IN (${ph})`).all(...movieIds) as Movie[];
     
     const allLanguages = db.prepare(`
        SELECT ml.movie_id, l.id, l.name, l.code
        FROM languages l INNER JOIN movie_languages ml ON l.id = ml.language_id
        WHERE ml.movie_id IN (${ph})
-    `).all(...movieIds) as any[];
+    `).all(...movieIds) as Array<{ movie_id: number; id: number; name: string; code: string }>;
 
     const allGenres = db.prepare(`
        SELECT mg.movie_id, g.id, g.name, g.slug
        FROM genres g INNER JOIN movie_genres mg ON g.id = mg.genre_id
        WHERE mg.movie_id IN (${ph})
-    `).all(...movieIds) as any[];
+    `).all(...movieIds) as Array<{ movie_id: number; id: number; name: string; slug: string }>;
 
-    const languageMap = new Map<number, any[]>();
+    const languageMap = new Map<number, Language[]>();
     allLanguages.forEach(({ movie_id, ...lang }) => {
       if (!languageMap.has(movie_id)) languageMap.set(movie_id, []);
       languageMap.get(movie_id)!.push(lang);
     });
 
-    const genreMap = new Map<number, any[]>();
+    const genreMap = new Map<number, Genre[]>();
     allGenres.forEach(({ movie_id, ...genre }) => {
       if (!genreMap.has(movie_id)) genreMap.set(movie_id, []);
-      genreMap.get(movie_id)!.push(genre);
+      genreMap.get(movie_id)!.push(genre as Genre);
     });
 
     movies.forEach(m => {
@@ -121,8 +131,8 @@ function attachMediaToWatchlistItems(
         uuid: m.uuid,
         type: 'movie',
         title: m.title,
-        poster_url: resolveImage((m as any).tmdb_poster_path, (m as any).local_poster_url) || m.poster_url,
-        backdrop_url: resolveImage((m as any).tmdb_backdrop_path, (m as any).local_backdrop_url, 'w780') || m.backdrop_url,
+        poster_url: resolveImage(m.tmdb_poster_path, m.local_poster_url) || m.poster_url,
+        backdrop_url: resolveImage(m.tmdb_backdrop_path, m.local_backdrop_url, 'w780') || m.backdrop_url,
         release_year: m.release_year,
         runtime: m.runtime,
         rating_imdb: m.rating_imdb,
@@ -138,7 +148,7 @@ function attachMediaToWatchlistItems(
   // Fetch Shows
   if (showIds.length > 0) {
     const ph = showIds.map(() => "?").join(",");
-    const shows = db.prepare(`SELECT * FROM tv_shows WHERE id IN (${ph})`).all(...showIds) as any[];
+    const shows = db.prepare(`SELECT * FROM tv_shows WHERE id IN (${ph})`).all(...showIds) as TVShow[];
     
     shows.forEach(s => {
       showMap.set(s.id, {
@@ -148,10 +158,11 @@ function attachMediaToWatchlistItems(
         title: s.title,
         poster_url: resolveImage(s.tmdb_poster_path, null) || s.poster_url,
         backdrop_url: resolveImage(s.tmdb_backdrop_path, null, 'w780') || s.backdrop_url,
-        first_air_date: s.first_air_date,
-        network: s.network,
-        status: s.status,
+        release_year: s.first_air_date ? parseInt(s.first_air_date.substring(0, 4)) : undefined,
+        status: s.status ?? "returning_series",
         in_watchlist: true,
+        genres: [],
+        description: s.description,
       });
     });
   }
@@ -159,12 +170,12 @@ function attachMediaToWatchlistItems(
   return items.map((item) => {
     const formattedItem = { ...item, liked: !!item.liked };
     if (formattedItem.movie_id) {
-      return { ...formattedItem, movie: movieMap.get(formattedItem.movie_id) };
+      return { ...formattedItem, movie: movieMap.get(formattedItem.movie_id)! } as WatchlistPopulatedItem;
     }
     if (formattedItem.show_id) {
-      return { ...formattedItem, show: showMap.get(formattedItem.show_id) };
+      return { ...formattedItem, show: showMap.get(formattedItem.show_id)! } as WatchlistPopulatedItem;
     }
-    return formattedItem;
+    return formattedItem as WatchlistPopulatedItem;
   });
 }
 
@@ -180,9 +191,9 @@ router.get("/movie/:movieId", (req: Request<MovieIdParam>, res: Response) => {
 
     const [populated] = attachMediaToWatchlistItems([item]);
     res.json({ success: true, data: populated });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error checking watchlist:", err);
-    res.status(500).json({ success: false, error: "Failed to check watchlist" });
+    res.status(500).json({ success: false, error: "Failed to check watchlist", message: getErrorMessage(err) });
   }
 });
 
@@ -198,9 +209,9 @@ router.get("/show/:showId", (req: Request<ShowIdParam>, res: Response) => {
 
     const [populated] = attachMediaToWatchlistItems([item]);
     res.json({ success: true, data: populated });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error checking watchlist:", err);
-    res.status(500).json({ success: false, error: "Failed to check watchlist" });
+    res.status(500).json({ success: false, error: "Failed to check watchlist", message: getErrorMessage(err) });
   }
 });
 
@@ -228,12 +239,12 @@ router.get("/", (req: Request, res: Response) => {
       if (!acc[item.status]) acc[item.status] = [];
       acc[item.status].push(item);
       return acc;
-    }, {} as Record<string, any[]>);
+    }, {} as Record<string, WatchlistPopulatedItem[]>);
 
     res.json({ success: true, data: { items: populatedItems, grouped } });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error fetching watchlist:", err);
-    res.status(500).json({ success: false, error: "Failed to fetch watchlist" });
+    res.status(500).json({ success: false, error: "Failed to fetch watchlist", message: getErrorMessage(err) });
   }
 });
 
@@ -249,9 +260,9 @@ router.get("/:id", (req: Request<IdParam>, res: Response) => {
 
     const [populated] = attachMediaToWatchlistItems([item]);
     res.json({ success: true, data: populated });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error fetching watchlist item:", err);
-    res.status(500).json({ success: false, error: "Failed to fetch watchlist item" });
+    res.status(500).json({ success: false, error: "Failed to fetch watchlist item", message: getErrorMessage(err) });
   }
 });
 
@@ -299,10 +310,11 @@ router.post("/", (req: Request, res: Response) => {
     const item = selectWatchlistByIdStmt.get(watchlistId as number) as WatchlistItem;
     const [populated] = attachMediaToWatchlistItems([item]);
 
+    invalidateWatchlistCache();
     res.status(201).json({ success: true, message: "Added to watchlist", data: populated });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error adding to watchlist:", err);
-    res.status(500).json({ success: false, error: "Failed to add to watchlist", message: err.message });
+    res.status(500).json({ success: false, error: "Failed to add to watchlist", message: getErrorMessage(err) });
   }
 });
 
@@ -351,10 +363,11 @@ router.patch("/:id", (req: Request<IdParam>, res: Response) => {
     const item = selectWatchlistByIdStmt.get(id) as WatchlistItem;
     const [populated] = attachMediaToWatchlistItems([item]);
 
+    invalidateWatchlistCache();
     res.json({ success: true, message: "Watchlist item updated", data: populated });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error updating watchlist:", err);
-    res.status(500).json({ success: false, error: "Failed to update watchlist" });
+    res.status(500).json({ success: false, error: "Failed to update watchlist", message: getErrorMessage(err) });
   }
 });
 
@@ -369,10 +382,11 @@ router.delete("/:id", (req: Request<IdParam>, res: Response) => {
     if (!item) return res.status(404).json({ success: false, error: "Watchlist item not found" });
 
     deleteWatchlistStmt.run(id);
+    invalidateWatchlistCache();
     res.json({ success: true, message: "Removed from watchlist", data: { id: item.id } });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error deleting from watchlist:", err);
-    res.status(500).json({ success: false, error: "Failed to remove from watchlist" });
+    res.status(500).json({ success: false, error: "Failed to remove from watchlist", message: getErrorMessage(err) });
   }
 });
 
@@ -380,7 +394,8 @@ router.delete("/:id", (req: Request<IdParam>, res: Response) => {
 
 router.get("/tv/continue-watching", (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, error: "Unauthorized" });
     
     // 1. Get shows the user has watched episodes of, with their max season and episode
     const progressStmt = db.prepare(`
@@ -392,7 +407,11 @@ router.get("/tv/continue-watching", (req: Request, res: Response) => {
       WHERE user_id = ?
       GROUP BY show_id
     `);
-    const progress = progressStmt.all(userId) as any[];
+    const progress = progressStmt.all(userId) as Array<{
+      show_id: number;
+      max_season: number;
+      max_episode: number;
+    }>;
 
     if (!progress.length) {
       return res.json({ success: true, data: [] });
@@ -401,9 +420,6 @@ router.get("/tv/continue-watching", (req: Request, res: Response) => {
     const nextEpisodes = [];
     
     for (const p of progress) {
-      // Find the next chronological episode for this show.
-      // Easiest logic: find the first episode that is > max_episode in max_season,
-      // OR season > max_season, ordered by season_number ASC, episode_number ASC LIMIT 1
       const nextEpStmt = db.prepare(`
         SELECT e.* 
         FROM tv_episodes e
@@ -417,36 +433,41 @@ router.get("/tv/continue-watching", (req: Request, res: Response) => {
         LIMIT 1
       `);
       
-      const nextEp = nextEpStmt.get(p.show_id, p.max_season, p.max_episode, p.max_season) as any;
+      const nextEp = nextEpStmt.get(p.show_id, p.max_season, p.max_episode, p.max_season) as TVEpisode | undefined;
       
       if (nextEp) {
         // Fetch show details
-        const show = db.prepare(`SELECT * FROM tv_shows WHERE id = ?`).get(p.show_id) as any;
-        
-        // resolve images
-        show.poster_url = resolveImage(show.tmdb_poster_path, null) || show.poster_url;
-        show.backdrop_url = resolveImage(show.tmdb_backdrop_path, null, 'w780') || show.backdrop_url;
-        
-        nextEp.still_url = resolveImage(nextEp.tmdb_still_path, null) || nextEp.still_url;
+        const show = db.prepare(`SELECT * FROM tv_shows WHERE id = ?`).get(p.show_id) as TVShow | undefined;
+        if (show) {
+          const resolvedShow = {
+            ...show,
+            poster_url: resolveImage(show.tmdb_poster_path, null) || show.poster_url,
+            backdrop_url: resolveImage(show.tmdb_backdrop_path, null, 'w780') || show.backdrop_url,
+          };
+          const resolvedNextEp = {
+            ...nextEp,
+            still_url: resolveImage(nextEp.tmdb_still_path, null) || nextEp.still_url,
+          };
 
-        nextEpisodes.push({
-          show,
-          nextEpisode: nextEp,
-          progressPercentage: 0 
-        });
+          nextEpisodes.push({
+            show: resolvedShow,
+            nextEpisode: resolvedNextEp,
+            progressPercentage: 0 
+          });
+        }
       }
     }
     
     res.json({ success: true, data: nextEpisodes });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error fetching continue watching:", err);
-    res.status(500).json({ success: false, error: "Failed to fetch continue watching feed" });
+    res.status(500).json({ success: false, error: "Failed to fetch continue watching feed", message: getErrorMessage(err) });
   }
 });
 
 router.get("/tv/:showId/watched-episodes", (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
     if (!userId) return res.status(401).json({ success: false, error: "Unauthorized" });
 
     const showId = parseInt(req.params.showId as string);
@@ -459,15 +480,16 @@ router.get("/tv/:showId/watched-episodes", (req: Request, res: Response) => {
     `).all(userId, showId) as { episode_id: number }[];
 
     res.json({ success: true, data: episodes.map(e => e.episode_id) });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error fetching watched episodes:", err);
-    res.status(500).json({ success: false, error: "Failed to fetch watched episodes" });
+    res.status(500).json({ success: false, error: "Failed to fetch watched episodes", message: getErrorMessage(err) });
   }
 });
 
 router.post("/tv/:showId/episodes/:episodeId/watched", (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, error: "Unauthorized" });
     const showId = parseInt(req.params.showId as string);
     const episodeId = parseInt(req.params.episodeId as string);
 
@@ -477,7 +499,7 @@ router.post("/tv/:showId/episodes/:episodeId/watched", (req: Request, res: Respo
       FROM tv_episodes e
       JOIN tv_seasons s ON e.season_id = s.id
       WHERE e.id = ? AND e.show_id = ?
-    `).get(episodeId, showId) as any;
+    `).get(episodeId, showId) as { episode_number: number; season_number: number; season_id: number } | undefined;
 
     if (!episode) return res.status(404).json({ success: false, error: "Episode not found" });
 
@@ -495,15 +517,16 @@ router.post("/tv/:showId/episodes/:episodeId/watched", (req: Request, res: Respo
     `).run(showId);
 
     res.json({ success: true, message: "Episode marked as watched" });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error marking episode watched:", err);
-    res.status(500).json({ success: false, error: "Failed to mark episode watched" });
+    res.status(500).json({ success: false, error: "Failed to mark episode watched", message: getErrorMessage(err) });
   }
 });
 
 router.delete("/tv/:showId/episodes/:episodeId/watched", (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, error: "Unauthorized" });
     const episodeId = parseInt(req.params.episodeId as string);
 
     db.prepare(`
@@ -512,15 +535,16 @@ router.delete("/tv/:showId/episodes/:episodeId/watched", (req: Request, res: Res
     `).run(userId, episodeId);
 
     res.json({ success: true, message: "Episode unmarked as watched" });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error unmarking episode:", err);
-    res.status(500).json({ success: false, error: "Failed to unmark episode" });
+    res.status(500).json({ success: false, error: "Failed to unmark episode", message: getErrorMessage(err) });
   }
 });
 
 router.post("/tv/:showId/seasons/:seasonId/watched", (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, error: "Unauthorized" });
     const showId = parseInt(req.params.showId as string);
     const seasonId = parseInt(req.params.seasonId as string);
 
@@ -530,7 +554,7 @@ router.post("/tv/:showId/seasons/:seasonId/watched", (req: Request, res: Respons
       FROM tv_episodes e
       JOIN tv_seasons s ON e.season_id = s.id
       WHERE s.id = ? AND e.show_id = ?
-    `).all(seasonId, showId) as any[];
+    `).all(seasonId, showId) as Array<{ episode_id: number; episode_number: number; season_number: number }>;
 
     if (!episodes.length) {
        return res.status(404).json({ success: false, error: "Season or episodes not found" });
@@ -555,9 +579,9 @@ router.post("/tv/:showId/seasons/:seasonId/watched", (req: Request, res: Respons
     })();
 
     res.json({ success: true, message: "Season marked as watched" });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error marking season watched:", err);
-    res.status(500).json({ success: false, error: "Failed to mark season watched" });
+    res.status(500).json({ success: false, error: "Failed to mark season watched", message: getErrorMessage(err) });
   }
 });
 

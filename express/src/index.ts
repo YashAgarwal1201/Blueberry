@@ -62,16 +62,10 @@ const authLimiter = rateLimit({
 app.use("/api/auth", authLimiter, toNodeHandler(auth));
 
 // Middleware
-// app.use(cors());
-// app.use(loggerMiddleware);
 app.use(express.json());
 app.use(express.static("public"));
 
 // Health check endpoint
-// app.get("/health", (req: Request, res: Response) => {
-//   res.json({ status: "ok", timestamp: new Date().toISOString() });
-// });
-
 app.get("/health", (req: Request, res: Response): void => {
   const clientIp =
     req.headers["x-forwarded-for"]?.toString().split(",")[0].trim() ||
@@ -87,8 +81,6 @@ app.get("/health", (req: Request, res: Response): void => {
 });
 
 // Routes
-// Keeping old routes
-// app.use("/items", itemsRouter); 
 app.use("/movies", moviesRouter);
 app.use("/tv", tvRouter);
 app.use("/languages", languagesRouter);

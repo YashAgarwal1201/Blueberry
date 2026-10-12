@@ -118,7 +118,10 @@
                   <div v-else class="relative w-full" ref="watchlistDropdownRef">
                     <button @click="watchlistMenuOpen = !watchlistMenuOpen"
                       class="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-primary/20 backdrop-blur-md text-primary rounded-full font-bold hover:bg-primary/30 active:scale-95 transition-all border border-primary/30 whitespace-nowrap">
-                      <CheckCircle2 :size="20" /> {{ prettyWatchlistStatus(watchlistItem?.status) }}
+                      <Bookmark v-if="watchlistItem?.status === 'want_to_watch'" :size="20" />
+                      <PlayCircle v-else-if="watchlistItem?.status === 'watching'" :size="20" />
+                      <CheckCircle2 v-else :size="20" />
+                      {{ prettyWatchlistStatus(watchlistItem?.status) }}
                       <ChevronDown :size="16" :class="{ 'rotate-180': watchlistMenuOpen }"
                         class="transition-transform shrink-0" />
                     </button>
@@ -127,14 +130,20 @@
                     <div v-if="watchlistMenuOpen"
                       class="absolute top-full left-0 mt-2 w-full sm:w-48 bg-surface-2/95 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl z-50 flex flex-col gap-1 text-left">
                       <button @click="updateStatus('want_to_watch')"
-                        class="text-left px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-surface-3 transition-colors"
-                        :class="{ 'text-primary bg-primary/10': watchlistItem?.status === 'want_to_watch' }">Want to watch</button>
+                        class="text-left px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-surface-3 transition-colors flex items-center gap-2"
+                        :class="{ 'text-primary bg-primary/10': watchlistItem?.status === 'want_to_watch' }">
+                        <Bookmark :size="16" /> Want to watch
+                      </button>
                       <button @click="updateStatus('watching')"
-                        class="text-left px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-surface-3 transition-colors"
-                        :class="{ 'text-primary bg-primary/10': watchlistItem?.status === 'watching' }">Watching</button>
+                        class="text-left px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-surface-3 transition-colors flex items-center gap-2"
+                        :class="{ 'text-primary bg-primary/10': watchlistItem?.status === 'watching' }">
+                        <PlayCircle :size="16" /> Watching
+                      </button>
                       <button @click="updateStatus('watched')"
-                        class="text-left px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-surface-3 transition-colors"
-                        :class="{ 'text-primary bg-primary/10': watchlistItem?.status === 'watched' }">Watched</button>
+                        class="text-left px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-surface-3 transition-colors flex items-center gap-2"
+                        :class="{ 'text-primary bg-primary/10': watchlistItem?.status === 'watched' }">
+                        <CheckCircle2 :size="16" /> Watched
+                      </button>
                       <div class="h-px bg-white/10 my-1"></div>
                       <button @click="removeFromWatchlist"
                         class="text-left px-3 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-2">
@@ -319,12 +328,12 @@ import MediaCard from '@/components/MediaCard.vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useMoviesStore } from '@/stores/moviesStore'
 import { useWatchlistStore } from '@/stores/watchListStore'
-import type { MovieWithDetails, WatchlistItemWithMovie, WatchlistStatus } from "shared-types"
-import toastHandler from '@/composables/toastHandeler'
+import type { MovieWithDetails, MovieCard, WatchlistItemWithMovie, WatchlistStatus } from "shared-types"
+import toastHandler from '@/composables/toastHandler'
 import { getErrorMessage } from '@/services/errorUtils'
 import { useAuthStore } from '@/stores/authStore'
 import { usePreferencesStore } from '@/stores/preferencesStore'
-import { AlertCircle, Play, Plus, CheckCircle2, ChevronDown, Clock, User, Star, X, Edit, Trash2, ArrowLeft, MoreHorizontal, Ban } from 'lucide-vue-next'
+import { AlertCircle, Play, Plus, Bookmark, PlayCircle, CheckCircle2, ChevronDown, Clock, Star, X, Edit, Trash2, ArrowLeft, MoreHorizontal, Ban } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -341,7 +350,7 @@ const directorName = computed(() => {
 })
 
 const movie = ref<MovieWithDetails | null>(null)
-const similarMovies = ref<any[]>([])
+const similarMovies = ref<MovieCard[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 
@@ -599,14 +608,3 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
 })
 </script>
-
-<style scoped>
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-</style>

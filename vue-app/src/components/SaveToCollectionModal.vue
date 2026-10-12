@@ -63,7 +63,7 @@ import AppImage from '@/components/AppImage.vue'
 import { Check, Plus, Folder, FolderPlus, Loader2 } from 'lucide-vue-next'
 import { useCollectionsStore } from '@/stores/collectionsStore'
 import { useToast } from 'primevue/usetoast'
-import type { MediaCard } from 'shared-types'
+import type { MediaCard, Collection } from 'shared-types'
 
 const props = defineProps<{
   visible: boolean
@@ -117,11 +117,11 @@ async function checkItemPresence() {
   // Let's just start with an empty set. If they try to add it again, it's a no-op on backend.
 }
 
-function isItemInCollection(collection: any) {
+function isItemInCollection(collection: Collection) {
   return itemInCollections.value.has(collection.id)
 }
 
-async function toggleInCollection(collection: any) {
+async function toggleInCollection(collection: Collection) {
   if (!props.media) return
   
   const inCol = itemInCollections.value.has(collection.id)
@@ -137,6 +137,7 @@ async function toggleInCollection(collection: any) {
       toast.add({ severity: 'success', summary: 'Added', detail: `Added to ${collection.name}`, life: 2000 })
     }
   } catch (err) {
+    console.error('Failed to toggle item in collection:', err)
     // Revert optimistic
     if (inCol) itemInCollections.value.add(collection.id)
     else itemInCollections.value.delete(collection.id)
@@ -158,6 +159,7 @@ async function handleCreate() {
       await toggleInCollection(newCol)
     }
   } catch (err) {
+    console.error('Failed to create collection:', err)
     toast.add({ severity: 'error', summary: 'Error', detail: 'Could not create collection', life: 3000 })
   } finally {
     creating.value = false
