@@ -33,9 +33,10 @@
         <button
           v-if="authStore.isAuthenticated && !isInWatchlist"
           @click="addToWatchlist"
-          class="px-4 py-2 bg-primary text-white text-sm font-bold rounded-full hover:bg-primary/90 transition-colors"
+          class="px-4 py-2 bg-primary text-white text-sm font-bold rounded-full hover:bg-primary/90 transition-colors flex items-center gap-1.5"
         >
-          + Watchlist
+          <Plus :size="16" />
+          <span>Watchlist</span>
         </button>
       </div>
     </nav>
