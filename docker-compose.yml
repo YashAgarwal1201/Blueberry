@@ -1,0 +1,60 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: blueberry-backend
+    restart: unless-stopped
+    ports:
+      - "${PORT_BACKEND:-8100}:8100"
+    environment:
+      - PORT=8100
+      - NODE_ENV=production
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5130,http://localhost:80,http://localhost}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-blueberry_super_secure_production_secret_32_chars}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:5130}
+      - TMDB_API_KEY=${TMDB_API_KEY:-}
+      - DATABASE_URL=${DATABASE_URL:-}
+    volumes:
+      - blueberry_data:/app/backend/data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8100/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: vue-app/Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:-}
+    container_name: blueberry-frontend
+    restart: unless-stopped
+    ports:
+      - "${PORT_FRONTEND:-5130}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # Optional PostgreSQL service for homelab setups using Postgres instead of SQLite
+  postgres:
+    image: postgres:16-alpine
+    container_name: blueberry-postgres
+    profiles: ["postgres"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-blueberry}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-blueberry_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-blueberry}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  blueberry_data:
+    name: blueberry_data
+  postgres_data:
+    name: blueberry_postgres_data

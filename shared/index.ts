@@ -688,3 +688,57 @@ export interface IngestResult {
   title: string
   media_type: MediaType
 }
+
+// ── Authentication & RBAC ───────────────────────────────────────────────────
+
+export type UserRole = "admin" | "moderator" | "user";
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  emailVerified: boolean;
+  image?: string | null;
+  role?: UserRole | string;
+  banned?: boolean | null;
+  banReason?: string | null;
+  banExpires?: number | null;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  preferences?: string | null;
+}
+
+export interface Session {
+  id: string;
+  userId: string;
+  token: string;
+  expiresAt: string | Date;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  impersonatedBy?: string | null;
+  user: User;
+}
+
+export interface UpdateUserRoleRequest {
+  userId: string;
+  role: UserRole;
+}
+
+export interface BanUserRequest {
+  userId: string;
+  banReason?: string;
+  banExpiresIn?: number;
+}
+
+export interface AdminUserListItem {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole | string;
+  banned: boolean;
+  banReason?: string | null;
+  createdAt: string | Date;
+}
+

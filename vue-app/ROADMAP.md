@@ -25,7 +25,7 @@ Development is organized by feature categories.
   - [ ] Responsive image sizing presets & edge optimization proxy (WebP/AVIF)
   - [ ] Large list DOM virtualization (Search, Watchlists, Collections)
   - [ ] Client-side API response deduplication / SWR caching
-- [ ] Multi-Engine Database Abstraction (Support for SQLite, LibSQL/Turso, PostgreSQL via Neon/Supabase)
+- [x] Multi-Engine Database Abstraction (Support for SQLite, LibSQL/Turso, PostgreSQL via Neon/Supabase — Completed in Backend)
 - [ ] Model Context Protocol (MCP) Server Integration (Standard tool server for AI orchestrators, Tulip, Claude Desktop, and agent clients)
 
 ## Authentication & User Accounts
@@ -36,7 +36,7 @@ Development is organized by feature categories.
 - [x] State management for user sessions
 - [ ] Social Logins (Google, GitHub, Apple)
 - [ ] Two-Factor Authentication (2FA)
-- [ ] Role-Based Access Control (Admin dashboards for moderating custom content/users)
+- [x] Role-Based Access Control (Admin dashboards for moderating custom content/users)
 
 ## Media Discovery & Browsing
 

@@ -43,7 +43,10 @@ const navItems = computed(() => {
     { to: '/settings/blocked-titles', label: 'Blocked Titles' },
   ]
   if (authStore.isAdmin) {
-    items.unshift({ to: '/settings/movies-added', label: 'Movies Added' })
+    items.unshift(
+      { to: '/settings/movies-added', label: 'Movies Added' },
+      { to: '/settings/users', label: 'User Management' },
+    )
   }
   return items
 })

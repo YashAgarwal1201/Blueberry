@@ -1,13 +1,13 @@
 # Blueberry
 
-Blueberry is a modern, responsive web application for discovering, managing, and curating movies, TV shows, and cast details. The project is structured as a full-stack monorepo featuring a Vue 3 frontend and an Express Node.js backend.
+Blueberry is a modern, responsive web application for discovering, managing, and curating movies, TV shows, and cast details. The project is structured as a full-stack monorepo featuring a Vue 3 frontend and a high-performance Hono & Drizzle ORM backend.
 
 ## Project Structure
 
 This monorepo consists of three main packages:
 
 - **[`vue-app/`](./vue-app/)**: The frontend client built with Vue 3, Vite, Pinia, and Tailwind CSS.
-- **[`express/`](./express/)**: The backend REST API built with Express, TypeScript, and SQLite (via `better-sqlite3`).
+- **[`backend/`](./backend/)**: The backend REST API built with Hono, Drizzle ORM, TypeScript, and multi-engine SQLite/Postgres.
 - **[`shared/`](./shared/)**: Shared TypeScript types and interfaces used by both the frontend and backend to ensure end-to-end type safety.
 
 ## Features
@@ -17,7 +17,7 @@ This monorepo consists of three main packages:
 - **Custom Content Forms** — Client-side forms to add user-generated movies and cast members, including a dedicated cast editor UI.
 - **Watchlist Management** — UI to keep track of content you want to see by managing a personal watchlist.
 - **Responsive UX** — Shared UI patterns across desktop and mobile devices featuring media drawers, hero carousels, and side menus.
-- **SQLite Database** — Fast and reliable data persistence with a robust API architecture designed to avoid overfetching and the N+1 problem.
+- **Multi-Engine Database & ORM** — Portably typed via Drizzle ORM supporting SQLite (`better-sqlite3`, Cloudflare D1, Turso) and Postgres with clean relational schema definitions.
 
 ## Getting Started
 
@@ -30,7 +30,7 @@ Ensure you have [Node.js](https://nodejs.org/) (v20+ recommended) and `npm` inst
 1. **Install Dependencies**
    Navigate to both the frontend and backend directories to install their respective dependencies:
    ```bash
-   cd express && npm install
+   cd backend && npm install
    cd ../vue-app && npm install
    cd ../shared && npm install
    ```
@@ -38,7 +38,7 @@ Ensure you have [Node.js](https://nodejs.org/) (v20+ recommended) and `npm` inst
 2. **Environment Variables**
    Set up your environment variables for both packages by copying the example files:
    ```bash
-   cp express/.env.example express/.env
+   cp backend/.env.example backend/.env
    cp vue-app/.env.example vue-app/.env
    ```
 
@@ -48,8 +48,8 @@ Ensure you have [Node.js](https://nodejs.org/) (v20+ recommended) and `npm` inst
    Generate certs in both directories:
    ```bash
    # Backend Certs
-   mkdir -p express/certs
-   cd express/certs
+   mkdir -p backend/certs
+   cd backend/certs
    mkcert -install
    mkcert localhost
    cd ../..
@@ -68,7 +68,7 @@ To start the development environment, run the dev servers in separate terminal w
 
 **Terminal 1 (Backend):**
 ```bash
-cd express
+cd backend
 npm run dev
 ```
 
@@ -81,9 +81,25 @@ npm run dev
 - The API will be available at `https://localhost:8100`
 - The Vue app will be available at `https://localhost:5130`
 
+### Self-Hosting with Docker Compose
+
+For homelabs and production self-hosting:
+
+```bash
+# 1. Copy the example environment file
+cp .env.docker.example .env
+
+# 2. Build and launch all containers
+docker compose up -d
+```
+
+- Frontend SPA: `http://localhost:5130`
+- Backend API & Health: `http://localhost:8100/health`
+- Persistent SQLite database stored in Docker volume `blueberry_data`.
+
 ## Documentation & Roadmap
 
 - **[Technical Architecture & Specification (`SPEC.md`)](./SPEC.md)**: Authoritative architecture, data schemas, dual-deployment model, multi-engine DB abstraction, and Tulip MCP protocol.
-- **[Express Backend Roadmap](./express/ROADMAP.md)**: Backend milestone tracker.
+- **[Backend Roadmap](./backend/ROADMAP.md)**: Backend milestone tracker.
 - **[Vue Client Roadmap](./vue-app/ROADMAP.md)**: Frontend milestone tracker.
-- Package guides: [Express Backend README](./express/README.md) | [Vue Client README](./vue-app/README.md)
+- Package guides: [Backend README](./backend/README.md) | [Vue Client README](./vue-app/README.md)

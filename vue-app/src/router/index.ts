@@ -18,6 +18,7 @@ const router = createRouter({
       path: '/profile',
       name: 'Profile',
       component: () => import('../views/ProfilePage.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path: '/profile/collections/:id',
@@ -60,6 +61,13 @@ const router = createRouter({
           path: 'movies-added',
           name: 'settings-movies-added',
           component: () => import('../views/settings/MoviesAddedSettingsPage.vue'),
+          meta: { requiresAuth: true, requiresAdmin: true },
+        },
+        {
+          path: 'users',
+          name: 'settings-users',
+          component: () => import('../views/settings/AdminUsersSettingsPage.vue'),
+          meta: { requiresAuth: true, requiresAdmin: true },
         },
         {
           path: 'customise-homepage',
@@ -110,11 +118,13 @@ const router = createRouter({
       path: '/people/add',
       name: 'add-person',
       component: () => import('@/views/PersonFormPage.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path: '/people/:uuid/edit',
       name: 'edit-person',
       component: () => import('@/views/PersonFormPage.vue'),
+      meta: { requiresAuth: true }
     },
 
     {
@@ -141,11 +151,13 @@ const router = createRouter({
       path: '/movies/add',
       name: 'add-movie',
       component: () => import('@/views/MovieFormPage.vue'),
+      meta: { requiresAuth: true }
     },
     {
       path: '/movies/:uuid/edit',
       name: 'edit-movie',
       component: () => import('@/views/MovieFormPage.vue'),
+      meta: { requiresAuth: true }
     },
   ],
 })
@@ -158,6 +170,10 @@ router.beforeEach((to, from, next) => {
   
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next({ name: 'Login' })
+  } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
+    next({ name: 'Home' })
+  } else if (to.meta.requiresModerator && !authStore.isModerator) {
+    next({ name: 'Home' })
   } else if ((to.name === 'Login' || to.name === 'Register') && authStore.isAuthenticated) {
     next({ name: 'Home' })
   } else if (to.path.startsWith('/movies') && !preferencesStore.showMovies && to.name !== 'Home') {
@@ -165,8 +181,6 @@ router.beforeEach((to, from, next) => {
   } else if (to.path.startsWith('/shows') && !preferencesStore.showShows && to.name !== 'Home') {
     next({ name: 'Home' })
   } else if (to.path.startsWith('/people') && !preferencesStore.showPeople && to.name !== 'Home') {
-    next({ name: 'Home' })
-  } else if (to.name === 'settings-movies-added' && !authStore.isAdmin) {
     next({ name: 'Home' })
   } else {
     next()

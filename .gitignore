@@ -16,6 +16,7 @@ dist-ssr/
 *.db-shm
 *.sqlite
 *.sql
+backend/data/
 express/data/
 
 # Logs

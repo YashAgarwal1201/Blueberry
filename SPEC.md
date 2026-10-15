@@ -9,12 +9,12 @@ Blueberry is a modern, responsive full-stack media platform for discovering, tra
 ### Monorepo Structure
 The project is structured as a TypeScript monorepo comprising three core packages:
 * **`vue-app/`**: Client frontend application built with Vue 3 and Vite.
-* **`express/` (or `backend/`)**: REST API and orchestration backend built with **Hono** and TypeScript, operating universally across Node.js, Cloudflare Workers, and Vercel.
+* **`backend/`**: REST API and orchestration backend built with **Hono** and TypeScript, operating universally across Node.js, Cloudflare Workers, and Vercel.
 * **`shared/`**: Shared TypeScript types, data contracts, and parameter schemas consumed by both client and server.
 
 ```
 Blueberry/
-├── express/            # Backend API (Hono), DB Layer (Drizzle), Auth, MCP Server
+├── backend/            # Backend API (Hono), DB Layer (Drizzle), Auth, MCP Server
 ├── vue-app/            # Vue 3 SPA, Pinia Stores, PrimeVue, Dexie.js, PWA
 ├── shared/             # Shared TypeScript models, contracts, and enums
 ├── data/               # Persistent media storage and SQLite database files
@@ -36,7 +36,7 @@ Blueberry/
 * **Carousel / Carousels**: Swiper v14 for hardware-accelerated touch sliders.
 * **Build System**: Vite v7 with custom Rollup `manualChunks` vendor splitting (`vue-core`, `ui-lib`, `swiper`, `lucide`).
 
-### Backend Stack (`express` / `backend`)
+### Backend Stack (`backend`)
 * **Framework**: **Hono** (`hono`) — Modern, zero-dependency web framework built natively on Web Standards (`Request`, `Response`, `fetch`).
   * **Universal Multi-Runtime**: Runs on Cloudflare Workers / Pages Functions ($0/month edge), Vercel Serverless, and local Node.js / Docker via `@hono/node-server`.
   * **Native Streaming & SSE**: Built-in Server-Sent Events primitives powering the Model Context Protocol (MCP) server.
@@ -225,7 +225,7 @@ Blueberry is engineered to be **infrastructure-agnostic**. Rather than imposing 
 * **Cloudflare Workers / Pages Functions ($0/Month Edge)**: Hono compiles directly into a native Cloudflare Worker / Pages Function running at the edge. The Vue SPA is hosted on Cloudflare Pages, providing an entire full-stack deployment for $0/month.
 * **Vercel Serverless ($0/Month)**: Hono runs natively on Vercel's Node/Edge functions, with the Vue SPA served on Vercel's global CDN.
 * **Unified Process (Single Port for Self-Hosters)**: In local development or Docker, Hono (via `@hono/node-server`) serves both the REST API endpoints and statically serves the compiled Vue client (`vue-app/dist`). This allows the entire platform to run in a single container or single process on a single port.
-* **Containerized Deployment**: Packaged via Docker / Docker Compose / Kubernetes for homelab self-hosters with persistent volume mounts for local SQLite/data.
+* **Containerized Deployment (Docker Compose)**: Multi-stage Alpine container definitions for both frontend (`vue-app/Dockerfile`) and backend (`backend/Dockerfile`), orchestrated via `docker-compose.yml`. Includes Nginx reverse proxying, SPA fallback routing, persistent volume mounts (`blueberry_data:/app/backend/data`), `/health` container healthchecks, and an optional PostgreSQL service profile.
 * **Bare-Metal / Traditional VPS**: Run as standard Node.js services managed by process managers (`systemd`, `PM2`, `supervisord`).
 
 ### 2. Database Engine Independence
