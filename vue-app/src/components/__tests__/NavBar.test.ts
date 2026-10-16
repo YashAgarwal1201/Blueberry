@@ -33,11 +33,11 @@ describe('NavBar.vue', () => {
     })
 
     const links = wrapper.findAll('a')
-    // Home, Movies, Shows, Genres, People, Profile
-    expect(links).toHaveLength(6)
+    // Home, Movies, Shows, Search, Profile
+    expect(links).toHaveLength(5)
     
     const toProps = links.map(link => link.attributes('href'))
-    expect(toProps).toEqual(['/', '/movies', '/shows', '/genres', '/people', '/profile'])
+    expect(toProps).toEqual(['/', '/movies', '/shows', '/search', '/profile'])
   })
 
   it('hides links based on preferences', () => {
@@ -55,11 +55,11 @@ describe('NavBar.vue', () => {
     })
 
     const links = wrapper.findAll('a')
-    // Home, Genres, Profile
+    // Home, Search, Profile
     expect(links).toHaveLength(3)
     
     const toProps = links.map(link => link.attributes('href'))
-    expect(toProps).toEqual(['/', '/genres', '/profile'])
+    expect(toProps).toEqual(['/', '/search', '/profile'])
   })
 
   it('toggles side menu when menu button is clicked', async () => {

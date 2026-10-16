@@ -231,7 +231,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import AppImage from '@/components/AppImage.vue'
-import { Plus, User, X } from 'lucide-vue-next'
+import { Plus, X } from 'lucide-vue-next'
 import { usePeopleStore } from '@/stores/peopleStore'
 import type { CastMemberRequest, CastRole, CreatePersonRequest, Person } from "shared-types"
 import { getErrorStatus } from '@/services/errorUtils'

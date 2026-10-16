@@ -165,7 +165,7 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Drawer, Button, Tag, Skeleton } from 'primevue'
-import { Calendar, Film, MapPin, User, Pencil, Trash2, X } from 'lucide-vue-next'
+import { Calendar, MapPin, Pencil, Trash2, X } from 'lucide-vue-next'
 import AppImage from '@/components/AppImage.vue'
 import type { Person } from "shared-types"
 

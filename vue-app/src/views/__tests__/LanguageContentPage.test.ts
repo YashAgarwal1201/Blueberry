@@ -32,9 +32,9 @@ describe('LanguageContentPage.vue', () => {
     mockRoute.params.code = 'en'
   })
 
-  it('renders loading state', () => {
+  it('renders loading skeleton state', () => {
     const languagesStore = useLanguagesStore()
-    languagesStore.moviesLoadingMap.set('en', true)
+    languagesStore.sectionsLoadingMap.set('en', true)
 
     const wrapper = mount(LanguageContentPage, {
       global: {
@@ -42,16 +42,16 @@ describe('LanguageContentPage.vue', () => {
       }
     })
 
-    expect(wrapper.text()).toContain('Loading movies...')
+    expect(wrapper.findAll('.animate-pulse').length).toBeGreaterThan(0)
   })
 
   it('renders empty state when no movies', async () => {
     const languagesStore = useLanguagesStore()
     languagesStore.fetchLanguages = vi.fn().mockResolvedValue({})
-    languagesStore.fetchMoviesByLanguage = vi.fn().mockResolvedValue({})
+    languagesStore.fetchLanguageSections = vi.fn().mockResolvedValue({})
     languagesStore.languages = [{ id: 1, name: 'English', code: 'en', native_script: 'English' }] as any
-    languagesStore.moviesByLanguage.set('en', [])
-    languagesStore.moviesLoadingMap.set('en', false)
+    languagesStore.sectionsByLanguage.set('en', [])
+    languagesStore.sectionsLoadingMap.set('en', false)
 
     const wrapper = mount(LanguageContentPage, {
       global: {
@@ -62,32 +62,35 @@ describe('LanguageContentPage.vue', () => {
     await wrapper.vm.$nextTick()
     
     expect(wrapper.text()).toContain('English')
-    expect(wrapper.text()).toContain('No content available for this language')
+    expect(wrapper.text()).toContain('No movies in this language yet.')
   })
 
   it('renders movies when data is available', async () => {
     const languagesStore = useLanguagesStore()
     languagesStore.fetchLanguages = vi.fn().mockResolvedValue({})
-    languagesStore.fetchMoviesByLanguage = vi.fn().mockResolvedValue({})
+    languagesStore.fetchLanguageSections = vi.fn().mockResolvedValue({})
     
     languagesStore.languages = [
       { id: 1, name: 'English', code: 'en' }
     ] as any
-    languagesStore.moviesByLanguage.set('en', [
-      { id: 101, title: 'English Movie 1', release_year: 2020 } as any
+    languagesStore.sectionsByLanguage.set('en', [
+      {
+        genre: { id: 1, name: 'Action', slug: 'action' },
+        movies: [{ id: 101, title: 'English Movie 1', release_year: 2020 }] as any
+      }
     ])
-    languagesStore.moviesLoadingMap.set('en', false)
+    languagesStore.sectionsLoadingMap.set('en', false)
 
     const wrapper = mount(LanguageContentPage, {
       global: {
-        stubs: { GoBackButton: true, MediaCard: true }
+        stubs: { GoBackButton: true, MediaCarousel: false, MediaCard: true }
       }
     })
 
     await wrapper.vm.$nextTick()
     
     expect(wrapper.text()).toContain('English')
-    expect(wrapper.text()).toContain('Explore movies in this language')
-    expect(wrapper.find('media-card-stub').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Action')
+    expect(wrapper.findComponent({ name: 'MediaCard' }).exists() || wrapper.find('media-card-stub').exists()).toBe(true)
   })
 })

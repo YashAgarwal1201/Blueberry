@@ -1,15 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import LoginPage from '../LoginPage.vue'
 
 const mockRouterPush = vi.fn()
+const mockRouterReplace = vi.fn()
 vi.mock('vue-router', () => ({
   useRouter: () => ({
-    push: mockRouterPush
+    push: mockRouterPush,
+    replace: mockRouterReplace,
+  }),
+  useRoute: () => ({
+    query: {},
   }),
   RouterLink: {
-    template: '<a><slot></slot></a>'
-  }
+    template: '<a><slot></slot></a>',
+  },
 }))
 
 const mockSignInEmail = vi.fn()
@@ -17,14 +23,16 @@ const mockSignInMagicLink = vi.fn()
 vi.mock('@/lib/auth-client', () => ({
   authClient: {
     signIn: {
-      email: (...args: any[]) => mockSignInEmail(...args),
-      magicLink: (...args: any[]) => mockSignInMagicLink(...args)
-    }
-  }
+      email: (...args: unknown[]) => mockSignInEmail(...args),
+      magicLink: (...args: unknown[]) => mockSignInMagicLink(...args),
+    },
+    useSession: () => ({ value: { isPending: false, data: null } }),
+  },
 }))
 
 describe('LoginPage.vue', () => {
   beforeEach(() => {
+    setActivePinia(createPinia())
     vi.clearAllMocks()
     mockSignInEmail.mockResolvedValue({ error: null, data: {} })
     mockSignInMagicLink.mockResolvedValue({ error: null, data: {} })

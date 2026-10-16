@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, watchEffect, computed } from 'vue'
+import { ref, watchEffect, computed, watch } from 'vue'
 import { authClient } from '../lib/auth-client'
 import type { User, UserRole } from 'shared-types'
 
@@ -21,6 +21,32 @@ export const useAuthStore = defineStore('auth', () => {
     }
   })
 
+  function waitUntilReady(timeoutMs = 5000): Promise<void> {
+    if (!isAuthLoading.value) {
+      return Promise.resolve()
+    }
+    return new Promise((resolve) => {
+      let timer: ReturnType<typeof setTimeout> | null = null
+
+      const unwatch = watch(
+        isAuthLoading,
+        (loading) => {
+          if (!loading) {
+            if (timer) clearTimeout(timer)
+            unwatch()
+            resolve()
+          }
+        },
+        { immediate: true }
+      )
+
+      timer = setTimeout(() => {
+        unwatch()
+        resolve()
+      }, timeoutMs)
+    })
+  }
+
   const userRole = computed<UserRole>(() => (user.value?.role as UserRole) || 'user')
   const isAdmin = computed(() => user.value?.role === 'admin')
   const isModerator = computed(() => user.value?.role === 'admin' || user.value?.role === 'moderator')
@@ -40,6 +66,7 @@ export const useAuthStore = defineStore('auth', () => {
     isBanned,
     hasRole,
     isAuthLoading,
+    waitUntilReady,
     session,
   }
 })

@@ -81,7 +81,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Plus, FolderPlus, Folder, Lock, Globe, Link as LinkIcon, Loader2 } from 'lucide-vue-next'
+import { Plus, FolderPlus, Lock, Globe, Link as LinkIcon, Loader2 } from 'lucide-vue-next'
 import AppImage from '@/components/AppImage.vue'
 import { useCollectionsStore } from '@/stores/collectionsStore'
 import { RouterLink } from 'vue-router'

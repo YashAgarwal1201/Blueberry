@@ -11,6 +11,7 @@ const defaultBaseUrl = hasCerts ? "https://localhost:8100" : "http://localhost:8
 
 const envOrigins = [
   ...(process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',').map((u) => u.trim()) : []),
+  ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL.trim()] : []),
   ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(',').map((u) => u.trim()) : []),
 ];
 

@@ -11,7 +11,7 @@ export const betterAuth = () => ({
     signOut: jest.fn(),
     getSession: jest.fn().mockResolvedValue({
       session: { id: 'test-session-id' },
-      user: { id: 'test-user-id', name: 'Test User' }
+      user: { id: 'test-user-id', name: 'Test User', role: 'admin' }
     }),
   },
 });

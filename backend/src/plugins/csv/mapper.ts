@@ -65,8 +65,8 @@ const LANGUAGE_MAP: Record<string, string> = {
 };
 
 // ── Status mapping ────────────────────────────────────────────────────────────
-function mapStatus(raw: string): MovieStatus {
-  switch (raw.trim()) {
+function mapStatus(raw?: string): MovieStatus {
+  switch ((raw || '').trim()) {
     case "Released":        return "released";
     case "In Production":
     case "Post Production": return "in_production";
@@ -77,8 +77,8 @@ function mapStatus(raw: string): MovieStatus {
   }
 }
 
-function mapTVStatus(raw: string): import("shared-types").TVStatus {
-  switch (raw.trim()) {
+function mapTVStatus(raw?: string): import("shared-types").TVStatus {
+  switch ((raw || '').trim()) {
     case "Returning Series": return "returning_series";
     case "Planned":          return "planned";
     case "In Production":    return "in_production";

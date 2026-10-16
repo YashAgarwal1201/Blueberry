@@ -1,7 +1,12 @@
 <template>
   <div class="w-full h-full flex flex-col gap-y-8 pb-10">
+    <!-- Loading state -->
+    <div v-if="authStore.isAuthLoading" class="grow flex flex-col items-center justify-center p-8">
+      <div class="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+    </div>
+
     <!-- If not logged in -->
-    <div v-if="!authStore.isAuthenticated"
+    <div v-else-if="!authStore.isAuthenticated"
       class="grow flex flex-col items-center justify-center p-8 text-center bg-surface-1 rounded-xl border border-border">
       <UserCircle :size="48" class="text-text-muted mb-4" />
       <h2 class="text-xl font-semibold mb-2">Not Logged In</h2>
@@ -159,7 +164,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRouter, useRoute, RouterLink } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useWatchlistStore } from '@/stores/watchListStore';
@@ -245,9 +250,13 @@ const handleSignOut = async () => {
   router.push('/');
 };
 
-onMounted(() => {
-  if (authStore.isAuthenticated && watchlistStore.items.length === 0) {
-    watchlistStore.fetchWatchlist();
-  }
-});
+watch(
+  () => authStore.isAuthenticated,
+  (isAuth) => {
+    if (isAuth && watchlistStore.items.length === 0) {
+      watchlistStore.fetchWatchlist();
+    }
+  },
+  { immediate: true }
+);
 </script>

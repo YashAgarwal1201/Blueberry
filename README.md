@@ -83,19 +83,90 @@ npm run dev
 
 ### Self-Hosting with Docker Compose
 
-For homelabs and production self-hosting:
+Blueberry is optimized for zero-config production self-hosting via Docker Compose.
+
+#### 1. Configuration & Launch
 
 ```bash
 # 1. Copy the example environment file
 cp .env.docker.example .env
 
-# 2. Build and launch all containers
-docker compose up -d
+# 2. Generate a secure 32-character secret for Better-Auth
+openssl rand -base64 32
+# Paste the generated string into BETTER_AUTH_SECRET in .env
+
+# 3. Configure the external URL you will use to access Blueberry
+# (e.g. http://192.168.1.100:5130 or https://blueberry.yourdomain.com)
+# BETTER_AUTH_URL=http://localhost:5130
+
+# 4. Build and launch all containers
+docker compose up -d --build
 ```
 
-- Frontend SPA: `http://localhost:5130`
-- Backend API & Health: `http://localhost:8100/health`
-- Persistent SQLite database stored in Docker volume `blueberry_data`.
+- **Frontend SPA**: `http://localhost:5130` (or your configured `PORT_FRONTEND`)
+- **Backend API & Healthcheck**: `http://localhost:8100/health`
+- **Data Persistence**: SQLite database stored in Docker volume `blueberry_data` (`/app/backend/data/app.db`).
+
+#### 2. Initial Admin User Bootstrapping
+
+Blueberry uses 3-tier Role-Based Access Control (`admin`, `moderator`, `user`). When first deployed, newly registered accounts are assigned the `user` role.
+
+To bootstrap your initial administrator account:
+```bash
+# Step 1: Open http://localhost:5130/register in your browser and create your account.
+
+# Step 2: Promote your account to admin via the container CLI:
+docker compose exec backend node scripts/set-admin.js your-email@example.com
+
+# Step 3: Verify the account role:
+docker compose exec backend node scripts/list-users.js
+```
+*Once promoted, log in to access the User Management panel at `/settings/users`, manage permissions, ban/unban users, and moderate content.*
+
+#### 3. Reverse Proxy & SSL Termination (Caddy, Traefik, Nginx)
+
+When deploying behind an external reverse proxy (Cloudflare Tunnels, Caddy, Traefik, or Nginx Proxy Manager):
+1. Point your proxy to `http://<server-ip>:5130`.
+2. Ensure your proxy passes standard headers: `Host`, `X-Real-IP`, `X-Forwarded-For`, and `X-Forwarded-Proto`. (Blueberry's internal Nginx gateway automatically preserves upstream SSL protocols).
+3. Set `BETTER_AUTH_URL=https://blueberry.yourdomain.com` in `.env` to enable secure session cookies.
+
+**Caddyfile Example:**
+```caddy
+blueberry.yourdomain.com {
+    reverse_proxy localhost:5130
+}
+```
+
+**Nginx / Nginx Proxy Manager Example:**
+```nginx
+server {
+    server_name blueberry.yourdomain.com;
+    location / {
+        proxy_pass http://127.0.0.1:5130;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+#### 4. Backups & Upgrades
+
+```bash
+# Zero-downtime database backup
+docker cp blueberry-backend:/app/backend/data/app.db ./backup-$(date +%F).db
+
+# Upgrade Blueberry to the latest version
+git pull
+docker compose build --no-cache
+docker compose up -d
+
+# View container logs & status
+docker compose ps
+docker compose logs -f backend
+docker compose logs -f frontend
+```
 
 ## Documentation & Roadmap
 

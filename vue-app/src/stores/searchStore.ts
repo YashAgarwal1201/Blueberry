@@ -1,9 +1,6 @@
 // src/stores/searchStore.ts
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import { useMoviesStore } from './moviesStore'
-import { useTvStore } from './tvStore'
-import { usePeopleStore } from './peopleStore'
 import type { MovieWithDetails, TVShowCard, Person } from 'shared-types'
 import { db } from '@/services/db'
 
@@ -12,9 +9,6 @@ export type SearchTab = 'all' | 'movies' | 'shows' | 'people'
 const MAX_RECENT = 8
 
 export const useSearchStore = defineStore('searchStore', () => {
-  const moviesStore = useMoviesStore()
-  const tvStore = useTvStore()
-  const peopleStore = usePeopleStore()
 
   // ── Tab ─────────────────────────────────────────────────────────────────────
   const activeTab = ref<SearchTab>('all')

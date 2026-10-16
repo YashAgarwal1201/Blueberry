@@ -26,10 +26,26 @@ import type { AppEnv } from "./types";
 const app = new Hono<AppEnv>();
 const PORT = process.env.PORT || 8100;
 
-// Allow multiple origins by splitting the FRONTEND_URL environment variable by comma, or fallback to localhost
-const allowedOrigins = process.env.FRONTEND_URL 
-  ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
-  : ['http://localhost:5130', 'http://127.0.0.1:5130', 'https://localhost:5130', 'https://127.0.0.1:5130', 'http://localhost:5173', 'http://127.0.0.1:5173', 'https://localhost:5173', 'https://127.0.0.1:5173'];
+// Harmonize allowed origins from FRONTEND_URL, BETTER_AUTH_URL, and BETTER_AUTH_TRUSTED_ORIGINS
+const envOrigins = [
+  ...(process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',').map(url => url.trim()) : []),
+  ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL.trim()] : []),
+  ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(',').map(url => url.trim()) : []),
+];
+
+const allowedOrigins = Array.from(new Set([
+  ...envOrigins,
+  'http://localhost:5130',
+  'http://127.0.0.1:5130',
+  'https://localhost:5130',
+  'https://127.0.0.1:5130',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'https://localhost:5173',
+  'https://127.0.0.1:5173',
+  'http://localhost:80',
+  'http://localhost',
+]));
 
 app.use(
   "*",
