@@ -12,7 +12,7 @@ export default defineConfig((configEnv) =>
         root: fileURLToPath(new URL('./', import.meta.url)),
         maxWorkers: 1,
         fileParallelism: false,
-        isolate: false,
+        isolate: true,
       },
     },
   ),
