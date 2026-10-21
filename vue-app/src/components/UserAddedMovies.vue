@@ -49,8 +49,8 @@
               <RouterLink :to="`/movies/${data.uuid}/edit`" class="p-button p-button-text p-button-sm">
                 <Pencil :size="16" />
               </RouterLink>
-              <Button class="p-button-text p-button-sm p-button-danger text-red-400 hover:text-red-300"
-                @click="confirmDelete(data.id)" title="Delete">
+              <Button v-if="authStore.isModerator" class="p-button-text p-button-sm p-button-danger text-red-400 hover:text-red-300"
+                @click="confirmDelete(data.uuid)" title="Delete">
                 <Trash2 :size="16" />
               </Button>
             </div>
@@ -68,6 +68,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useMoviesStore } from '@/stores/moviesStore'
+import { useAuthStore } from '@/stores/authStore'
 import { RouterLink } from 'vue-router'
 import { FilterMatchMode } from '@primevue/core/api'
 import toastHandler from '@/composables/toastHandler'
@@ -81,6 +82,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import type { Movie } from "shared-types"
 
 const moviesStore = useMoviesStore()
+const authStore = useAuthStore()
 const confirm = useConfirm()
 const showToast = toastHandler().showToast
 
@@ -107,7 +109,7 @@ function openAddDialog() {
   dialogVisible.value = true
 }
 
-function confirmDelete(id: string) {
+function confirmDelete(uuid: string) {
   confirm.require({
     message: 'Are you sure you want to delete this movie?',
     header: 'Confirm Deletion',
@@ -115,7 +117,7 @@ function confirmDelete(id: string) {
     acceptClass: '!text-white border !border-red-500 !bg-red-500 h-9',
     rejectClass: '!text-text !bg-transparent border !border-border h-9',
     accept: async () => {
-      await moviesStore.deleteMovie(id as string)
+      await moviesStore.deleteMovie(uuid)
       showToast('success', 'Deleted', 'Movie deleted successfully.')
     },
   })

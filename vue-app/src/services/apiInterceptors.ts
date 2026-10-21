@@ -1,6 +1,9 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8100'
+const API_URL =
+  import.meta.env.VITE_API_URL !== undefined && import.meta.env.VITE_API_URL !== ''
+    ? import.meta.env.VITE_API_URL
+    : (import.meta.env.DEV ? 'http://localhost:8100' : '')
 
 const apiClient = axios.create({
   baseURL: API_URL,

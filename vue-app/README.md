@@ -75,7 +75,7 @@ src/
 
 ## Backend Integration
 
-This Vue client relies on its companion Express backend to function. It communicates via REST APIs to fetch media data, handle user authentication securely, and persist user-generated content (like custom movies and watchlists).
+This Vue client communicates with its companion Hono & Drizzle ORM backend (`backend/`). It communicates via REST APIs to fetch media data, handle user authentication securely, and persist user-generated content (like custom movies, collections, and watchlists).
 
 ## Roadmap
 
