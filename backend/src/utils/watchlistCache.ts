@@ -1,41 +1,66 @@
 import db, { watchlist as watchlistTable } from "../db";
-import { isNotNull } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
 
-let cachedMovieWatchlist: { set: Set<number>; timestamp: number } | null = null;
-let cachedShowWatchlist: { set: Set<number>; timestamp: number } | null = null;
+interface CacheEntry {
+  set: Set<number>;
+  timestamp: number;
+}
+
+const movieCache = new Map<string, CacheEntry>();
+const showCache = new Map<string, CacheEntry>();
 const TTL_MS = 5000;
+const EMPTY_SET = new Set<number>();
 
-export function getMovieWatchlistSet(): Set<number> {
+export function getMovieWatchlistSet(userId?: string): Set<number> {
+  if (!userId) return EMPTY_SET;
   const now = Date.now();
-  if (cachedMovieWatchlist && now - cachedMovieWatchlist.timestamp < TTL_MS) {
-    return cachedMovieWatchlist.set;
+  const cached = movieCache.get(userId);
+  if (cached && now - cached.timestamp < TTL_MS) {
+    return cached.set;
   }
   const rows = db
     .select({ movie_id: watchlistTable.movie_id })
     .from(watchlistTable)
-    .where(isNotNull(watchlistTable.movie_id))
+    .where(
+      and(
+        eq(watchlistTable.user_id, userId),
+        isNotNull(watchlistTable.movie_id),
+      ),
+    )
     .all();
   const set = new Set(rows.map((r) => r.movie_id).filter(Boolean) as number[]);
-  cachedMovieWatchlist = { set, timestamp: now };
+  movieCache.set(userId, { set, timestamp: now });
   return set;
 }
 
-export function getShowWatchlistSet(): Set<number> {
+export function getShowWatchlistSet(userId?: string): Set<number> {
+  if (!userId) return EMPTY_SET;
   const now = Date.now();
-  if (cachedShowWatchlist && now - cachedShowWatchlist.timestamp < TTL_MS) {
-    return cachedShowWatchlist.set;
+  const cached = showCache.get(userId);
+  if (cached && now - cached.timestamp < TTL_MS) {
+    return cached.set;
   }
   const rows = db
     .select({ show_id: watchlistTable.show_id })
     .from(watchlistTable)
-    .where(isNotNull(watchlistTable.show_id))
+    .where(
+      and(
+        eq(watchlistTable.user_id, userId),
+        isNotNull(watchlistTable.show_id),
+      ),
+    )
     .all();
   const set = new Set(rows.map((r) => r.show_id).filter(Boolean) as number[]);
-  cachedShowWatchlist = { set, timestamp: now };
+  showCache.set(userId, { set, timestamp: now });
   return set;
 }
 
-export function invalidateWatchlistCache(): void {
-  cachedMovieWatchlist = null;
-  cachedShowWatchlist = null;
+export function invalidateWatchlistCache(userId?: string): void {
+  if (userId) {
+    movieCache.delete(userId);
+    showCache.delete(userId);
+  } else {
+    movieCache.clear();
+    showCache.clear();
+  }
 }

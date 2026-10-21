@@ -1,11 +1,32 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watchEffect } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { authClient } from '@/lib/auth-client'
+import { useAuthStore } from '@/stores/authStore'
 import { Loader2, Check, X } from 'lucide-vue-next'
 import GoBackButton from '@/components/GoBackButton.vue'
 
 const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
+
+watchEffect(() => {
+  if (authStore.isAuthenticated) {
+    const redirect = (route.query.redirect as string) || '/'
+    router.replace(redirect)
+  }
+})
+
+const backRoute = computed(() => {
+  if (route.query.redirect && typeof route.query.redirect === 'string') {
+    if (route.query.redirect === '/watchlist' || route.query.redirect.startsWith('/settings/')) {
+      return '/'
+    }
+    return route.query.redirect
+  }
+  return '/profile'
+})
+
 const email = ref('')
 const password = ref('')
 const error = ref('')
@@ -54,7 +75,8 @@ const handleLogin = async () => {
       if (signInError) {
         error.value = signInError.message || 'Login failed'
       } else {
-        router.push('/')
+        const redirect = (route.query.redirect as string) || '/'
+        router.push(redirect)
       }
     }
   } catch (err: unknown) {
@@ -68,7 +90,7 @@ const handleLogin = async () => {
 <template>
   <div class="w-full min-h-dvh flex bg-surface-0 relative">
     <div class="absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
-      <GoBackButton to="/profile" />
+      <GoBackButton :to="backRoute" />
     </div>
 
     <!-- Left Panel: Branding / Hero -->

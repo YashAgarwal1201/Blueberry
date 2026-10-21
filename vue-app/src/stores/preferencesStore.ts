@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, watch, watchEffect } from 'vue'
+import { ref, watchEffect } from 'vue'
 import { useAuthStore } from './authStore'
 
 import apiClient from '@/services/apiInterceptors'

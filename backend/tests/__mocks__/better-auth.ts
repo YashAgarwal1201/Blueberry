@@ -9,9 +9,20 @@ export const betterAuth = () => ({
     signInEmail: jest.fn(),
     signUpEmail: jest.fn(),
     signOut: jest.fn(),
-    getSession: jest.fn().mockResolvedValue({
-      session: { id: 'test-session-id' },
-      user: { id: 'test-user-id', name: 'Test User' }
+    getSession: jest.fn().mockImplementation(async (opts?: { headers?: any }) => {
+      let customUserId: string | null | undefined;
+      if (opts?.headers) {
+        if (typeof opts.headers.get === "function") {
+          customUserId = opts.headers.get("x-test-user-id");
+        } else if (typeof opts.headers === "object") {
+          customUserId = opts.headers["x-test-user-id"];
+        }
+      }
+      const userId = customUserId || "test-user-id";
+      return {
+        session: { id: `session-${userId}` },
+        user: { id: userId, name: `User ${userId}`, role: "admin" }
+      };
     }),
   },
 });

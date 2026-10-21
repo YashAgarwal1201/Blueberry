@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import apiClient, { startBackendMonitoring, stopBackendMonitoring, getBackendStatus } from '../apiInterceptors'
+import { startBackendMonitoring, stopBackendMonitoring, getBackendStatus } from '../apiInterceptors'
 import axios from 'axios'
 
 vi.mock('axios', () => {

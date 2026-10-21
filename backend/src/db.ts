@@ -53,15 +53,23 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS watchlist (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    TEXT    NOT NULL REFERENCES user(id) ON DELETE CASCADE,
     movie_id   INTEGER REFERENCES movies(id) ON DELETE CASCADE,
     show_id    INTEGER REFERENCES tv_shows(id) ON DELETE CASCADE,
     status     TEXT    NOT NULL CHECK(status IN ('want_to_watch','watching','watched')),
     added_at   TEXT    DEFAULT (datetime('now')),
     watched_at TEXT,
     notes      TEXT,
+    updated_at TEXT,
+    user_rating INTEGER CHECK(user_rating IS NULL OR (user_rating >= 1 AND user_rating <= 10)),
+    liked      INTEGER DEFAULT 0,
+    review_text TEXT,
+    watch_count INTEGER DEFAULT 0,
+    last_watched_at TEXT,
+    source     TEXT,
     CHECK (movie_id IS NOT NULL OR show_id IS NOT NULL),
-    UNIQUE(movie_id),
-    UNIQUE(show_id)
+    UNIQUE(user_id, movie_id),
+    UNIQUE(user_id, show_id)
   );
 
 
@@ -454,16 +462,71 @@ CREATE TABLE IF NOT EXISTS person_known_for (
 )
 `);
 
-// watchlist columns added after initial schema
-addColumnIfMissing("watchlist", "notes", "TEXT");
-addColumnIfMissing("watchlist", "updated_at", "TEXT");
-addColumnIfMissing("watchlist", "user_rating", "INTEGER CHECK(user_rating IS NULL OR (user_rating >= 1 AND user_rating <= 10))");
-addColumnIfMissing("watchlist", "liked", "INTEGER DEFAULT 0");
-addColumnIfMissing("watchlist", "review_text", "TEXT");
-addColumnIfMissing("watchlist", "watch_count", "INTEGER DEFAULT 0");
-addColumnIfMissing("watchlist", "last_watched_at", "TEXT");
-addColumnIfMissing("watchlist", "source", "TEXT");
-db.exec(`UPDATE watchlist SET updated_at = added_at WHERE updated_at IS NULL`);
+// Multi-tenant watchlist migration
+const watchlistCols = db.prepare("PRAGMA table_info('watchlist')").all() as { name: string }[];
+const hasUserId = watchlistCols.some((c) => c.name === "user_id");
+const watchlistIndexes = db.prepare("PRAGMA index_list('watchlist')").all() as { name: string; unique: number }[];
+const hasOldGlobalUniq = watchlistIndexes.some((idx) => {
+  if (!idx.unique) return false;
+  const info = db.prepare(`PRAGMA index_info('${idx.name}')`).all() as { name: string }[];
+  return info.length === 1 && (info[0].name === "movie_id" || info[0].name === "show_id");
+});
+
+if (!hasUserId || hasOldGlobalUniq) {
+  const firstUser = db.prepare("SELECT id FROM user LIMIT 1").get() as { id: string } | undefined;
+  let defaultUserId = firstUser?.id;
+  if (!defaultUserId) {
+    defaultUserId = "default_user";
+    db.prepare(`
+      INSERT OR IGNORE INTO "user" (id, name, email, emailVerified, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
+    `).run(defaultUserId, "Default User", "default@blueberry.local", 1);
+  }
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS watchlist_tenant_migration (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id         TEXT    NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+      movie_id        INTEGER REFERENCES movies(id) ON DELETE CASCADE,
+      show_id         INTEGER REFERENCES tv_shows(id) ON DELETE CASCADE,
+      status          TEXT    NOT NULL CHECK(status IN ('want_to_watch','watching','watched')),
+      added_at        TEXT    DEFAULT (datetime('now')),
+      watched_at      TEXT,
+      notes           TEXT,
+      updated_at      TEXT,
+      user_rating     INTEGER CHECK(user_rating IS NULL OR (user_rating >= 1 AND user_rating <= 10)),
+      liked           INTEGER DEFAULT 0,
+      review_text     TEXT,
+      watch_count     INTEGER DEFAULT 0,
+      last_watched_at TEXT,
+      source          TEXT,
+      CHECK (movie_id IS NOT NULL OR show_id IS NOT NULL),
+      UNIQUE(user_id, movie_id),
+      UNIQUE(user_id, show_id)
+    );
+
+    INSERT OR IGNORE INTO watchlist_tenant_migration (
+      id, user_id, movie_id, show_id, status, added_at, watched_at, notes,
+      updated_at, user_rating, liked, review_text, watch_count, last_watched_at, source
+    )
+    SELECT 
+      id, 
+      ${hasUserId ? "COALESCE(user_id, '" + defaultUserId + "')" : "'" + defaultUserId + "'"}, 
+      movie_id, show_id, status, added_at, watched_at, notes,
+      updated_at, user_rating, liked, review_text, watch_count, last_watched_at, source
+    FROM watchlist;
+
+    DROP TABLE watchlist;
+    ALTER TABLE watchlist_tenant_migration RENAME TO watchlist;
+  `);
+}
+
+db.exec(`CREATE INDEX IF NOT EXISTS idx_watchlist_user ON watchlist(user_id)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_watchlist_movie ON watchlist(movie_id)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_watchlist_show ON watchlist(show_id)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_watchlist_status ON watchlist(status)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_watchlist_user_status ON watchlist(user_id, status)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_watchlist_updated_at ON watchlist(updated_at)`);
 
 // better-auth missing columns
 addColumnIfMissing("account", "issuer", "TEXT");

@@ -1,11 +1,23 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { authClient } from '@/lib/auth-client'
 import { Loader2, Check, X } from 'lucide-vue-next'
 import GoBackButton from '@/components/GoBackButton.vue'
 
 const router = useRouter()
+const route = useRoute()
+
+const backRoute = computed(() => {
+  if (route.query.redirect && typeof route.query.redirect === 'string') {
+    if (route.query.redirect === '/watchlist' || route.query.redirect.startsWith('/settings/')) {
+      return '/'
+    }
+    return route.query.redirect
+  }
+  return '/profile'
+})
+
 const firstName = ref('')
 const lastName = ref('')
 const email = ref('')
@@ -83,7 +95,7 @@ const handleRegister = async () => {
 <template>
   <div class="w-full min-h-dvh flex bg-surface-0 relative">
     <div class="absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
-      <GoBackButton to="/profile" />
+      <GoBackButton :to="backRoute" />
     </div>
 
     <!-- Left Panel: Branding / Hero -->

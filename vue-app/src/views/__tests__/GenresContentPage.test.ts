@@ -32,9 +32,9 @@ describe('GenresContentPage.vue', () => {
     mockRoute.params.slug = 'action'
   })
 
-  it('renders loading state', () => {
+  it('renders loading skeleton state', () => {
     const genresStore = useGenresStore()
-    genresStore.moviesLoadingMap.set('action', true)
+    genresStore.sectionsLoadingMap.set('action', true)
 
     const wrapper = mount(GenresContentPage, {
       global: {
@@ -42,16 +42,16 @@ describe('GenresContentPage.vue', () => {
       }
     })
 
-    expect(wrapper.text()).toContain('Loading movies...')
+    expect(wrapper.findAll('.animate-pulse').length).toBeGreaterThan(0)
   })
 
   it('renders empty state when no movies', async () => {
     const genresStore = useGenresStore()
     genresStore.fetchGenres = vi.fn().mockResolvedValue({})
-    genresStore.fetchMoviesByGenre = vi.fn().mockResolvedValue({})
+    genresStore.fetchGenreSections = vi.fn().mockResolvedValue({})
     genresStore.genres = [{ id: 1, name: 'Action', slug: 'action' }] as any
-    genresStore.moviesByGenre.set('action', [])
-    genresStore.moviesLoadingMap.set('action', false)
+    genresStore.sectionsByGenre.set('action', [])
+    genresStore.sectionsLoadingMap.set('action', false)
 
     const wrapper = mount(GenresContentPage, {
       global: {
@@ -62,25 +62,28 @@ describe('GenresContentPage.vue', () => {
     await wrapper.vm.$nextTick()
     
     expect(wrapper.text()).toContain('Action')
-    expect(wrapper.text()).toContain('No content available for this genre')
+    expect(wrapper.text()).toContain('No movies in this genre yet.')
   })
 
   it('renders movies when data is available', async () => {
     const genresStore = useGenresStore()
     genresStore.fetchGenres = vi.fn().mockResolvedValue({})
-    genresStore.fetchMoviesByGenre = vi.fn().mockResolvedValue({})
+    genresStore.fetchGenreSections = vi.fn().mockResolvedValue({})
     
     genresStore.genres = [
       { id: 1, name: 'Action', slug: 'action', description: 'Action movies' }
     ] as any
-    genresStore.moviesByGenre.set('action', [
-      { id: 101, title: 'Action Movie 1', release_year: 2020 } as any
+    genresStore.sectionsByGenre.set('action', [
+      {
+        language: { id: 1, code: 'en', name: 'English' },
+        movies: [{ id: 101, title: 'Action Movie 1', release_year: 2020 }] as any
+      }
     ])
-    genresStore.moviesLoadingMap.set('action', false)
+    genresStore.sectionsLoadingMap.set('action', false)
 
     const wrapper = mount(GenresContentPage, {
       global: {
-        stubs: { GoBackButton: true, MediaCard: true }
+        stubs: { GoBackButton: true, MediaCarousel: false, MediaCard: true }
       }
     })
 
@@ -88,7 +91,7 @@ describe('GenresContentPage.vue', () => {
     
     expect(wrapper.text()).toContain('Action')
     expect(wrapper.text()).toContain('Action movies')
-    // We stubbed MediaCard, so let's check for the stub
-    expect(wrapper.find('media-card-stub').exists()).toBe(true)
+    expect(wrapper.text()).toContain('English')
+    expect(wrapper.findComponent({ name: 'MediaCard' }).exists() || wrapper.find('media-card-stub').exists()).toBe(true)
   })
 })

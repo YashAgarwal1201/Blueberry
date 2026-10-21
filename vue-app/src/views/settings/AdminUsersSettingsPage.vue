@@ -406,7 +406,7 @@ async function handleSaveRole() {
   try {
     const res = await authClient.admin.setRole({
       userId: selectedUser.value.id,
-      role: selectedRole.value as any,
+      role: selectedRole.value as unknown as 'user' | 'admin',
     })
     if (res.error) {
       showToast('error', 'Error', res.error.message || 'Failed to update role')

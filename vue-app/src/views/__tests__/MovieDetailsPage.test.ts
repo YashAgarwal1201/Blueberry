@@ -3,11 +3,9 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import MovieDetailsPage from '../MovieDetailsPage.vue'
 import { useMoviesStore } from '@/stores/moviesStore'
-import { useWatchlistStore } from '@/stores/watchListStore'
 import { useAuthStore } from '@/stores/authStore'
-import { usePreferencesStore } from '@/stores/preferencesStore'
 
-const mockRoute = { params: { uuid: '123-abc' }, query: {} as Record<string, any>, name: 'movie-details' }
+const mockRoute = { params: { uuid: '123-abc' }, query: {} as Record<string, string>, name: 'movie-details' }
 const mockRouter = { push: vi.fn(), replace: vi.fn(), back: vi.fn() }
 
 vi.mock('vue-router', () => ({

@@ -3,7 +3,6 @@ import { setActivePinia, createPinia } from 'pinia'
 import { usePreferencesStore } from '../preferencesStore'
 import { useAuthStore } from '../authStore'
 import apiClient from '@/services/apiInterceptors'
-import { nextTick } from 'vue'
 
 vi.mock('@/services/apiInterceptors', () => ({
   default: {

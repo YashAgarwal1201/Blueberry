@@ -99,8 +99,8 @@ function makePagination(
 }
 
 /** Build a Set of movie_ids currently in the watchlist — used to set in_watchlist */
-function getWatchlistSet(): Set<number> {
-  return getMovieWatchlistSet();
+function getWatchlistSet(userId?: string): Set<number> {
+  return getMovieWatchlistSet(userId);
 }
 
 /**
@@ -174,7 +174,7 @@ function toMovieCards(movies: Movie[], watchlistSet: Set<number>): MovieCard[] {
 }
 
 /** Fetch full MovieWithDetails for a single movie — used by GET /:uuid, POST, PUT */
-function getMovieWithDetails(identifier: string | number): MovieWithDetails | undefined {
+function getMovieWithDetails(identifier: string | number, userId?: string): MovieWithDetails | undefined {
   const isUuid = typeof identifier === "string";
   const movie = db
     .select()
@@ -185,12 +185,15 @@ function getMovieWithDetails(identifier: string | number): MovieWithDetails | un
   if (!movie) return undefined;
   const id = movie.id;
 
-  const wl = db
-    .select({ id: watchlistTable.id })
-    .from(watchlistTable)
-    .where(eq(watchlistTable.movie_id, id))
-    .get();
-  const inWatchlist = !!wl;
+  let inWatchlist = false;
+  if (userId) {
+    const wl = db
+      .select({ id: watchlistTable.id })
+      .from(watchlistTable)
+      .where(and(eq(watchlistTable.movie_id, id), eq(watchlistTable.user_id, userId)))
+      .get();
+    inWatchlist = !!wl;
+  }
 
   const languages = db
     .select({
@@ -334,7 +337,7 @@ router.get("/recent", optionalAuth, (c) => {
       .limit(20)
       .all() as unknown as Movie[];
 
-    const cards = toMovieCards(movies, getWatchlistSet());
+    const cards = toMovieCards(movies, getWatchlistSet(user?.id));
     c.header("Cache-Control", user ? "private, max-age=60" : "public, max-age=300");
     return c.json({ success: true, data: cards });
   } catch (err: unknown) {
@@ -365,7 +368,7 @@ router.get("/top-rated", optionalAuth, (c) => {
       .limit(20)
       .all() as unknown as Movie[];
 
-    const cards = toMovieCards(movies, getWatchlistSet());
+    const cards = toMovieCards(movies, getWatchlistSet(user?.id));
     c.header("Cache-Control", user ? "private, max-age=60" : "public, max-age=300");
     return c.json({ success: true, data: cards });
   } catch (err: unknown) {
@@ -399,7 +402,7 @@ router.get("/hot", optionalAuth, (c) => {
       .limit(20)
       .all() as unknown as Movie[];
 
-    const cards = toMovieCards(movies, getWatchlistSet());
+    const cards = toMovieCards(movies, getWatchlistSet(user?.id));
     c.header("Cache-Control", user ? "private, max-age=60" : "public, max-age=300");
     return c.json({ success: true, data: cards });
   } catch (err: unknown) {
@@ -450,7 +453,7 @@ router.get("/search", optionalAuth, (c) => {
       .offset(offset)
       .all() as unknown as Movie[];
 
-    const cards = toMovieCards(movies, getWatchlistSet());
+    const cards = toMovieCards(movies, getWatchlistSet(user?.id));
     return c.json({
       success: true,
       data: cards,
@@ -530,7 +533,7 @@ router.get("/", optionalAuth, (c) => {
       .offset(offset)
       .all() as unknown as Movie[];
 
-    const cards = toMovieCards(movies, getWatchlistSet());
+    const cards = toMovieCards(movies, getWatchlistSet(user?.id));
     return c.json({
       success: true,
       data: cards,
@@ -584,7 +587,7 @@ router.get("/:uuid/similar", optionalAuth, (c) => {
       .limit(15)
       .all() as unknown as Movie[];
 
-    const cards = toMovieCards(similar, getWatchlistSet());
+    const cards = toMovieCards(similar, getWatchlistSet(user?.id));
     return c.json({ success: true, data: cards });
   } catch (err: unknown) {
     return c.json({ success: false, error: "Failed to fetch similar movies", message: getErrorMessage(err) }, 500);
@@ -592,13 +595,14 @@ router.get("/:uuid/similar", optionalAuth, (c) => {
 });
 
 // ── GET /movies/:uuid ───────────────────────────────────────────────────────────
-router.get("/:uuid", (c) => {
+router.get("/:uuid", optionalAuth, (c) => {
   try {
+    const user = c.get("user");
     const uuid = c.req.param("uuid");
     if (!uuid)
       return c.json({ success: false, error: "Invalid movie UUID" }, 400);
 
-    const movie = getMovieWithDetails(uuid);
+    const movie = getMovieWithDetails(uuid, user?.id);
     if (!movie)
       return c.json({ success: false, error: "Movie not found" }, 404);
 

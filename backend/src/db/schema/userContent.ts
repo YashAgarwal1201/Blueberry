@@ -5,6 +5,9 @@ import { movies, tvShows } from "./media";
 
 export const watchlist = sqliteTable("watchlist", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  user_id: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
   movie_id: integer("movie_id")
     .references(() => movies.id, { onDelete: "cascade" }),
   show_id: integer("show_id")
@@ -21,11 +24,13 @@ export const watchlist = sqliteTable("watchlist", {
   last_watched_at: text("last_watched_at"),
   source: text("source"),
 }, (table) => [
-  uniqueIndex("uniq_watchlist_movie").on(table.movie_id),
-  uniqueIndex("uniq_watchlist_show").on(table.show_id),
+  uniqueIndex("uniq_user_watchlist_movie").on(table.user_id, table.movie_id),
+  uniqueIndex("uniq_user_watchlist_show").on(table.user_id, table.show_id),
+  index("idx_watchlist_user").on(table.user_id),
   index("idx_watchlist_movie").on(table.movie_id),
   index("idx_watchlist_show").on(table.show_id),
   index("idx_watchlist_status").on(table.status),
+  index("idx_watchlist_user_status").on(table.user_id, table.status),
   index("idx_watchlist_updated_at").on(table.updated_at),
 ]);
 

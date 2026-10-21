@@ -225,7 +225,11 @@ Blueberry is engineered to be **infrastructure-agnostic**. Rather than imposing 
 * **Cloudflare Workers / Pages Functions ($0/Month Edge)**: Hono compiles directly into a native Cloudflare Worker / Pages Function running at the edge. The Vue SPA is hosted on Cloudflare Pages, providing an entire full-stack deployment for $0/month.
 * **Vercel Serverless ($0/Month)**: Hono runs natively on Vercel's Node/Edge functions, with the Vue SPA served on Vercel's global CDN.
 * **Unified Process (Single Port for Self-Hosters)**: In local development or Docker, Hono (via `@hono/node-server`) serves both the REST API endpoints and statically serves the compiled Vue client (`vue-app/dist`). This allows the entire platform to run in a single container or single process on a single port.
-* **Containerized Deployment (Docker Compose)**: Multi-stage Alpine container definitions for both frontend (`vue-app/Dockerfile`) and backend (`backend/Dockerfile`), orchestrated via `docker-compose.yml`. Includes Nginx reverse proxying, SPA fallback routing, persistent volume mounts (`blueberry_data:/app/backend/data`), `/health` container healthchecks, and an optional PostgreSQL service profile.
+* **Containerized Deployment (Docker Compose)**: Multi-stage Alpine container definitions for both frontend (`vue-app/Dockerfile`) and backend (`backend/Dockerfile`), orchestrated via `docker-compose.yml`. Includes:
+  - Build context isolation via `.dockerignore` (prevents host native binary mismatch and secret leakage).
+  - Hardened Nginx reverse proxy gateway: client payload limit increased to 50MB (supporting poster uploads & CSV imports), proxy timeouts extended to 300s (preventing 504 timeouts on TMDB batch ingestion), PWA service worker cache-busting (`sw.js`, `manifest.webmanifest`), and upstream SSL protocol preservation (`$proxy_x_forwarded_proto`).
+  - Containerized administrative CLI tools (`scripts/set-admin.js`, `scripts/list-users.js`) for zero-downtime RBAC bootstrapping.
+  - Persistent volume mounts (`blueberry_data:/app/backend/data`), zero-config SQLite, `/health` container healthchecks, and an optional PostgreSQL service profile.
 * **Bare-Metal / Traditional VPS**: Run as standard Node.js services managed by process managers (`systemd`, `PM2`, `supervisord`).
 
 ### 2. Database Engine Independence

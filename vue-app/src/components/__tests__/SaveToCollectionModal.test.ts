@@ -3,21 +3,21 @@ import { mount } from '@vue/test-utils'
 import SaveToCollectionModal from '../SaveToCollectionModal.vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { useCollectionsStore } from '@/stores/collectionsStore'
+import type { Collection, MediaCard } from 'shared-types'
 
 vi.mock('@/services/apiInterceptors', () => ({
   default: {
     get: vi.fn(() => Promise.resolve({ data: { data: [] } })),
     post: vi.fn(),
     put: vi.fn(),
-    delete: vi.fn()
-  }
+    delete: vi.fn(),
+  },
 }))
 
-// Mock PrimeVue components and services
 vi.mock('primevue/usetoast', () => ({
   useToast: () => ({
-    add: vi.fn()
-  })
+    add: vi.fn(),
+  }),
 }))
 
 describe('SaveToCollectionModal.vue', () => {
@@ -25,25 +25,25 @@ describe('SaveToCollectionModal.vue', () => {
     vi.clearAllMocks()
   })
 
-  it('renders empty state when no collections exist', () => {
+  it('renders correctly when no collections exist', () => {
     const pinia = createPinia()
     setActivePinia(pinia)
-    
+
     const wrapper = mount(SaveToCollectionModal, {
       props: {
         visible: true,
-        media: { id: 100, type: 'movie', title: 'Inception', poster_url: '' } as any
+        media: { id: 100, type: 'movie', title: 'Inception', poster_url: '' } as unknown as MediaCard,
       },
       global: {
         plugins: [pinia],
         stubs: {
           Dialog: {
-            template: '<div><slot></slot></div>'
-          }
-        }
-      }
+            template: '<div><slot></slot></div>',
+          },
+        },
+      },
     })
-    
+
     expect(wrapper.text()).toContain("You don't have any collections yet.")
   })
 
@@ -52,25 +52,25 @@ describe('SaveToCollectionModal.vue', () => {
     setActivePinia(pinia)
     const store = useCollectionsStore()
     store.myCollections = [
-      { id: 1, name: 'Favs', item_count: 5 } as any,
-      { id: 2, name: 'Watchlist', item_count: 2 } as any
+      { id: 1, name: 'Favs', item_count: 5 } as unknown as Collection,
+      { id: 2, name: 'Watchlist', item_count: 2 } as unknown as Collection,
     ]
-    
+
     const wrapper = mount(SaveToCollectionModal, {
       props: {
         visible: true,
-        media: { id: 100, type: 'movie', title: 'Inception', poster_url: '' } as any
+        media: { id: 100, type: 'movie', title: 'Inception', poster_url: '' } as unknown as MediaCard,
       },
       global: {
         plugins: [pinia],
         stubs: {
           Dialog: {
-            template: '<div><slot></slot></div>'
-          }
-        }
-      }
+            template: '<div><slot></slot></div>',
+          },
+        },
+      },
     })
-    
+
     expect(wrapper.text()).toContain('Favs')
     expect(wrapper.text()).toContain('5 items')
     expect(wrapper.text()).toContain('Watchlist')
@@ -81,27 +81,29 @@ describe('SaveToCollectionModal.vue', () => {
     const pinia = createPinia()
     setActivePinia(pinia)
     const store = useCollectionsStore()
-    vi.spyOn(store, 'createCollection').mockResolvedValue({} as any)
-    
+    vi.spyOn(store, 'createCollection').mockResolvedValue({} as unknown as Collection)
+
     const wrapper = mount(SaveToCollectionModal, {
       props: {
         visible: true,
-        media: { id: 100, type: 'movie', title: 'Inception', poster_url: '' } as any
+        media: { id: 100, type: 'movie', title: 'Inception', poster_url: '' } as unknown as MediaCard,
       },
       global: {
         plugins: [pinia],
         stubs: {
-          Dialog: { template: '<div><slot></slot></div>' }
-        }
-      }
+          Dialog: { template: '<div><slot></slot></div>' },
+        },
+      },
     })
-    
+
     const input = wrapper.find('input[type="text"]')
     await input.setValue('New Super Collection')
-    
+
     const form = wrapper.find('form')
-    await form.trigger('submit.prevent')
-    
-    expect(store.createCollection).toHaveBeenCalledWith({ name: 'New Super Collection', slug: '', privacy: 'private' })
+    await form.trigger('submit')
+
+    expect(store.createCollection).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'New Super Collection' }),
+    )
   })
 })

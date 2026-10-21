@@ -18,7 +18,6 @@ const router = createRouter({
       path: '/profile',
       name: 'Profile',
       component: () => import('../views/ProfilePage.vue'),
-      meta: { requiresAuth: true }
     },
     {
       path: '/profile/collections/:id',
@@ -164,12 +163,16 @@ const router = createRouter({
 
 import { usePreferencesStore } from '@/stores/preferencesStore'
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
   const preferencesStore = usePreferencesStore()
   
+  if (authStore.isAuthLoading) {
+    await authStore.waitUntilReady()
+  }
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next({ name: 'Login' })
+    next({ name: 'Login', query: to.fullPath !== '/' ? { redirect: to.fullPath } : undefined })
   } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
     next({ name: 'Home' })
   } else if (to.meta.requiresModerator && !authStore.isModerator) {

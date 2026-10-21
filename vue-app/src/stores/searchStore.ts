@@ -1,10 +1,7 @@
 // src/stores/searchStore.ts
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import { useMoviesStore } from './moviesStore'
-import { useTvStore } from './tvStore'
-import { usePeopleStore } from './peopleStore'
-import type { MovieWithDetails, TVShowCard, Person } from 'shared-types'
+import type { MovieWithDetails, TVShowCard, Person, RemoteSearchResult } from 'shared-types'
 import { db } from '@/services/db'
 
 export type SearchTab = 'all' | 'movies' | 'shows' | 'people'
@@ -12,9 +9,6 @@ export type SearchTab = 'all' | 'movies' | 'shows' | 'people'
 const MAX_RECENT = 8
 
 export const useSearchStore = defineStore('searchStore', () => {
-  const moviesStore = useMoviesStore()
-  const tvStore = useTvStore()
-  const peopleStore = usePeopleStore()
 
   // ── Tab ─────────────────────────────────────────────────────────────────────
   const activeTab = ref<SearchTab>('all')
@@ -70,11 +64,21 @@ export const useSearchStore = defineStore('searchStore', () => {
 
   // ── Loading ──────────────────────────────────────────────────────────────────
   const searching = ref(false)
+  const searchingRemote = ref(false)
+  const remoteConfigured = ref(true)
 
   // ── Results — derived from existing stores ───────────────────────────────────
   const movieResults = ref<MovieWithDetails[]>([])
   const showResults = ref<TVShowCard[]>([])
   const peopleResults = ref<Person[]>([])
+  const remoteResults = ref<RemoteSearchResult[]>([])
+
+  const remoteMovies = computed(() =>
+    remoteResults.value.filter((r) => r.media_type === 'movie')
+  )
+  const remoteShows = computed(() =>
+    remoteResults.value.filter((r) => r.media_type === 'tv')
+  )
 
   const totalCount = computed(
     () => movieResults.value.length + showResults.value.length + peopleResults.value.length
@@ -84,15 +88,22 @@ export const useSearchStore = defineStore('searchStore', () => {
     movieResults.value = []
     showResults.value = []
     peopleResults.value = []
+    remoteResults.value = []
+    searchingRemote.value = false
   }
 
   return {
     activeTab,
     recentSearches,
     searching,
+    searchingRemote,
+    remoteConfigured,
     movieResults,
     showResults,
     peopleResults,
+    remoteResults,
+    remoteMovies,
+    remoteShows,
     totalCount,
     pushRecent,
     removeRecent,
@@ -100,3 +111,4 @@ export const useSearchStore = defineStore('searchStore', () => {
     clearResults,
   }
 })
+

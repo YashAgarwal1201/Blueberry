@@ -17,6 +17,7 @@ Development is organized by feature categories.
 - [x] Progressive Web App (PWA) support (offline support and installability)
 - [ ] SEO Optimization (Server-Side Rendering / Static Site Generation)
 - [x] Comprehensive Unit Testing suites (Vitest for frontend, Jest for backend)
+- [x] Automated CI/CD Pipeline & Pre-Push Quality Gate (GitHub Actions workflow, local CI runner, and GHCR container publishing)
 - [ ] Performance Optimization
   - [x] Route-level and component lazy loading (dynamic chunking, isolated drawer loading)
   - [x] Database query optimization (indexes, column projection, watchlist TTL cache)

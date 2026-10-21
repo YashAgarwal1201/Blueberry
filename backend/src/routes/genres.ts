@@ -16,7 +16,7 @@ import type {
   Movie,
   MovieCard,
 } from "shared-types";
-import { requireAuth, requireModerator } from "../middleware/authMiddleware";
+import { requireAuth, requireModerator, optionalAuth } from "../middleware/authMiddleware";
 import type { AppEnv } from "../types";
 
 const router = new Hono<AppEnv>();
@@ -40,7 +40,7 @@ function parsePage(query: Record<string, string | undefined>) {
   return { page, limit, offset: (page - 1) * limit };
 }
 
-function toMovieCards(movies: Movie[]): MovieCard[] {
+function toMovieCards(movies: Movie[], watchlistSet?: Set<number>): MovieCard[] {
   if (movies.length === 0) return [];
   const ids = movies.map((m) => m.id);
 
@@ -92,7 +92,7 @@ function toMovieCards(movies: Movie[]): MovieCard[] {
     genreMap.get(movie_id)!.push(g);
   });
 
-  const watchlist = getMovieWatchlistSet();
+  const watchlist = watchlistSet ?? new Set<number>();
 
   return movies.map((m) => ({
     id: m.id,
@@ -151,7 +151,7 @@ router.get("/", (c) => {
 
 // ── GET /genres/:slug/sections ──────────────────────────────────────────────────
 // IMPORTANT: must be declared BEFORE /:slug/movies and /:slug
-router.get("/:slug/sections", (c) => {
+router.get("/:slug/sections", optionalAuth, (c) => {
   try {
     const slug = c.req.param("slug");
     const genre = db
@@ -192,7 +192,7 @@ router.get("/:slug/sections", (c) => {
       .orderBy(desc(moviesTable.created_at))
       .all() as unknown as Movie[];
 
-    const movies = toMovieCards(rawMovies);
+    const movies = toMovieCards(rawMovies, getMovieWatchlistSet(c.get("user")?.id));
 
     // Group by language
     const sectionMap = new Map<
@@ -236,7 +236,7 @@ router.get("/:slug/sections", (c) => {
 
 // ── GET /genres/:slug/movies ──────────────────────────────────────────────────
 // IMPORTANT: must be declared BEFORE /:slug to avoid being swallowed by it
-router.get("/:slug/movies", (c) => {
+router.get("/:slug/movies", optionalAuth, (c) => {
   try {
     const slug = c.req.param("slug");
     const genre = db
@@ -315,7 +315,7 @@ router.get("/:slug/movies", (c) => {
       .offset(offset)
       .all() as unknown as Movie[];
 
-    const cards = toMovieCards(movies);
+    const cards = toMovieCards(movies, getMovieWatchlistSet(c.get("user")?.id));
     const totalPages = Math.ceil(total / limit);
 
     return c.json({

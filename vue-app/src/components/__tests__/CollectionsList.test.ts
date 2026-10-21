@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import CollectionsList from '../CollectionsList.vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { useCollectionsStore } from '@/stores/collectionsStore'
+import type { Collection } from 'shared-types'
 
 vi.mock('@/services/apiInterceptors', () => ({
   default: {
@@ -28,9 +29,9 @@ describe('CollectionsList.vue', () => {
     const pinia = createPinia()
     setActivePinia(pinia)
     const store = useCollectionsStore()
-    vi.spyOn(store, 'fetchMyCollections').mockResolvedValue(undefined as any)
+    vi.spyOn(store, 'fetchMyCollections').mockResolvedValue([])
     store.myCollections = [
-      { id: 1, name: 'Sci-Fi Hits', item_count: 5, privacy: 'public' } as any
+      { id: 1, name: 'Sci-Fi Hits', item_count: 5, privacy: 'public' } as unknown as Collection
     ]
     
     const wrapper = mount(CollectionsList, {
@@ -53,7 +54,7 @@ describe('CollectionsList.vue', () => {
     const pinia = createPinia()
     setActivePinia(pinia)
     const store = useCollectionsStore()
-    vi.spyOn(store, 'fetchMyCollections').mockResolvedValue(undefined as any)
+    vi.spyOn(store, 'fetchMyCollections').mockResolvedValue([])
     store.myCollections = []
     
     const wrapper = mount(CollectionsList, {

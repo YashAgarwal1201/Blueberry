@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import HeroCarousel from '../HeroCarousel.vue'
+import type { MediaCard } from 'shared-types'
 
 describe('HeroCarousel.vue', () => {
   beforeEach(() => {
@@ -22,7 +23,7 @@ describe('HeroCarousel.vue', () => {
   it('renders items correctly', () => {
     const wrapper = mount(HeroCarousel, {
       props: {
-        items: mockItems as any[]
+        items: mockItems as unknown as MediaCard[]
       }
     })
     
@@ -36,7 +37,7 @@ describe('HeroCarousel.vue', () => {
   it('emits clickItem event when clicked', async () => {
     const wrapper = mount(HeroCarousel, {
       props: {
-        items: mockItems as any[]
+        items: mockItems as unknown as MediaCard[]
       }
     })
     

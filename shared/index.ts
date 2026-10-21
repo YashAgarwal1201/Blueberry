@@ -208,6 +208,7 @@ export interface TVShow {
   imdb_id?: string;
   letterboxd_id?: string;
   network?: string;
+  trailer_url?: string | null;
   tagline?: string;
   origin_country?: string;
   original_language?: string;
@@ -289,6 +290,7 @@ export interface PaginatedResponse<T> {
 // ── Watchlist ─────────────────────────────────────────────────────────────────
 export interface WatchlistItem {
   id: number;
+  user_id?: string;
   movie_id?: number;
   show_id?: number;
   status: WatchlistStatus;
@@ -741,4 +743,26 @@ export interface AdminUserListItem {
   banReason?: string | null;
   createdAt: string | Date;
 }
+
+// ── Remote Search & Ingestion ───────────────────────────────────────────────
+export interface RemoteSearchResult {
+  id: number;
+  tmdb_id: number;
+  title: string;
+  media_type: 'movie' | 'tv';
+  release_year: number | null;
+  poster_url: string | null;
+  backdrop_url: string | null;
+  overview: string | null;
+  vote_average: number | null;
+  already_imported: boolean;
+  local_id?: number | null;
+  local_uuid?: string | null;
+}
+
+export interface ImportMediaRequest {
+  tmdbId: number;
+  mediaType: 'movie' | 'tv';
+}
+
 

@@ -5,20 +5,23 @@ import RegisterPage from '../RegisterPage.vue'
 const mockRouterPush = vi.fn()
 vi.mock('vue-router', () => ({
   useRouter: () => ({
-    push: mockRouterPush
+    push: mockRouterPush,
+  }),
+  useRoute: () => ({
+    query: {},
   }),
   RouterLink: {
-    template: '<a><slot></slot></a>'
-  }
+    template: '<a><slot></slot></a>',
+  },
 }))
 
 const mockSignUpEmail = vi.fn()
 vi.mock('@/lib/auth-client', () => ({
   authClient: {
     signUp: {
-      email: (...args: any[]) => mockSignUpEmail(...args)
-    }
-  }
+      email: (...args: unknown[]) => mockSignUpEmail(...args),
+    },
+  },
 }))
 
 describe('RegisterPage.vue', () => {
