@@ -33,7 +33,7 @@ import { resolveImage } from "../utils/imageUtils";
 import { getShowWatchlistSet } from "../utils/watchlistCache";
 import { clean } from "../utils/stringUtils";
 import { getErrorMessage } from "../utils/errors";
-import { requireAuth, requireModerator } from "../middleware/authMiddleware";
+import { requireAuth, requireModerator, optionalAuth } from "../middleware/authMiddleware";
 import type { AppEnv } from "../types";
 
 const router = new Hono<AppEnv>();
@@ -55,8 +55,8 @@ const tvCardSelection = {
   episode_count: tvShowsTable.episode_count,
 };
 
-function getWatchlistSet(): Set<number> {
-  return getShowWatchlistSet();
+function getWatchlistSet(userId?: string): Set<number> {
+  return getShowWatchlistSet(userId);
 }
 
 function toTVShowCards(shows: TVShow[], watchlistSet: Set<number>): TVShowCard[] {
@@ -98,7 +98,7 @@ function toTVShowCards(shows: TVShow[], watchlistSet: Set<number>): TVShowCard[]
   }));
 }
 
-function getTVShowWithDetails(identifier: string | number): TVShowWithDetails | undefined {
+function getTVShowWithDetails(identifier: string | number, userId?: string): TVShowWithDetails | undefined {
   const isUuid = typeof identifier === "string";
   const show = db
     .select()
@@ -109,12 +109,15 @@ function getTVShowWithDetails(identifier: string | number): TVShowWithDetails | 
   if (!show) return undefined;
   const id = show.id;
 
-  const wl = db
-    .select({ id: watchlistTable.id })
-    .from(watchlistTable)
-    .where(eq(watchlistTable.show_id, id))
-    .get();
-  const inWatchlist = !!wl;
+  let inWatchlist = false;
+  if (userId) {
+    const wl = db
+      .select({ id: watchlistTable.id })
+      .from(watchlistTable)
+      .where(and(eq(watchlistTable.show_id, id), eq(watchlistTable.user_id, userId)))
+      .get();
+    inWatchlist = !!wl;
+  }
 
   const languages = db
     .select({
@@ -249,15 +252,16 @@ function upsertCompany(req: CompanyRequest): number {
 }
 
 // ── GET /tv/recent ────────────────────────────────────────────────────────────
-router.get("/recent", (c) => {
+router.get("/recent", optionalAuth, (c) => {
   try {
+    const user = c.get("user");
     const shows = db
       .select(tvCardSelection)
       .from(tvShowsTable)
       .orderBy(desc(tvShowsTable.first_air_date))
       .limit(20)
       .all() as unknown as TVShow[];
-    const cards = toTVShowCards(shows, getWatchlistSet());
+    const cards = toTVShowCards(shows, getWatchlistSet(user?.id));
     c.header("Cache-Control", "public, max-age=300");
     return c.json({ success: true, data: cards });
   } catch (err: unknown) {
@@ -266,15 +270,16 @@ router.get("/recent", (c) => {
 });
 
 // ── GET /tv/top-rated ─────────────────────────────────────────────────────────
-router.get("/top-rated", (c) => {
+router.get("/top-rated", optionalAuth, (c) => {
   try {
+    const user = c.get("user");
     const shows = db
       .select(tvCardSelection)
       .from(tvShowsTable)
       .orderBy(sql`${tvShowsTable.rating_imdb} desc nulls last`, asc(tvShowsTable.title))
       .limit(20)
       .all() as unknown as TVShow[];
-    const cards = toTVShowCards(shows, getWatchlistSet());
+    const cards = toTVShowCards(shows, getWatchlistSet(user?.id));
     c.header("Cache-Control", "public, max-age=300");
     return c.json({ success: true, data: cards });
   } catch (err: unknown) {
@@ -283,15 +288,16 @@ router.get("/top-rated", (c) => {
 });
 
 // ── GET /tv/hot ─────────────────────────────────────────────────────────────
-router.get("/hot", (c) => {
+router.get("/hot", optionalAuth, (c) => {
   try {
+    const user = c.get("user");
     const shows = db
       .select(tvCardSelection)
       .from(tvShowsTable)
       .orderBy(sql`${tvShowsTable.rating_imdb} desc nulls last`, desc(tvShowsTable.episode_count))
       .limit(20)
       .all() as unknown as TVShow[];
-    const cards = toTVShowCards(shows, getWatchlistSet());
+    const cards = toTVShowCards(shows, getWatchlistSet(user?.id));
     c.header("Cache-Control", "public, max-age=300");
     return c.json({ success: true, data: cards });
   } catch (err: unknown) {
@@ -300,8 +306,9 @@ router.get("/hot", (c) => {
 });
 
 // ── GET /tv/completed ───────────────────────────────────────────────────────
-router.get("/completed", (c) => {
+router.get("/completed", optionalAuth, (c) => {
   try {
+    const user = c.get("user");
     const shows = db
       .select(tvCardSelection)
       .from(tvShowsTable)
@@ -309,7 +316,7 @@ router.get("/completed", (c) => {
       .orderBy(sql`${tvShowsTable.rating_imdb} desc nulls last`)
       .limit(20)
       .all() as unknown as TVShow[];
-    const cards = toTVShowCards(shows, getWatchlistSet());
+    const cards = toTVShowCards(shows, getWatchlistSet(user?.id));
     c.header("Cache-Control", "public, max-age=300");
     return c.json({ success: true, data: cards });
   } catch (err: unknown) {
@@ -318,8 +325,9 @@ router.get("/completed", (c) => {
 });
 
 // ── GET /tv ───────────────────────────────────────────────────────────────────
-router.get("/", (c) => {
+router.get("/", optionalAuth, (c) => {
   try {
+    const user = c.get("user");
     const search = c.req.query("search");
     let query = db.select(tvCardSelection).from(tvShowsTable).$dynamic();
 
@@ -331,7 +339,7 @@ router.get("/", (c) => {
       .orderBy(asc(tvShowsTable.title))
       .limit(50)
       .all() as unknown as TVShow[];
-    const cards = toTVShowCards(shows, getWatchlistSet());
+    const cards = toTVShowCards(shows, getWatchlistSet(user?.id));
     return c.json({ success: true, data: cards });
   } catch (err: unknown) {
     return c.json({ success: false, error: "Failed to fetch TV shows", message: getErrorMessage(err) }, 500);
@@ -374,7 +382,7 @@ router.get("/:uuid/similar", (c) => {
       .limit(15)
       .all() as unknown as TVShow[];
 
-    const cards = toTVShowCards(similar, getWatchlistSet());
+    const cards = toTVShowCards(similar, getWatchlistSet(c.get("user")?.id));
     return c.json({ success: true, data: cards });
   } catch (err: unknown) {
     return c.json({ success: false, error: "Failed to fetch similar tv shows", message: getErrorMessage(err) }, 500);
@@ -407,10 +415,11 @@ router.get("/:uuid/seasons/:seasonId/episodes", (c) => {
 });
 
 // ── GET /tv/:uuid ──────────────────────────────────────────────────────────────
-router.get("/:uuid", (c) => {
+router.get("/:uuid", optionalAuth, (c) => {
   try {
+    const user = c.get("user");
     const uuid = c.req.param("uuid");
-    const showWithDetails = getTVShowWithDetails(uuid);
+    const showWithDetails = getTVShowWithDetails(uuid, user?.id);
 
     if (!showWithDetails) {
       return c.json({ success: false, error: "TV Show not found" }, 404);

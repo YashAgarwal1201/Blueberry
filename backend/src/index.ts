@@ -19,6 +19,7 @@ import companiesRouter from "./routes/companies";
 import collectionsRouter from "./routes/collections";
 import preferencesRouter from "./routes/preferences";
 import ingestRouter from "./routes/ingest";
+import searchRouter from "./routes/search";
 import { auth } from "./auth";
 import { requireAuth, requireModerator } from "./middleware/authMiddleware";
 import type { AppEnv } from "./types";
@@ -118,6 +119,7 @@ app.route("/api/preferences", preferencesRouter);
 app.use("/ingest", requireModerator);
 app.use("/ingest/*", requireModerator);
 app.route("/ingest", ingestRouter);
+app.route("/search", searchRouter);
 
 // Static files from public/
 app.use("/*", serveStatic({ root: "./public" }));

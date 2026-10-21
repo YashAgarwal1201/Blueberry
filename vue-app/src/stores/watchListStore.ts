@@ -211,12 +211,22 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
     }
   }
 
-  const markSeasonWatched = async (showId: number, seasonId: number) => {
+  const markSeasonWatched = async (showId: number, seasonNumber: number) => {
     try {
-      await apiClient.post(`/watchlist/tv/${showId}/seasons/${seasonId}/watched`)
-      return true
+      const res = await apiClient.post(`/watchlist/shows/${showId}/seasons/${seasonNumber}/watch`)
+      return res.data?.data
     } catch (err: unknown) {
       console.error('Error marking season watched:', err)
+      throw err
+    }
+  }
+
+  const unmarkSeasonWatched = async (showId: number, seasonNumber: number) => {
+    try {
+      await apiClient.delete(`/watchlist/shows/${showId}/seasons/${seasonNumber}/watch`)
+      return true
+    } catch (err: unknown) {
+      console.error('Error unmarking season watched:', err)
       throw err
     }
   }
@@ -243,6 +253,7 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
     markEpisodeWatched,
     unmarkEpisodeWatched,
     markSeasonWatched,
+    unmarkSeasonWatched,
     addMovieToWatchlist,
     addShowToWatchlist,
     updateStatus,

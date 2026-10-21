@@ -87,9 +87,22 @@
           </div>
         </div>
 
-        <!-- B3. Zero results -->
+        <!-- B3. Searching Remote Databases -->
         <div
-          v-else-if="searchStore.totalCount === 0"
+          v-else-if="searchStore.totalCount === 0 && searchStore.searchingRemote"
+          class="flex flex-col items-center justify-center gap-3 py-16 text-center"
+        >
+          <Loader2
+            :size="32"
+            class="text-primary animate-spin"
+          />
+          <p class="text-text font-medium">Searching TMDB for "{{ query }}"...</p>
+          <p class="text-text-muted text-sm">Checking remote databases for titles to import.</p>
+        </div>
+
+        <!-- B3.1 Zero results -->
+        <div
+          v-else-if="searchStore.totalCount === 0 && searchStore.remoteResults.length === 0"
           class="flex flex-col items-center justify-center gap-3 py-16 text-center"
         >
           <Search
@@ -223,6 +236,91 @@
                   <ChevronRight :size="14" />
                 </button>
               </div>
+
+              <!-- Remote TMDB Results Section (Federated Ingestion) -->
+              <div
+                v-if="filteredRemoteResults.length > 0"
+                class="flex flex-col gap-3 pt-2"
+              >
+                <div class="flex items-center gap-3 mb-1">
+                  <div class="flex items-center gap-1.5">
+                    <Sparkles :size="13" class="text-primary" />
+                    <span
+                      class="font-heading text-[10px] text-text-muted uppercase tracking-widest whitespace-nowrap"
+                    >
+                      Available on TMDB (Import & Track)
+                    </span>
+                  </div>
+                  <div class="flex-1 h-px bg-border" />
+                  <span class="text-[10px] text-text-muted shrink-0">
+                    Not in local library
+                  </span>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                  <div
+                    v-for="item in filteredRemoteResults"
+                    :key="`${item.media_type}-${item.id}`"
+                    class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-surface-1 border border-border group hover:border-primary/40 transition-colors"
+                  >
+                    <!-- Poster & Metadata -->
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                      <AppImage
+                        :src="item.poster_url"
+                        :alt="item.title"
+                        :type="item.media_type === 'movie' ? 'movie' : 'tv'"
+                        class="w-12 h-18 rounded-lg shrink-0 object-cover"
+                      />
+                      <div class="flex flex-col min-w-0 flex-1">
+                        <div class="flex items-center gap-2">
+                          <span class="text-sm font-semibold text-text truncate">
+                            {{ item.title }}
+                          </span>
+                          <span
+                            class="px-1.5 py-0.5 bg-surface-2 text-text-muted text-[10px] uppercase font-bold rounded-md shrink-0"
+                          >
+                            {{ item.media_type }}
+                          </span>
+                          <span
+                            v-if="item.vote_average"
+                            class="text-[10px] text-yellow-500 font-bold flex items-center gap-0.5 shrink-0"
+                          >
+                            ★ {{ item.vote_average.toFixed(1) }}
+                          </span>
+                        </div>
+                        <div class="text-xs text-text-muted mt-1 flex items-center gap-2">
+                          <span v-if="item.release_year">{{ item.release_year }}</span>
+                          <span v-if="item.release_year && item.overview" class="text-border">•</span>
+                          <span v-if="item.overview" class="truncate line-clamp-1 max-w-md">
+                            {{ item.overview }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Action: Import & Track Button or In Library Badge -->
+                    <div class="shrink-0 flex items-center gap-2">
+                      <button
+                        v-if="!item.already_imported"
+                        :disabled="importingIds.has(item.id)"
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-on-primary text-xs font-semibold shadow-sm transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                        @click.stop="handleImportAndTrack(item)"
+                      >
+                        <Loader2 v-if="importingIds.has(item.id)" :size="13" class="animate-spin" />
+                        <Plus v-else :size="13" />
+                        <span>{{ importingIds.has(item.id) ? 'Importing...' : 'Import & Track' }}</span>
+                      </button>
+                      <div
+                        v-else
+                        class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-2 text-primary text-xs font-medium border border-primary/20"
+                      >
+                        <Check :size="13" />
+                        <span>In Library</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </transition>
         </div>
@@ -255,7 +353,7 @@
 <script setup lang="ts">
   import { ref, computed, onMounted, watch } from 'vue';
   import { useRouter, useRoute } from 'vue-router';
-  import { Search, X, ChevronRight } from 'lucide-vue-next';
+  import { Search, X, ChevronRight, Sparkles, Plus, Check, Loader2 } from 'lucide-vue-next';
   import { useConfirm } from 'primevue/useconfirm';
 
   import { useSearchStore, type SearchTab } from '@/stores/searchStore';
@@ -268,6 +366,7 @@
 
   import SearchEmptyState from '@/components/search/SearchEmptyState.vue';
   import SearchResultRow from '@/components/search/SearchResultRow.vue';
+  import AppImage from '@/components/AppImage.vue';
   import MediaDrawer from '@/components/MediaDrawer.vue';
   import PersonProfileDrawer from '@/components/people/PersonProfileDrawer.vue';
   import type {
@@ -275,13 +374,14 @@
     MovieWithDetails,
     TVShowCard,
     Person,
-    CreatePersonRequest
+    CreatePersonRequest,
+    RemoteSearchResult
   } from 'shared-types';
 
   const router = useRouter();
   const route = useRoute();
   const searchStore = useSearchStore();
-  const { query } = useSearch();
+  const { query, runSearch } = useSearch();
 
   const watchlistStore = useWatchlistStore();
   const authStore = useAuthStore();
@@ -312,9 +412,9 @@
   });
 
   const tabs = computed(() => [
-    { label: 'All', value: 'all', count: searchStore.totalCount },
-    { label: 'Movies', value: 'movies', count: searchStore.movieResults.length },
-    { label: 'Shows', value: 'shows', count: searchStore.showResults.length },
+    { label: 'All', value: 'all', count: searchStore.totalCount + searchStore.remoteResults.length },
+    { label: 'Movies', value: 'movies', count: searchStore.movieResults.length + searchStore.remoteMovies.length },
+    { label: 'Shows', value: 'shows', count: searchStore.showResults.length + searchStore.remoteShows.length },
     { label: 'People', value: 'people', count: searchStore.peopleResults.length }
   ]);
 
@@ -331,6 +431,55 @@
       ? searchStore.peopleResults.slice(0, 5)
       : searchStore.peopleResults
   );
+
+  // ── Remote Federated Ingestion Logic ────────────────────────
+  const importingIds = ref<Set<number>>(new Set());
+
+  const filteredRemoteResults = computed(() => {
+    if (searchStore.activeTab === 'all') return searchStore.remoteResults;
+    if (searchStore.activeTab === 'movies') return searchStore.remoteMovies;
+    if (searchStore.activeTab === 'shows') return searchStore.remoteShows;
+    return [];
+  });
+
+  async function handleImportAndTrack(item: RemoteSearchResult) {
+    if (importingIds.value.has(item.id)) return;
+    importingIds.value.add(item.id);
+
+    try {
+      const res = await apiClient.post('search/import', {
+        tmdbId: item.tmdb_id,
+        mediaType: item.media_type
+      });
+
+      if (res.data?.success) {
+        showToast(
+          'success',
+          'Imported to Library',
+          `"${item.title}" was imported and is now available in Blueberry.`,
+          3000
+        );
+
+        item.already_imported = true;
+        item.local_id = res.data.data?.id;
+        item.local_uuid = res.data.data?.uuid;
+
+        // Re-run local search so the item appears in local results
+        if (query.value.trim()) {
+          runSearch(query.value.trim());
+        }
+      }
+    } catch (err: unknown) {
+      showToast(
+        'error',
+        'Import Failed',
+        getErrorMessage(err) || 'Unable to import title from TMDB.',
+        4000
+      );
+    } finally {
+      importingIds.value.delete(item.id);
+    }
+  }
 
   // ── Drawers Logic ──────────────────────────────────────────
 

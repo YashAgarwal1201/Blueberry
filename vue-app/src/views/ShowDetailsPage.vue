@@ -358,7 +358,7 @@
             ></div>
           </button>
           <button
-            @click="activeTab = 'episodes'"
+            @click="switchToEpisodes"
             :class="[
               'pb-4 text-base font-bold transition-colors relative',
               activeTab === 'episodes' ? 'text-white' : 'text-white/50 hover:text-white/80'
@@ -367,6 +367,21 @@
             Episodes
             <div
               v-if="activeTab === 'episodes'"
+              class="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-t-full"
+            ></div>
+          </button>
+          <button
+            v-if="hasSpecials"
+            @click="switchToSpecials"
+            :class="[
+              'pb-4 text-base font-bold transition-colors relative flex items-center gap-1.5',
+              activeTab === 'specials' ? 'text-white' : 'text-white/50 hover:text-white/80'
+            ]"
+          >
+            <Sparkles :size="15" class="text-amber-400" />
+            Specials
+            <div
+              v-if="activeTab === 'specials'"
               class="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-t-full"
             ></div>
           </button>
@@ -502,14 +517,16 @@
           </div>
         </div>
 
-        <!-- EPISODES TAB -->
+        <!-- EPISODES & SPECIALS TAB -->
         <div
-          v-else-if="activeTab === 'episodes'"
+          v-else-if="activeTab === 'episodes' || activeTab === 'specials'"
           class="flex flex-col gap-6"
         >
           <!-- Header / Controls -->
           <div class="flex flex-wrap items-center justify-between gap-4">
-            <h2 class="text-2xl font-heading font-bold text-white hidden md:block">Episodes</h2>
+            <h2 class="text-2xl font-heading font-bold text-white hidden md:block">
+              {{ activeTab === 'specials' ? 'Special Episodes' : 'Episodes' }}
+            </h2>
             <div
               class="flex items-center gap-3 relative ml-auto w-full md:w-auto overflow-x-auto hide-scrollbar"
             >
@@ -532,13 +549,21 @@
                 Oldest
               </button>
               <button
-                class="shrink-0 flex items-center gap-2 px-4 py-2 bg-surface-2 hover:bg-surface-3 transition-colors rounded-full text-white font-medium border border-white/10 text-sm"
+                @click="toggleCurrentSeasonWatched"
+                :disabled="bulkMarkingLoading || !activeSeasonEpisodes.length"
+                class="shrink-0 flex items-center gap-2 px-4 py-2 bg-surface-2 hover:bg-surface-3 transition-colors rounded-full text-white font-medium border border-white/10 text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
-                <CheckCircle2
+                <Loader2
+                  v-if="bulkMarkingLoading"
                   :size="16"
-                  class="text-white/50"
+                  class="animate-spin text-primary"
                 />
-                Mark watched
+                <CheckCircle2
+                  v-else
+                  :size="16"
+                  :class="isCurrentSeasonAllWatched ? 'text-primary fill-primary/20' : 'text-white/50'"
+                />
+                <span>{{ isCurrentSeasonAllWatched ? 'Season Watched' : 'Mark Season Watched' }}</span>
               </button>
               <!-- Season Dropdown -->
               <div
@@ -549,15 +574,15 @@
                   @click="seasonMenuOpen = !seasonMenuOpen"
                   class="flex items-center gap-2 px-4 py-2 bg-surface-2 hover:bg-surface-3 transition-colors rounded-full text-white font-medium border border-white/10 text-sm"
                 >
-                  {{ activeSeason?.title || 'Season 1' }}
+                  {{ activeSeason?.title || (activeTab === 'specials' ? 'Specials' : 'Season 1') }}
                   <ChevronDown :size="16" />
                 </button>
                 <div
                   v-if="seasonMenuOpen"
-                  class="absolute top-full right-0 mt-2 w-48 bg-surface-2/95 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl z-50 flex flex-col gap-1 max-h-64 overflow-y-auto hide-scrollbar"
+                  class="absolute top-full right-0 mt-2 w-52 bg-surface-2/95 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl z-50 flex flex-col gap-1 max-h-64 overflow-y-auto hide-scrollbar"
                 >
                   <button
-                    v-for="season in displaySeasons"
+                    v-for="season in regularSeasons"
                     :key="season.id"
                     @click="
                       selectSeason(season);
@@ -571,6 +596,27 @@
                     "
                   >
                     {{ season.title }}
+                  </button>
+                  <div
+                    v-if="hasSpecials && regularSeasons.length"
+                    class="my-1 border-t border-white/10"
+                  ></div>
+                  <button
+                    v-if="specialsSeason"
+                    :key="specialsSeason.id"
+                    @click="
+                      selectSeason(specialsSeason);
+                      seasonMenuOpen = false;
+                    "
+                    class="text-left px-3 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-between"
+                    :class="
+                      activeSeasonId === specialsSeason.id
+                        ? 'bg-primary/20 text-primary'
+                        : 'text-white/70 hover:bg-surface-3 hover:text-white'
+                    "
+                  >
+                    <span>{{ specialsSeason.title || 'Specials' }}</span>
+                    <span class="text-xs px-1.5 py-0.5 rounded bg-white/10 text-amber-300 font-semibold">S0</span>
                   </button>
                 </div>
               </div>
@@ -695,39 +741,44 @@
         </div>
 
         <!-- CAST TAB -->
-        <div
-          v-else-if="activeTab === 'cast'"
-          class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6"
-        >
+        <div v-else-if="activeTab === 'cast'">
           <div
-            v-for="member in displayCast"
-            :key="`${member.id}-${member.role}`"
-            class="flex flex-col items-center gap-3 group"
+            v-if="displayCast.length > 0"
+            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6"
           >
             <div
-              class="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden border-2 border-transparent group-hover:border-primary/50 shadow-md group-hover:shadow-xl transition-all flex items-center justify-center relative bg-surface-2"
+              v-for="member in displayCast"
+              :key="`${member.id}-${member.role}`"
+              class="flex flex-col items-center gap-3 group"
             >
-              <AppImage
-                v-if="member.profile_url"
-                :src="member.profile_url"
-                type="person"
-                class="w-full h-full object-cover"
-              />
               <div
-                v-else
-                class="w-full h-full bg-surface-3 flex items-center justify-center text-3xl font-bold text-white/30 font-heading tracking-widest"
+                class="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden border-2 border-transparent group-hover:border-primary/50 shadow-md group-hover:shadow-xl transition-all flex items-center justify-center relative bg-surface-2"
               >
-                {{ getInitials(member.name) }}
+                <AppImage
+                  v-if="member.profile_url"
+                  :src="member.profile_url"
+                  type="person"
+                  class="w-full h-full object-cover"
+                />
+                <div
+                  v-else
+                  class="w-full h-full bg-surface-3 flex items-center justify-center text-3xl font-bold text-white/30 font-heading tracking-widest"
+                >
+                  {{ getInitials(member.name) }}
+                </div>
+              </div>
+              <div class="text-center w-full">
+                <div class="text-base font-bold text-white line-clamp-2 leading-tight">
+                  {{ member.name }}
+                </div>
+                <div class="text-sm text-text-muted line-clamp-1 mt-1">
+                  {{ member.character || member.role }}
+                </div>
               </div>
             </div>
-            <div class="text-center w-full">
-              <div class="text-base font-bold text-white line-clamp-2 leading-tight">
-                {{ member.name }}
-              </div>
-              <div class="text-sm text-text-muted line-clamp-1 mt-1">
-                {{ member.character || member.role }}
-              </div>
-            </div>
+          </div>
+          <div v-else class="text-white/50 italic py-12 text-center">
+            No cast information available for this series.
           </div>
         </div>
 
@@ -823,7 +874,9 @@
     MoreHorizontal,
     Ban,
     Star,
-    ArrowDownUp
+    ArrowDownUp,
+    Sparkles,
+    Loader2
   } from 'lucide-vue-next';
 
   const route = useRoute();
@@ -857,7 +910,7 @@
   const seasonDropdownRef = ref<HTMLElement | null>(null);
   const episodesContainerRef = ref<HTMLElement | null>(null);
 
-  const VALID_TABS = ['overview', 'episodes', 'cast', 'related'] as const;
+  const VALID_TABS = ['overview', 'episodes', 'specials', 'cast', 'related'] as const;
   type TabType = (typeof VALID_TABS)[number];
 
   function getInitialTab(): TabType {
@@ -873,9 +926,42 @@
   const activeSeasonEpisodes = ref<TVEpisode[]>([]);
   const similarShows = ref<MediaCardType[]>([]);
   const loadingEpisodes = ref(false);
+
+  const displaySeasons = computed<TVSeason[]>(() => {
+    if (!show.value?.seasons?.length) return [];
+    return [...show.value.seasons].sort((a, b) => a.season_number - b.season_number);
+  });
+
+  const regularSeasons = computed<TVSeason[]>(() => {
+    return displaySeasons.value.filter((s) => s.season_number > 0);
+  });
+
+  const specialsSeason = computed<TVSeason | undefined>(() => {
+    return displaySeasons.value.find((s) => s.season_number === 0);
+  });
+
+  const hasSpecials = computed(() => !!specialsSeason.value);
+
   const activeSeason = computed(() =>
     displaySeasons.value.find((s) => s.id === activeSeasonId.value)
   );
+
+  function switchToSpecials() {
+    activeTab.value = 'specials';
+    if (specialsSeason.value) {
+      selectSeason(specialsSeason.value);
+    }
+  }
+
+  function switchToEpisodes() {
+    activeTab.value = 'episodes';
+    if (activeSeason.value?.season_number === 0) {
+      const firstRegular = regularSeasons.value[0];
+      if (firstRegular) {
+        selectSeason(firstRegular);
+      }
+    }
+  }
 
   watch(activeTab, (newTab) => {
     const currentTab = (route.query?.tab as string) || 'overview';
@@ -1005,6 +1091,12 @@
 
   async function selectSeason(season: TVSeason) {
     activeSeasonId.value = season.id;
+    if (season.season_number === 0 && activeTab.value !== 'specials') {
+      activeTab.value = 'specials';
+    } else if (season.season_number > 0 && activeTab.value === 'specials') {
+      activeTab.value = 'episodes';
+    }
+
     if (activeTab.value === 'episodes' && router.replace) {
       const query = { ...route.query };
       if (season.season_number > 1) {
@@ -1015,7 +1107,15 @@
       if (route.query?.season !== query.season) {
         Promise.resolve(router.replace({ query })).catch(() => {});
       }
+    } else if (activeTab.value === 'specials' && router.replace) {
+      const query = { ...route.query };
+      delete query.season;
+      if (route.query?.tab !== 'specials') {
+        query.tab = 'specials';
+        Promise.resolve(router.replace({ query })).catch(() => {});
+      }
     }
+
     if (!show.value) return;
     loadingEpisodes.value = true;
     try {
@@ -1025,6 +1125,40 @@
       showToast('error', 'Error', 'Failed to load episodes');
     } finally {
       loadingEpisodes.value = false;
+    }
+  }
+
+  // --- Bulk Watch Progression Actions ---
+  const isCurrentSeasonAllWatched = computed(() => {
+    if (!activeSeasonEpisodes.value.length) return false;
+    return activeSeasonEpisodes.value.every((ep) => watchedEpisodesSet.value.has(ep.id));
+  });
+
+  const bulkMarkingLoading = ref(false);
+
+  async function toggleCurrentSeasonWatched() {
+    if (!show.value || !activeSeason.value || !activeSeasonEpisodes.value.length) return;
+    bulkMarkingLoading.value = true;
+    const currentSeason = activeSeason.value;
+    const seasonNum = currentSeason.season_number;
+    try {
+      if (isCurrentSeasonAllWatched.value) {
+        await watchlistStore.unmarkSeasonWatched(show.value.id, seasonNum);
+        for (const ep of activeSeasonEpisodes.value) {
+          watchedEpisodesSet.value.delete(ep.id);
+        }
+        showToast('info', 'Season Unmarked', `Unmarked ${currentSeason.title} as watched`);
+      } else {
+        await watchlistStore.markSeasonWatched(show.value.id, seasonNum);
+        for (const ep of activeSeasonEpisodes.value) {
+          watchedEpisodesSet.value.add(ep.id);
+        }
+        showToast('success', 'Season Watched', `Marked ${currentSeason.title} as watched`);
+      }
+    } catch (err: unknown) {
+      showToast('error', 'Error', getErrorMessage(err, 'Failed to update season watch status'));
+    } finally {
+      bulkMarkingLoading.value = false;
     }
   }
 
@@ -1062,75 +1196,28 @@
     });
   }
 
-  // --- Dummy Data Injectors ---
+  // --- Media & Metadata Computeds ---
   const displayTrailers = computed(() => {
     if (!show.value) return [];
     const trailers = [];
-    trailers.push(
-      {
+    if (show.value.trailer_url) {
+      trailers.push({
         id: 1,
-        title: 'Series Premiere Trailer',
+        title: `${show.value.title} Official Trailer`,
         type: 'Trailer',
-        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        url: show.value.trailer_url,
         thumbnail_url:
           show.value.backdrop_url ||
           show.value.poster_url ||
-          'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&q=80'
-      },
-      {
-        id: 2,
-        title: 'Season 2 Teaser',
-        type: 'Clip',
-        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        thumbnail_url: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&q=80'
-      },
-      {
-        id: 3,
-        title: 'Behind the Scenes',
-        type: 'Featurette',
-        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        thumbnail_url: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&q=80'
-      }
-    );
+          ''
+      });
+    }
     return trailers;
   });
 
-  const displaySeasons = computed<TVSeason[]>(() => {
-    if (!show.value) return [];
-    if (show.value.seasons && show.value.seasons.length > 0) {
-      return [...show.value.seasons].sort((a, b) => a.season_number - b.season_number);
-    }
-    return [
-      {
-        id: 991,
-        uuid: 's1',
-        show_id: show.value.id,
-        season_number: 1,
-        title: 'Season 1',
-        episode_count: 10,
-        air_date: show.value.first_air_date,
-        poster_url: show.value.poster_url
-      }
-    ];
-  });
-
   const displayCast = computed<CastMember[]>(() => {
-    if (!show.value) return [];
-    if (show.value.cast && show.value.cast.length > 0) {
-      return [...show.value.cast].sort((a, b) => a.display_order - b.display_order);
-    }
-    return [
-      {
-        id: 881,
-        uuid: 'c1',
-        name: 'Bryan Cranston',
-        role: 'actor',
-        character: 'Walter White',
-        display_order: 1,
-        created_at: '',
-        profile_url: 'https://image.tmdb.org/t/p/w276_and_h350_face/a7cPqAOXhtBElJ3y62n5lWl8V6V.jpg'
-      }
-    ];
+    if (!show.value?.cast?.length) return [];
+    return [...show.value.cast].sort((a, b) => a.display_order - b.display_order);
   });
   // ----------------------------
 
@@ -1192,7 +1279,11 @@
                 String(s.id) === String(seasonQuery)
             )
           : null;
-        const selected = targetSeason || displaySeasons.value[0];
+        const defaultSeason =
+          activeTab.value === 'specials' && specialsSeason.value
+            ? specialsSeason.value
+            : regularSeasons.value[0] || displaySeasons.value[0];
+        const selected = targetSeason || defaultSeason;
         if (selected) selectSeason(selected);
       }
     } catch (err: unknown) {

@@ -81,6 +81,31 @@ npm run dev
 - The API will be available at `https://localhost:8100`
 - The Vue app will be available at `https://localhost:5130`
 
+### Code Quality, Testing & CI/CD
+
+Blueberry maintains high software quality standards with automated static typing, linting, unit testing, and container builds across the entire monorepo.
+
+#### Local CI & Pre-Push Hook
+To set up local git hooks and mirror CI verification before pushing:
+```bash
+# 1. Install git pre-push hook (one-time setup)
+./scripts/setup-hooks.sh
+
+# 2. Run local CI verification suite anytime (all 4 phases)
+./scripts/run-ci-local.sh
+
+# Optional flags:
+# ./scripts/run-ci-local.sh --skip-build   # Fast check without full production build
+# ./scripts/run-ci-local.sh --backend      # Run backend checks only
+# ./scripts/run-ci-local.sh --frontend     # Run frontend checks only
+```
+
+#### GitHub Actions CI/CD Pipeline
+Every pull request and push to `main` and `development` triggers automated verification via [`.github/workflows/ci.yml`](./.github/workflows/ci.yml):
+- **Backend CI**: TypeScript compilation (`tsc -p tsconfig.build.json --noEmit`), Jest test suite (14 suites, 96 tests), and production build.
+- **Frontend CI**: Vue/TypeScript compilation (`vue-tsc -p tsconfig.vitest.json --noEmit`), ESLint, Vitest test suite (63 suites, 238 tests), and Vite PWA build.
+- **Container Publishing**: On successful pushes to `main` or `development`, container images are automatically built and published to GitHub Container Registry (`ghcr.io`).
+
 ### Self-Hosting with Docker Compose
 
 Blueberry is optimized for zero-config production self-hosting via Docker Compose.

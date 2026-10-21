@@ -2,9 +2,12 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  maxWorkers: 2,
+  workerIdleMemoryLimit: '300MB',
   transform: {
     '^.+\\.[tj]sx?$': ['ts-jest', {
-      tsconfig: 'tsconfig.json'
+      tsconfig: 'tsconfig.json',
+      isolatedModules: true,
     }],
   },
   transformIgnorePatterns: [

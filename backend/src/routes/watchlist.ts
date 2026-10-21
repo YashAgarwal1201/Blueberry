@@ -43,47 +43,48 @@ function formatWatchlistItem(row: any): WatchlistItem {
 
 // ── Drizzle helper queries ────────────────────────────────────────────────────
 
-function selectAllWatchlist(): WatchlistItem[] {
+function selectAllWatchlist(userId: string): WatchlistItem[] {
   const rows = db
     .select()
     .from(watchlistTable)
+    .where(eq(watchlistTable.user_id, userId))
     .orderBy(desc(watchlistTable.added_at))
     .all();
   return rows.map(formatWatchlistItem);
 }
 
-function selectWatchlistById(id: number): WatchlistItem | undefined {
+function selectWatchlistById(id: number, userId: string): WatchlistItem | undefined {
   const row = db
     .select()
     .from(watchlistTable)
-    .where(eq(watchlistTable.id, id))
+    .where(and(eq(watchlistTable.id, id), eq(watchlistTable.user_id, userId)))
     .get();
   return row ? formatWatchlistItem(row) : undefined;
 }
 
-function selectWatchlistByMovieId(movieId: number): WatchlistItem | undefined {
+function selectWatchlistByMovieId(movieId: number, userId: string): WatchlistItem | undefined {
   const row = db
     .select()
     .from(watchlistTable)
-    .where(eq(watchlistTable.movie_id, movieId))
+    .where(and(eq(watchlistTable.movie_id, movieId), eq(watchlistTable.user_id, userId)))
     .get();
   return row ? formatWatchlistItem(row) : undefined;
 }
 
-function selectWatchlistByShowId(showId: number): WatchlistItem | undefined {
+function selectWatchlistByShowId(showId: number, userId: string): WatchlistItem | undefined {
   const row = db
     .select()
     .from(watchlistTable)
-    .where(eq(watchlistTable.show_id, showId))
+    .where(and(eq(watchlistTable.show_id, showId), eq(watchlistTable.user_id, userId)))
     .get();
   return row ? formatWatchlistItem(row) : undefined;
 }
 
-function selectWatchlistByStatus(status: string): WatchlistItem[] {
+function selectWatchlistByStatus(status: string, userId: string): WatchlistItem[] {
   const rows = db
     .select()
     .from(watchlistTable)
-    .where(eq(watchlistTable.status, status))
+    .where(and(eq(watchlistTable.status, status), eq(watchlistTable.user_id, userId)))
     .orderBy(desc(watchlistTable.added_at))
     .all();
   return rows.map(formatWatchlistItem);
@@ -226,11 +227,15 @@ function attachMediaToWatchlistItems(
 
 router.get("/movie/:movieId", (c) => {
   try {
+    const user = c.get("user");
+    const userId = user?.id;
+    if (!userId) return c.json({ success: false, error: "Unauthorized" }, 401);
+
     const movieId = parseInt(c.req.param("movieId"));
     if (isNaN(movieId))
       return c.json({ success: false, error: "Invalid movie ID" }, 400);
 
-    const item = selectWatchlistByMovieId(movieId);
+    const item = selectWatchlistByMovieId(movieId, userId);
     if (!item) return c.json({ success: true, data: null });
 
     const [populated] = attachMediaToWatchlistItems([item]);
@@ -252,11 +257,15 @@ router.get("/movie/:movieId", (c) => {
 
 router.get("/show/:showId", (c) => {
   try {
+    const user = c.get("user");
+    const userId = user?.id;
+    if (!userId) return c.json({ success: false, error: "Unauthorized" }, 401);
+
     const showId = parseInt(c.req.param("showId"));
     if (isNaN(showId))
       return c.json({ success: false, error: "Invalid show ID" }, 400);
 
-    const item = selectWatchlistByShowId(showId);
+    const item = selectWatchlistByShowId(showId, userId);
     if (!item) return c.json({ success: true, data: null });
 
     const [populated] = attachMediaToWatchlistItems([item]);
@@ -325,6 +334,10 @@ router.get("/tv/continue-watching", (c) => {
         .where(
           and(
             eq(tvEpisodesTable.show_id, p.show_id),
+            // Specials (season 0) are standalone and excluded from regular sequential binge queue
+            sql`${tvSeasonsTable.season_number} > 0`,
+            // Air-Date Gating: Exclude future unreleased episodes (air_date > CURRENT_DATE)
+            sql`(${tvEpisodesTable.air_date} IS NULL OR ${tvEpisodesTable.air_date} <= date('now'))`,
             or(
               and(
                 eq(tvSeasonsTable.season_number, p.max_season),
@@ -363,10 +376,41 @@ router.get("/tv/continue-watching", (c) => {
               resolveImage(nextEp.tmdb_still_path, null) || nextEp.still_url,
           };
 
+          // Calculate progress percentage based on aired episodes
+          const totalAiredRow = db
+            .select({ count: sql<number>`COUNT(*)` })
+            .from(tvEpisodesTable)
+            .innerJoin(tvSeasonsTable, eq(tvEpisodesTable.season_id, tvSeasonsTable.id))
+            .where(
+              and(
+                eq(tvEpisodesTable.show_id, p.show_id),
+                sql`${tvSeasonsTable.season_number} > 0`,
+                sql`(${tvEpisodesTable.air_date} IS NULL OR ${tvEpisodesTable.air_date} <= date('now'))`,
+              ),
+            )
+            .get();
+
+          const watchedRow = db
+            .select({ count: sql<number>`COUNT(*)` })
+            .from(userWatchedEpisodesTable)
+            .where(
+              and(
+                eq(userWatchedEpisodesTable.user_id, userId),
+                eq(userWatchedEpisodesTable.show_id, p.show_id),
+                sql`${userWatchedEpisodesTable.season_number} > 0`,
+              ),
+            )
+            .get();
+
+          const totalAired = Number(totalAiredRow?.count ?? 0);
+          const watchedCount = Number(watchedRow?.count ?? 0);
+          const progressPercentage =
+            totalAired > 0 ? Math.min(100, Math.round((watchedCount / totalAired) * 100)) : 0;
+
           nextEpisodes.push({
             show: resolvedShow,
             nextEpisode: resolvedNextEp,
-            progressPercentage: 0,
+            progressPercentage,
           });
         }
       }
@@ -468,17 +512,19 @@ router.post("/tv/:showId/episodes/:episodeId/watched", (c) => {
     // Also update watchlist status to 'watching' if not already there
     db.insert(watchlistTable)
       .values({
+        user_id: userId,
         show_id: showId,
         status: "watching",
         source: "manual",
       })
       .onConflictDoUpdate({
-        target: watchlistTable.show_id,
+        target: [watchlistTable.user_id, watchlistTable.show_id],
         set: { status: "watching" },
         where: eq(watchlistTable.status, "want_to_watch"),
       })
       .run();
 
+    invalidateWatchlistCache(userId);
     return c.json({ success: true, message: "Episode marked as watched" });
   } catch (err: unknown) {
     console.error("Error marking episode watched:", err);
@@ -558,35 +604,37 @@ router.post("/tv/:showId/seasons/:seasonId/watched", (c) => {
       );
     }
 
-    for (const ep of episodes) {
-      db.insert(userWatchedEpisodesTable)
-        .values({
-          user_id: userId,
-          show_id: showId,
-          season_id: seasonId,
-          episode_id: ep.episode_id,
-          season_number: ep.season_number,
-          episode_number: ep.episode_number,
-        })
-        .onConflictDoNothing()
-        .run();
-    }
+    const values = episodes.map((ep) => ({
+      user_id: userId,
+      show_id: showId,
+      season_id: seasonId,
+      episode_id: ep.episode_id,
+      season_number: ep.season_number,
+      episode_number: ep.episode_number,
+    }));
+
+    db.insert(userWatchedEpisodesTable)
+      .values(values)
+      .onConflictDoNothing()
+      .run();
 
     // Update watchlist
     db.insert(watchlistTable)
       .values({
+        user_id: userId,
         show_id: showId,
         status: "watching",
         source: "manual",
       })
       .onConflictDoUpdate({
-        target: watchlistTable.show_id,
-        set: { status: "watching" },
+        target: [watchlistTable.user_id, watchlistTable.show_id],
+        set: { status: "watching", updated_at: sql`(datetime('now'))` },
         where: eq(watchlistTable.status, "want_to_watch"),
       })
       .run();
 
-    return c.json({ success: true, message: "Season marked as watched" });
+    invalidateWatchlistCache(userId);
+    return c.json({ success: true, message: "Season marked as watched", count: episodes.length });
   } catch (err: unknown) {
     console.error("Error marking season watched:", err);
     return c.json(
@@ -600,10 +648,158 @@ router.post("/tv/:showId/seasons/:seasonId/watched", (c) => {
   }
 });
 
+/**
+ * POST /shows/:id/seasons/:seasonNumber/watch
+ * Marks an entire season (including Season 0 Specials) as watched in a single atomic transaction.
+ */
+router.post("/shows/:id/seasons/:seasonNumber/watch", (c) => {
+  try {
+    const user = c.get("user");
+    const userId = user?.id;
+    if (!userId) return c.json({ success: false, error: "Unauthorized" }, 401);
+
+    const showId = parseInt(c.req.param("id"));
+    const seasonNumber = parseInt(c.req.param("seasonNumber"));
+    if (isNaN(showId) || isNaN(seasonNumber)) {
+      return c.json({ success: false, error: "Invalid showId or seasonNumber" }, 400);
+    }
+
+    const episodes = db
+      .select({
+        episode_id: tvEpisodesTable.id,
+        season_id: tvEpisodesTable.season_id,
+        episode_number: tvEpisodesTable.episode_number,
+        season_number: tvSeasonsTable.season_number,
+      })
+      .from(tvEpisodesTable)
+      .innerJoin(
+        tvSeasonsTable,
+        eq(tvEpisodesTable.season_id, tvSeasonsTable.id),
+      )
+      .where(
+        and(
+          eq(tvEpisodesTable.show_id, showId),
+          eq(tvSeasonsTable.season_number, seasonNumber),
+        ),
+      )
+      .all();
+
+    if (!episodes.length) {
+      return c.json(
+        { success: false, error: "Season or episodes not found" },
+        404,
+      );
+    }
+
+    // Single-transaction bulk insert
+    const values = episodes.map((ep) => ({
+      user_id: userId,
+      show_id: showId,
+      season_id: ep.season_id,
+      episode_id: ep.episode_id,
+      season_number: ep.season_number,
+      episode_number: ep.episode_number,
+    }));
+
+    db.insert(userWatchedEpisodesTable)
+      .values(values)
+      .onConflictDoNothing()
+      .run();
+
+    // Upsert watchlist entry
+    db.insert(watchlistTable)
+      .values({
+        user_id: userId,
+        show_id: showId,
+        status: "watching",
+        source: "manual",
+      })
+      .onConflictDoUpdate({
+        target: [watchlistTable.user_id, watchlistTable.show_id],
+        set: { status: "watching", updated_at: sql`(datetime('now'))` },
+        where: eq(watchlistTable.status, "want_to_watch"),
+      })
+      .run();
+
+    invalidateWatchlistCache(userId);
+
+    return c.json({
+      success: true,
+      message: `Season ${seasonNumber} marked as watched (${episodes.length} episodes)`,
+      data: {
+        showId,
+        seasonNumber,
+        markedCount: episodes.length,
+        episodeIds: episodes.map((e) => e.episode_id),
+      },
+    });
+  } catch (err: unknown) {
+    console.error("Error bulk marking season watched:", err);
+    return c.json(
+      {
+        success: false,
+        error: "Failed to mark season watched",
+        message: getErrorMessage(err),
+      },
+      500,
+    );
+  }
+});
+
+/**
+ * DELETE /shows/:id/seasons/:seasonNumber/watch
+ * Unmarks an entire season as watched in a single transaction.
+ */
+router.delete("/shows/:id/seasons/:seasonNumber/watch", (c) => {
+  try {
+    const user = c.get("user");
+    const userId = user?.id;
+    if (!userId) return c.json({ success: false, error: "Unauthorized" }, 401);
+
+    const showId = parseInt(c.req.param("id"));
+    const seasonNumber = parseInt(c.req.param("seasonNumber"));
+    if (isNaN(showId) || isNaN(seasonNumber)) {
+      return c.json({ success: false, error: "Invalid showId or seasonNumber" }, 400);
+    }
+
+    db.delete(userWatchedEpisodesTable)
+      .where(
+        and(
+          eq(userWatchedEpisodesTable.user_id, userId),
+          eq(userWatchedEpisodesTable.show_id, showId),
+          eq(userWatchedEpisodesTable.season_number, seasonNumber),
+        ),
+      )
+      .run();
+
+    invalidateWatchlistCache(userId);
+
+    return c.json({
+      success: true,
+      message: `Season ${seasonNumber} unmarked as watched`,
+      data: { showId, seasonNumber },
+    });
+  } catch (err: unknown) {
+    console.error("Error bulk unmarking season watched:", err);
+    return c.json(
+      {
+        success: false,
+        error: "Failed to unmark season watched",
+        message: getErrorMessage(err),
+      },
+      500,
+    );
+  }
+});
+
 // ── GET /watchlist ────────────────────────────────────────────────────────────
 
 router.get("/", (c) => {
   try {
+    const user = c.get("user");
+    const userId = user?.id;
+    if (!userId) return c.json({ success: false, error: "Unauthorized" }, 401);
+
     const status = c.req.query("status");
     let items: WatchlistItem[];
 
@@ -612,9 +808,9 @@ router.get("/", (c) => {
       if (!validStatuses.includes(status)) {
         return c.json({ success: false, error: `Invalid status` }, 400);
       }
-      items = selectWatchlistByStatus(status);
+      items = selectWatchlistByStatus(status, userId);
     } else {
-      items = selectAllWatchlist();
+      items = selectAllWatchlist(userId);
     }
 
     const populatedItems = attachMediaToWatchlistItems(items);
@@ -646,11 +842,15 @@ router.get("/", (c) => {
 
 router.get("/:id", (c) => {
   try {
+    const user = c.get("user");
+    const userId = user?.id;
+    if (!userId) return c.json({ success: false, error: "Unauthorized" }, 401);
+
     const id = parseInt(c.req.param("id"));
     if (isNaN(id))
       return c.json({ success: false, error: "Invalid watchlist ID" }, 400);
 
-    const item = selectWatchlistById(id);
+    const item = selectWatchlistById(id, userId);
     if (!item)
       return c.json({ success: false, error: "Watchlist item not found" }, 404);
 
@@ -673,6 +873,10 @@ router.get("/:id", (c) => {
 
 router.post("/", async (c) => {
   try {
+    const user = c.get("user");
+    const userId = user?.id;
+    if (!userId) return c.json({ success: false, error: "Unauthorized" }, 401);
+
     const body = await c.req
       .json<AddToWatchlistRequest>()
       .catch(() => ({} as AddToWatchlistRequest));
@@ -711,7 +915,7 @@ router.post("/", async (c) => {
       if (!exists)
         return c.json({ success: false, error: "Movie not found" }, 404);
 
-      const existing = selectWatchlistByMovieId(movie_id);
+      const existing = selectWatchlistByMovieId(movie_id, userId);
       if (existing)
         return c.json(
           {
@@ -725,6 +929,7 @@ router.post("/", async (c) => {
       const info = db
         .insert(watchlistTable)
         .values({
+          user_id: userId,
           movie_id,
           status,
           user_rating,
@@ -745,7 +950,7 @@ router.post("/", async (c) => {
       if (!exists)
         return c.json({ success: false, error: "Show not found" }, 404);
 
-      const existing = selectWatchlistByShowId(show_id!);
+      const existing = selectWatchlistByShowId(show_id!, userId);
       if (existing)
         return c.json(
           {
@@ -759,6 +964,7 @@ router.post("/", async (c) => {
       const info = db
         .insert(watchlistTable)
         .values({
+          user_id: userId,
           show_id: show_id!,
           status,
           user_rating,
@@ -772,10 +978,10 @@ router.post("/", async (c) => {
       watchlistId = Number(info.lastInsertRowid);
     }
 
-    const item = selectWatchlistById(watchlistId)!;
+    const item = selectWatchlistById(watchlistId, userId)!;
     const [populated] = attachMediaToWatchlistItems([item]);
 
-    invalidateWatchlistCache();
+    invalidateWatchlistCache(userId);
     return c.json(
       { success: true, message: "Added to watchlist", data: populated },
       201,
@@ -797,11 +1003,15 @@ router.post("/", async (c) => {
 
 router.patch("/:id", async (c) => {
   try {
+    const user = c.get("user");
+    const userId = user?.id;
+    if (!userId) return c.json({ success: false, error: "Unauthorized" }, 401);
+
     const id = parseInt(c.req.param("id"));
     if (isNaN(id))
       return c.json({ success: false, error: "Invalid watchlist ID" }, 400);
 
-    const existing = selectWatchlistById(id);
+    const existing = selectWatchlistById(id, userId);
     if (!existing)
       return c.json({ success: false, error: "Watchlist item not found" }, 404);
 
@@ -869,13 +1079,13 @@ router.patch("/:id", async (c) => {
         source: newSource,
         updated_at: sql`datetime('now')`,
       })
-      .where(eq(watchlistTable.id, id))
+      .where(and(eq(watchlistTable.id, id), eq(watchlistTable.user_id, userId)))
       .run();
 
-    const item = selectWatchlistById(id)!;
+    const item = selectWatchlistById(id, userId)!;
     const [populated] = attachMediaToWatchlistItems([item]);
 
-    invalidateWatchlistCache();
+    invalidateWatchlistCache(userId);
     return c.json({
       success: true,
       message: "Watchlist item updated",
@@ -898,17 +1108,23 @@ router.patch("/:id", async (c) => {
 
 router.delete("/:id", (c) => {
   try {
+    const user = c.get("user");
+    const userId = user?.id;
+    if (!userId) return c.json({ success: false, error: "Unauthorized" }, 401);
+
     const id = parseInt(c.req.param("id"));
     if (isNaN(id))
       return c.json({ success: false, error: "Invalid watchlist ID" }, 400);
 
-    const item = selectWatchlistById(id);
+    const item = selectWatchlistById(id, userId);
     if (!item)
       return c.json({ success: false, error: "Watchlist item not found" }, 404);
 
-    db.delete(watchlistTable).where(eq(watchlistTable.id, id)).run();
+    db.delete(watchlistTable)
+      .where(and(eq(watchlistTable.id, id), eq(watchlistTable.user_id, userId)))
+      .run();
 
-    invalidateWatchlistCache();
+    invalidateWatchlistCache(userId);
     return c.json({
       success: true,
       message: "Removed from watchlist",

@@ -549,41 +549,24 @@ watch(
   }
 );
 
-// --- Dummy Trailers ---
+// --- Trailers ---
 const displayTrailers = computed(() => {
   if (!movie.value) return [];
   const trailers = [];
   if (movie.value.trailer_url) {
     trailers.push({
       id: 1,
-      title: 'Official Trailer',
+      title: `${movie.value.title} Official Trailer`,
       type: 'Trailer',
       url: movie.value.trailer_url,
       thumbnail_url:
         movie.value.backdrop_url ||
         movie.value.poster_url ||
-        'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&q=80'
+        ''
     });
   }
-  trailers.push(
-    {
-      id: 2,
-      title: 'Teaser Trailer',
-      type: 'Clip',
-      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      thumbnail_url: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&q=80'
-    },
-    {
-      id: 3,
-      title: 'Behind the Scenes',
-      type: 'Featurette',
-      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      thumbnail_url: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&q=80'
-    }
-  );
   return trailers;
 });
-// ----------------------
 
 const watchlistItem = computed<WatchlistItemWithMovie | undefined>(() => {
   if (!movie.value) return undefined;
