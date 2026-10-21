@@ -4,7 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import ShowsPage from '../ShowsPage.vue'
 import { useTvStore } from '@/stores/tvStore'
 
-vi.mock('@/composables/toastHandeler', () => ({
+vi.mock('@/composables/toastHandler', () => ({
   default: () => ({
     showToast: vi.fn()
   })
@@ -35,6 +35,8 @@ describe('ShowsPage.vue', () => {
     
     // Set loading to true so sections render
     tvStore.loading = true
+    tvStore.loadingTopRated = true
+    tvStore.loadingRecent = true
 
     const wrapper = mount(ShowsPage, {
       global: {

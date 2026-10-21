@@ -14,7 +14,7 @@ vi.mock('@/composables/theme', () => ({
 }))
 
 const mockShowToast = vi.fn()
-vi.mock('@/composables/toastHandeler', () => ({
+vi.mock('@/composables/toastHandler', () => ({
   default: () => ({
     showToast: mockShowToast
   })

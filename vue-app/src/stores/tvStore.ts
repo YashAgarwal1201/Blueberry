@@ -7,11 +7,30 @@ import { getErrorMessage } from '@/services/errorUtils'
 export const useTvStore = defineStore('tvStore', () => {
   const recentShows = ref<TVShowCard[]>([])
   const topRatedShows = ref<TVShowCard[]>([])
+  const hotShows = ref<TVShowCard[]>([])
+  const completedShows = ref<TVShowCard[]>([])
   const loading = ref(false)
+  const loadingRecent = ref(false)
+  const loadingTopRated = ref(false)
+  const loadingHot = ref(false)
+  const loadingCompleted = ref(false)
+  const loadingShowById = ref(false)
+  const loadingEpisodes = ref(false)
   const error = ref<string | null>(null)
 
+  const syncLoading = () => {
+    loading.value =
+      loadingRecent.value ||
+      loadingTopRated.value ||
+      loadingHot.value ||
+      loadingCompleted.value ||
+      loadingShowById.value ||
+      loadingEpisodes.value
+  }
+
   const fetchRecentShows = async () => {
-    loading.value = true
+    loadingRecent.value = true
+    syncLoading()
     error.value = null
     try {
       const response = await apiClient.get('tv/recent')
@@ -23,12 +42,14 @@ export const useTvStore = defineStore('tvStore', () => {
       error.value = message
       throw err
     } finally {
-      loading.value = false
+      loadingRecent.value = false
+      syncLoading()
     }
   }
 
   const fetchTopRatedShows = async () => {
-    loading.value = true
+    loadingTopRated.value = true
+    syncLoading()
     error.value = null
     try {
       const response = await apiClient.get('tv/top-rated')
@@ -40,12 +61,46 @@ export const useTvStore = defineStore('tvStore', () => {
       error.value = message
       throw err
     } finally {
-      loading.value = false
+      loadingTopRated.value = false
+      syncLoading()
+    }
+  }
+
+  const fetchHotShows = async () => {
+    loadingHot.value = true
+    syncLoading()
+    try {
+      const response = await apiClient.get('tv/hot')
+      hotShows.value = response.data.data as TVShowCard[]
+      return hotShows.value
+    } catch (err: unknown) {
+      console.error('Error fetching hot tv shows:', err)
+      throw err
+    } finally {
+      loadingHot.value = false
+      syncLoading()
+    }
+  }
+
+  const fetchCompletedShows = async () => {
+    loadingCompleted.value = true
+    syncLoading()
+    try {
+      const response = await apiClient.get('tv/completed')
+      completedShows.value = response.data.data as TVShowCard[]
+      return completedShows.value
+    } catch (err: unknown) {
+      console.error('Error fetching completed tv shows:', err)
+      throw err
+    } finally {
+      loadingCompleted.value = false
+      syncLoading()
     }
   }
 
   const fetchShowById = async (uuid: string) => {
-    loading.value = true
+    loadingShowById.value = true
+    syncLoading()
     error.value = null
     try {
       const response = await apiClient.get(`tv/${uuid}`)
@@ -56,7 +111,36 @@ export const useTvStore = defineStore('tvStore', () => {
       error.value = message
       throw err
     } finally {
-      loading.value = false
+      loadingShowById.value = false
+      syncLoading()
+    }
+  }
+
+  const fetchSimilarShows = async (uuid: string) => {
+    try {
+      const response = await apiClient.get(`tv/${uuid}/similar`)
+      return response.data.data as TVShowCard[]
+    } catch (err: unknown) {
+      console.error('Error fetching similar shows:', err)
+      throw err
+    }
+  }
+
+  const fetchSeasonEpisodes = async (uuid: string, seasonId: number) => {
+    loadingEpisodes.value = true
+    syncLoading()
+    error.value = null
+    try {
+      const response = await apiClient.get(`tv/${uuid}/seasons/${seasonId}/episodes`)
+      return response.data.data // Returns an array of episodes
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error fetching season episodes')
+      console.error('Error fetching season episodes:', err)
+      error.value = message
+      throw err
+    } finally {
+      loadingEpisodes.value = false
+      syncLoading()
     }
   }
 
@@ -68,11 +152,23 @@ export const useTvStore = defineStore('tvStore', () => {
   return {
     recentShows,
     topRatedShows,
+    hotShows,
+    completedShows,
     loading,
+    loadingRecent,
+    loadingTopRated,
+    loadingHot,
+    loadingCompleted,
+    loadingShowById,
+    loadingEpisodes,
     error,
     fetchRecentShows,
     fetchTopRatedShows,
+    fetchHotShows,
+    fetchCompletedShows,
     fetchShowById,
+    fetchSimilarShows,
+    fetchSeasonEpisodes,
     removeShowLocally,
   }
 })

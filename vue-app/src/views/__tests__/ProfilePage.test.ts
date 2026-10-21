@@ -8,9 +8,14 @@ import { useWatchlistStore } from '@/stores/watchListStore'
 import { ref } from 'vue'
 
 const mockRouterPush = vi.fn()
+const mockRouterReplace = vi.fn()
 vi.mock('vue-router', () => ({
   useRouter: () => ({
-    push: mockRouterPush
+    push: mockRouterPush,
+    replace: mockRouterReplace
+  }),
+  useRoute: () => ({
+    query: {}
   }),
   RouterLink: {
     template: '<a><slot></slot></a>'

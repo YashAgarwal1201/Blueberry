@@ -8,7 +8,7 @@ const updatePreferencesStmt = db.prepare(`UPDATE "user" SET preferences = ? WHER
 
 router.get("/", (req: Request, res: Response): void => {
   try {
-    const user = (req as any).user;
+    const user = req.user;
     if (!user) {
       res.status(401).json({ error: "Unauthorized" });
       return;
@@ -39,7 +39,7 @@ router.get("/", (req: Request, res: Response): void => {
 
 router.put("/", (req: Request, res: Response): void => {
   try {
-    const user = (req as any).user;
+    const user = req.user;
     if (!user) {
       res.status(401).json({ error: "Unauthorized" });
       return;

@@ -110,7 +110,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { usePreferencesStore } from '@/stores/preferencesStore'
 import { useMoviesStore } from '@/stores/moviesStore'
 import { useTvStore } from '@/stores/tvStore'
-import toastHandler from '@/composables/toastHandeler'
+import toastHandler from '@/composables/toastHandler'
 import type { MovieWithDetails, TVShowWithDetails } from 'shared-types'
 
 const authStore = useAuthStore()

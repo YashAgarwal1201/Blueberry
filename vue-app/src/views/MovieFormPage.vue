@@ -307,7 +307,7 @@ import { useMoviesStore } from '@/stores/moviesStore'
 import { useLanguagesStore } from '@/stores/languagesStore'
 import { useGenresStore } from '@/stores/genresStore'
 import type { CreateMovieRequest, MovieWithDetails } from "shared-types"
-import toastHandler from '@/composables/toastHandeler'
+import toastHandler from '@/composables/toastHandler'
 import CastEditor from '@/components/CastEditor.vue'
 import { getErrorMessage } from '@/services/errorUtils'
 

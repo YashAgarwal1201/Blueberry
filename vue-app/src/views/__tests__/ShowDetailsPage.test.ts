@@ -6,8 +6,8 @@ import { useTvStore } from '@/stores/tvStore'
 import { useWatchlistStore } from '@/stores/watchListStore'
 import { useAuthStore } from '@/stores/authStore'
 
-const mockRoute = { params: { uuid: '456-def' }, name: 'show-details' }
-const mockRouter = { push: vi.fn(), back: vi.fn() }
+const mockRoute = { params: { uuid: '456-def' }, query: {} as Record<string, any>, name: 'show-details' }
+const mockRouter = { push: vi.fn(), replace: vi.fn(), back: vi.fn() }
 
 vi.mock('vue-router', () => ({
   useRoute: () => mockRoute,
@@ -17,7 +17,7 @@ vi.mock('vue-router', () => ({
   }
 }))
 
-vi.mock('@/composables/toastHandeler', () => ({
+vi.mock('@/composables/toastHandler', () => ({
   default: () => ({
     showToast: vi.fn()
   })

@@ -25,6 +25,7 @@ import {
   tmdbClient,
 } from "../plugins/tmdb";
 import { ingestMovieBySearch as ingestWikidataMovieBySearch } from "../plugins/wikidata";
+import { getErrorMessage } from "../utils/errors";
 
 const router: Router = express.Router();
 
@@ -58,9 +59,10 @@ router.post("/tmdb/movie/:tmdbId", async (req: Request, res: Response) => {
   try {
     const result = await ingestMovieByTMDBId(tmdbId, { overwrite });
     res.status(result.action === "created" ? 201 : 200).json({ success: true, data: result });
-  } catch (err: any) {
-    console.error("[ingest] movie", tmdbId, err.message);
-    res.status(500).json({ success: false, error: err.message });
+  } catch (err: unknown) {
+    const msg = getErrorMessage(err);
+    console.error("[ingest] movie", tmdbId, msg);
+    res.status(500).json({ success: false, error: msg });
   }
 });
 
@@ -77,9 +79,10 @@ router.post("/tmdb/tv/:tmdbId", async (req: Request, res: Response) => {
   try {
     const result = await ingestTVByTMDBId(tmdbId, { overwrite });
     res.status(result.action === "created" ? 201 : 200).json({ success: true, data: result });
-  } catch (err: any) {
-    console.error("[ingest] tv", tmdbId, err.message);
-    res.status(500).json({ success: false, error: err.message });
+  } catch (err: unknown) {
+    const msg = getErrorMessage(err);
+    console.error("[ingest] tv", tmdbId, msg);
+    res.status(500).json({ success: false, error: msg });
   }
 });
 
@@ -94,9 +97,10 @@ router.post("/tmdb/search/movie", async (req: Request, res: Response) => {
   try {
     const result = await ingestMovieBySearch(query.trim());
     res.status(result.action === "created" ? 201 : 200).json({ success: true, data: result });
-  } catch (err: any) {
-    console.error("[ingest] search movie", query, err.message);
-    res.status(500).json({ success: false, error: err.message });
+  } catch (err: unknown) {
+    const msg = getErrorMessage(err);
+    console.error("[ingest] search movie", query, msg);
+    res.status(500).json({ success: false, error: msg });
   }
 });
 
@@ -111,9 +115,10 @@ router.post("/tmdb/search/tv", async (req: Request, res: Response) => {
   try {
     const result = await ingestTVBySearch(query.trim());
     res.status(result.action === "created" ? 201 : 200).json({ success: true, data: result });
-  } catch (err: any) {
-    console.error("[ingest] search tv", query, err.message);
-    res.status(500).json({ success: false, error: err.message });
+  } catch (err: unknown) {
+    const msg = getErrorMessage(err);
+    console.error("[ingest] search tv", query, msg);
+    res.status(500).json({ success: false, error: msg });
   }
 });
 
@@ -134,9 +139,10 @@ router.post("/tmdb/popular/movies", async (req: Request, res: Response) => {
       skipped: results.filter((r) => r.action === "skipped").length,
     };
     res.json({ success: true, data: results, summary });
-  } catch (err: any) {
-    console.error("[ingest] popular movies", err.message);
-    res.status(500).json({ success: false, error: err.message });
+  } catch (err: unknown) {
+    const msg = getErrorMessage(err);
+    console.error("[ingest] popular movies", msg);
+    res.status(500).json({ success: false, error: msg });
   }
 });
 
@@ -157,9 +163,10 @@ router.post("/tmdb/popular/tv", async (req: Request, res: Response) => {
       skipped: results.filter((r) => r.action === "skipped").length,
     };
     res.json({ success: true, data: results, summary });
-  } catch (err: any) {
-    console.error("[ingest] popular tv", err.message);
-    res.status(500).json({ success: false, error: err.message });
+  } catch (err: unknown) {
+    const msg = getErrorMessage(err);
+    console.error("[ingest] popular tv", msg);
+    res.status(500).json({ success: false, error: msg });
   }
 });
 
@@ -174,9 +181,10 @@ router.post("/wikidata/search/movie", async (req: Request, res: Response) => {
   try {
     const result = await ingestWikidataMovieBySearch(query.trim(), { overwrite });
     res.status(result.action === "created" ? 201 : 200).json({ success: true, data: result });
-  } catch (err: any) {
-    console.error("[ingest] wikidata search movie", query, err.message);
-    res.status(500).json({ success: false, error: err.message });
+  } catch (err: unknown) {
+    const msg = getErrorMessage(err);
+    console.error("[ingest] wikidata search movie", query, msg);
+    res.status(500).json({ success: false, error: msg });
   }
 });
 

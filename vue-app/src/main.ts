@@ -9,6 +9,7 @@ import ToastService from 'primevue/toastservice'
 import { ConfirmationService } from 'primevue'
 import './styles/index.css'
 import { startBackendMonitoring } from './services/apiInterceptors'
+import { logger } from './services/logger'
 
 const BlueberryPreset = definePreset(Aura, {
   semantic: {
@@ -110,5 +111,9 @@ app.use(router)
 app.use(PrimeVue, { theme: { preset: BlueberryPreset } })
 app.use(ToastService)
 app.use(ConfirmationService)
+app.config.errorHandler = (err, _instance, info) => {
+  logger.error('[Vue Global Error]:', err, info)
+}
+
 startBackendMonitoring()
 app.mount('#app')

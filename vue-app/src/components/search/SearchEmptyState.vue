@@ -52,7 +52,7 @@
           class="flex flex-col items-center justify-center gap-2 p-5 rounded-xl bg-surface-1 border border-border active:bg-surface-2 transition-colors"
           @click="router.push('/people')"
         >
-          <UserSquare :size="28" class="text-primary" />
+          <Users :size="28" class="text-primary" />
           <span class="text-sm font-medium">People</span>
         </button>
       </div>
@@ -64,7 +64,7 @@
 import { useRouter } from 'vue-router'
 import { useSearchStore } from '@/stores/searchStore'
 import { usePreferencesStore } from '@/stores/preferencesStore'
-import { X, Film, Tv, UserSquare } from 'lucide-vue-next'
+import { X, Film, Tv, Users } from 'lucide-vue-next'
 
 const router = useRouter()
 const searchStore = useSearchStore()

@@ -2,7 +2,8 @@
 
 import express, { Request, Response, Router } from "express";
 import db from "../db";
-import { CodeParam, Language, Genre } from "shared-types";
+import { CodeParam, Language, Genre, Movie } from "shared-types";
+import { getErrorMessage } from "../utils/errors";
 
 const router: Router = express.Router();
 
@@ -75,7 +76,7 @@ const languageCache = new LanguageCache();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function attachDataToMovies(movies: any[]) {
+function attachDataToMovies(movies: Movie[]) {
   if (movies.length === 0) return [];
   const ids = movies.map((m) => m.id);
   const ph = ids.map(() => "?").join(",");
@@ -140,14 +141,14 @@ router.get("/", (req: Request, res: Response) => {
       success: true,
       data: languages,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error fetching languages:", err);
     res
       .status(500)
       .json({
         success: false,
         error: "Failed to fetch languages",
-        message: err.message,
+        message: getErrorMessage(err),
       });
   }
 });
@@ -169,7 +170,7 @@ router.get("/:code/sections", (req: Request, res: Response) => {
          WHERE ml.language_id = ?
          ORDER BY m.created_at DESC`
       )
-      .all(language.id) as any[];
+      .all(language.id) as Movie[];
 
     const movies = attachDataToMovies(rawMovies);
 
@@ -192,13 +193,9 @@ router.get("/:code/sections", (req: Request, res: Response) => {
       .sort((a, b) => b.movies.length - a.movies.length);
 
     res.json({ success: true, data: { language, sections } });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error fetching language sections:", err);
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch language sections",
-      message: err.message,
-    });
+    res.status(500).json({ success: false, error: "Failed to fetch language content", message: getErrorMessage(err) });
   }
 });
 
@@ -246,19 +243,19 @@ router.get("/:code/movies", (req: Request<CodeParam>, res: Response) => {
          WHERE ${conditions.join(" AND ")}
          ORDER BY ${orderBy}`,
       )
-      .all(...params) as any[];
+      .all(...params) as Movie[];
 
     const result = attachDataToMovies(movies);
 
     res.json({ success: true, data: { language, movies: result } });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error fetching movies by language:", err);
     res
       .status(500)
       .json({
         success: false,
         error: "Failed to fetch movies for language",
-        message: err.message,
+        message: getErrorMessage(err),
       });
   }
 });
@@ -280,14 +277,14 @@ router.get("/:id", (req: Request<IdParam>, res: Response) => {
         .json({ success: false, error: "Language not found" });
 
     res.json({ success: true, data: language });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error fetching language:", err);
     res
       .status(500)
       .json({
         success: false,
         error: "Failed to fetch language",
-        message: err.message,
+        message: getErrorMessage(err),
       });
   }
 });
@@ -341,9 +338,10 @@ router.post("/", (req: Request, res: Response) => {
         message: "Language added successfully",
         data: language,
       });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error adding language:", err);
-    if (err.message.includes("UNIQUE constraint failed"))
+    const msg = getErrorMessage(err);
+    if (msg.includes("UNIQUE constraint failed"))
       return res
         .status(409)
         .json({
@@ -355,7 +353,7 @@ router.post("/", (req: Request, res: Response) => {
       .json({
         success: false,
         error: "Failed to add language",
-        message: err.message,
+        message: msg,
       });
   }
 });
@@ -404,9 +402,10 @@ router.put("/:id", (req: Request<IdParam>, res: Response) => {
       message: "Language updated successfully",
       data: language,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error updating language:", err);
-    if (err.message.includes("UNIQUE constraint failed"))
+    const msg = getErrorMessage(err);
+    if (msg.includes("UNIQUE constraint failed"))
       return res
         .status(409)
         .json({
@@ -418,7 +417,7 @@ router.put("/:id", (req: Request<IdParam>, res: Response) => {
       .json({
         success: false,
         error: "Failed to update language",
-        message: err.message,
+        message: msg,
       });
   }
 });
@@ -457,14 +456,14 @@ router.delete("/:id", (req: Request<IdParam>, res: Response) => {
       message: "Language deleted successfully",
       data: { id: language.id, name: language.name },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error deleting language:", err);
     res
       .status(500)
       .json({
         success: false,
         error: "Failed to delete language",
-        message: err.message,
+        message: getErrorMessage(err),
       });
   }
 });

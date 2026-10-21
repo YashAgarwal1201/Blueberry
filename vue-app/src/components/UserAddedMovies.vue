@@ -49,8 +49,10 @@
               <RouterLink :to="`/movies/${data.uuid}/edit`" class="p-button p-button-text p-button-sm">
                 <Pencil :size="16" />
               </RouterLink>
-              <Button icon="pi pi-trash" class="p-button-text p-button-sm p-button-danger"
-                @click="confirmDelete(data.id)" title="Delete" />
+              <Button class="p-button-text p-button-sm p-button-danger text-red-400 hover:text-red-300"
+                @click="confirmDelete(data.id)" title="Delete">
+                <Trash2 :size="16" />
+              </Button>
             </div>
           </template>
         </Column>
@@ -68,8 +70,8 @@ import { ref, computed, watch } from 'vue'
 import { useMoviesStore } from '@/stores/moviesStore'
 import { RouterLink } from 'vue-router'
 import { FilterMatchMode } from '@primevue/core/api'
-import toastHandler from '@/composables/toastHandeler'
-import { Download, Pencil, Plus } from 'lucide-vue-next'
+import toastHandler from '@/composables/toastHandler'
+import { Download, Pencil, Plus, Trash2 } from 'lucide-vue-next'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'

@@ -51,3 +51,12 @@
   height: 1.5px;
   background: var(--color-rose-border);
 }
+
+/* Scrollbar Utilities */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

@@ -1,7 +1,7 @@
 // src/composables/useBackendMonitor.ts
 import { ref, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import toastHandler from '@/composables/toastHandeler'
+import toastHandler from '@/composables/toastHandler'
 
 const isMonitoring = ref(false)
 let checkInterval: ReturnType<typeof setInterval> | null = null

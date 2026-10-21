@@ -4,7 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import MoviesPage from '../MoviesPage.vue'
 import { useMoviesStore } from '@/stores/moviesStore'
 
-vi.mock('@/composables/toastHandeler', () => ({
+vi.mock('@/composables/toastHandler', () => ({
   default: () => ({
     showToast: vi.fn()
   })

@@ -1,170 +1,3 @@
-// // stores/moviesStore.ts
-// import { ref, computed } from 'vue'
-// import { defineStore } from 'pinia'
-// // import { useMainStore } from './mainStore'
-// import apiClient from '@/services/apiInterceptors'
-// import type { MovieWithDetails, CreateMovieRequest, UpdateMovieRequest } from "shared-types"
-
-// export const useMoviesStore = defineStore('moviesStore', () => {
-//   // const mainStore = useMainStore()
-
-//   const movies = ref<MovieWithDetails[]>([])
-//   const loading = ref(false)
-//   const error = ref<string | null>(null)
-
-//   const movieCount = computed(() => movies.value.length)
-
-//   const moviesByYear = computed(() => {
-//     const grouped = new Map<number, MovieWithDetails[]>()
-//     movies.value.forEach((movie) => {
-//       const year = movie.release_year || 0
-//       if (!grouped.has(year)) {
-//         grouped.set(year, [])
-//       }
-//       grouped.get(year)!.push(movie)
-//     })
-//     return grouped
-//   })
-
-//   const recentMovies = computed(() => {
-//     return [...movies.value].slice(0, 10)
-//   })
-
-//   const findMovieById = (id: number): MovieWithDetails | undefined => {
-//     return movies.value.find((m) => m.id === id)
-//   }
-
-//   const fetchMovies = async (params?: {
-//     search?: string
-//     language?: string
-//     year?: number
-//     sort?: 'title' | 'year' | 'recent'
-//   }) => {
-//     loading.value = true
-//     error.value = null
-//     try {
-//       const queryParams = new URLSearchParams()
-//       if (params?.search) queryParams.append('search', params.search)
-//       if (params?.language) queryParams.append('language', params.language)
-//       if (params?.year) queryParams.append('year', params.year.toString())
-//       if (params?.sort) queryParams.append('sort', params.sort)
-
-//       const url = `/movies${queryParams.toString() ? '?' + queryParams.toString() : ''}`
-//       const response = await apiClient.get(url)
-//       const data = response.data
-
-//       movies.value = data.movies || []
-//       return data.movies
-//     } catch (err: any) {
-//       console.error('Error fetching movies:', err)
-//       error.value = err.message || 'Error fetching movies'
-//       throw err
-//     } finally {
-//       loading.value = false
-//     }
-//   }
-
-//   const fetchMovieById = async (id: number) => {
-//     loading.value = true
-//     error.value = null
-//     try {
-//       const response = await apiClient.get(`/movies/${id}`)
-//       const data = response.data
-//       return data.movie as MovieWithDetails
-//     } catch (err: any) {
-//       console.error('Error fetching movie:', err)
-//       error.value = err.message
-//       throw err
-//     } finally {
-//       loading.value = false
-//     }
-//   }
-
-//   const addMovie = async (movieData: CreateMovieRequest) => {
-//     loading.value = true
-//     error.value = null
-//     try {
-//       const response = await apiClient.post('/movies', movieData)
-//       const data = response.data
-//       const newMovie = data.movie as MovieWithDetails
-//       movies.value.unshift(newMovie)
-//       return newMovie
-//     } catch (err: any) {
-//       console.error('Error adding movie:', err)
-//       error.value = err.message
-//       throw err
-//     } finally {
-//       loading.value = false
-//     }
-//   }
-
-//   const updateMovie = async (id: number, updates: UpdateMovieRequest) => {
-//     loading.value = true
-//     error.value = null
-//     try {
-//       const response = await apiClient.put(`/movies/${id}`, updates)
-//       const data = response.data
-//       const updatedMovie = data.movie as MovieWithDetails
-//       const idx = movies.value.findIndex((m) => m.id === id)
-//       if (idx !== -1) {
-//         movies.value[idx] = updatedMovie
-//       }
-//       return updatedMovie
-//     } catch (err: any) {
-//       console.error('Error updating movie:', err)
-//       error.value = err.message
-//       throw err
-//     } finally {
-//       loading.value = false
-//     }
-//   }
-
-//   const deleteMovie = async (id: number) => {
-//     loading.value = true
-//     error.value = null
-//     try {
-//       await apiClient.delete(`/movies/${id}`)
-//       movies.value = movies.value.filter((m) => m.id !== id)
-//       return true
-//     } catch (err: any) {
-//       console.error('Error deleting movie:', err)
-//       error.value = err.message
-//       throw err
-//     } finally {
-//       loading.value = false
-//     }
-//   }
-
-//   const searchLocal = (query: string) => {
-//     if (!query) return movies.value
-//     const lowerQuery = query.toLowerCase()
-//     return movies.value.filter(
-//       (m) =>
-//         m.title.toLowerCase().includes(lowerQuery) ||
-//         m.description?.toLowerCase().includes(lowerQuery) ||
-//         m.director?.toLowerCase().includes(lowerQuery),
-//     )
-//   }
-
-//   return {
-//     movies,
-//     loading,
-//     error,
-//     movieCount,
-//     moviesByYear,
-//     recentMovies,
-//     fetchMovies,
-//     fetchMovieById,
-//     addMovie,
-//     updateMovie,
-//     deleteMovie,
-//     findMovieById,
-//     searchLocal,
-//   }
-// })
-
-// v2 - mar 9, 2026
-
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import apiClient from '@/services/apiInterceptors'
@@ -177,8 +10,11 @@ export const useMoviesStore = defineStore('moviesStore', () => {
   const hotMovies = ref<MovieWithDetails[]>([])
   
   const loading = ref(false)
+  const loadingMovies = loading
   const loadingTopRated = ref(false)
   const loadingHot = ref(false)
+  const loadingMovieById = ref(false)
+  const loadingMutate = ref(false)
   const error = ref<string | null>(null)
 
   const movieCount = computed(() => movies.value.length)
@@ -256,7 +92,7 @@ export const useMoviesStore = defineStore('moviesStore', () => {
   }
 
   const fetchMovieById = async (uuid: string) => {
-    loading.value = true
+    loadingMovieById.value = true
     error.value = null
     try {
       const response = await apiClient.get(`movies/${uuid}`)
@@ -267,12 +103,22 @@ export const useMoviesStore = defineStore('moviesStore', () => {
       error.value = message
       throw err
     } finally {
-      loading.value = false
+      loadingMovieById.value = false
+    }
+  }
+
+  const fetchSimilarMovies = async (uuid: string) => {
+    try {
+      const response = await apiClient.get(`movies/${uuid}/similar`)
+      return response.data.data as MovieWithDetails[]
+    } catch (err: unknown) {
+      console.error('Error fetching similar movies:', err)
+      throw err
     }
   }
 
   const addMovie = async (movieData: CreateMovieRequest) => {
-    loading.value = true
+    loadingMutate.value = true
     error.value = null
     try {
       const response = await apiClient.post('movies', movieData)
@@ -285,12 +131,12 @@ export const useMoviesStore = defineStore('moviesStore', () => {
       error.value = message
       throw err
     } finally {
-      loading.value = false
+      loadingMutate.value = false
     }
   }
 
   const updateMovie = async (uuid: string, updates: UpdateMovieRequest) => {
-    loading.value = true
+    loadingMutate.value = true
     error.value = null
     try {
       const response = await apiClient.put(`movies/${uuid}`, updates)
@@ -304,12 +150,12 @@ export const useMoviesStore = defineStore('moviesStore', () => {
       error.value = message
       throw err
     } finally {
-      loading.value = false
+      loadingMutate.value = false
     }
   }
 
   const deleteMovie = async (uuid: string) => {
-    loading.value = true
+    loadingMutate.value = true
     error.value = null
     try {
       await apiClient.delete(`movies/${uuid}`)
@@ -321,7 +167,7 @@ export const useMoviesStore = defineStore('moviesStore', () => {
       error.value = message
       throw err
     } finally {
-      loading.value = false
+      loadingMutate.value = false
     }
   }
 
@@ -349,8 +195,11 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     topRatedMovies,
     hotMovies,
     loading,
+    loadingMovies,
     loadingTopRated,
     loadingHot,
+    loadingMovieById,
+    loadingMutate,
     error,
     movieCount,
     moviesByYear,
@@ -359,6 +208,7 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     fetchTopRatedMovies,
     fetchHotMovies,
     fetchMovieById,
+    fetchSimilarMovies,
     addMovie,
     updateMovie,
     deleteMovie,

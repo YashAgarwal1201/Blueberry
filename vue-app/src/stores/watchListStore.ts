@@ -2,12 +2,13 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import apiClient from '@/services/apiInterceptors'
-import type { WatchlistPopulatedItem, WatchlistStatus, AddToWatchlistRequest, WatchlistItemWithMovie, WatchlistItemWithShow } from "shared-types"
+import type { WatchlistPopulatedItem, WatchlistStatus, AddToWatchlistRequest, WatchlistItemWithMovie, WatchlistItemWithShow, ContinueWatchingItem } from "shared-types"
 import { getErrorMessage } from '@/services/errorUtils'
 
 export const useWatchlistStore = defineStore('watchlistStore', () => {
 
   const items = ref<WatchlistPopulatedItem[]>([])
+  const continueWatchingItems = ref<ContinueWatchingItem[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -162,6 +163,64 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
     }
   }
 
+  const fetchContinueWatching = async () => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await apiClient.get('/watchlist/tv/continue-watching')
+      const data = response.data
+      continueWatchingItems.value = data.data || []
+      return data.data
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error fetching continue watching feed')
+      console.error('Error fetching continue watching feed:', err)
+      error.value = message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const fetchWatchedEpisodes = async (showId: number) => {
+    try {
+      const response = await apiClient.get(`/watchlist/tv/${showId}/watched-episodes`)
+      return response.data.data as number[]
+    } catch (err: unknown) {
+      console.error('Error fetching watched episodes:', err)
+      return []
+    }
+  }
+
+  const markEpisodeWatched = async (showId: number, episodeId: number) => {
+    try {
+      await apiClient.post(`/watchlist/tv/${showId}/episodes/${episodeId}/watched`)
+      return true
+    } catch (err: unknown) {
+      console.error('Error marking episode watched:', err)
+      throw err
+    }
+  }
+
+  const unmarkEpisodeWatched = async (showId: number, episodeId: number) => {
+    try {
+      await apiClient.delete(`/watchlist/tv/${showId}/episodes/${episodeId}/watched`)
+      return true
+    } catch (err: unknown) {
+      console.error('Error unmarking episode watched:', err)
+      throw err
+    }
+  }
+
+  const markSeasonWatched = async (showId: number, seasonId: number) => {
+    try {
+      await apiClient.post(`/watchlist/tv/${showId}/seasons/${seasonId}/watched`)
+      return true
+    } catch (err: unknown) {
+      console.error('Error marking season watched:', err)
+      throw err
+    }
+  }
+
   return {
     items,
     loading,
@@ -173,11 +232,17 @@ export const useWatchlistStore = defineStore('watchlistStore', () => {
     watchingMovies,
     watchingShows,
     watchingMedia,
+    continueWatchingItems,
     isMovieInWatchlist,
     isShowInWatchlist,
     getItemByMovieId,
     getItemByShowId,
     fetchWatchlist,
+    fetchContinueWatching,
+    fetchWatchedEpisodes,
+    markEpisodeWatched,
+    unmarkEpisodeWatched,
+    markSeasonWatched,
     addMovieToWatchlist,
     addShowToWatchlist,
     updateStatus,

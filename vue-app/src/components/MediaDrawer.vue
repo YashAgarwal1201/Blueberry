@@ -1,6 +1,6 @@
 <template>
   <Drawer :visible="visible" position="bottom"
-    class="w-full sm:w-3/4! h-auto! max-h-[90vh]! rounded-t-3xl bg-surface-1 text-text overflow-hidden" :pt="{
+    class="w-full md:w-[600px]! md:mx-auto! h-auto! max-h-[90vh]! rounded-t-3xl md:rounded-3xl md:bottom-6! bg-surface-1 text-text overflow-hidden" :pt="{
       header: { class: 'hidden' }, // Hide default header, we'll build our own inside
       content: { class: 'p-0 flex flex-col' }
     }" @update:visible="(val: boolean) => $emit('update:visible', val)">
@@ -39,8 +39,8 @@
           </span>
         </div>
 
-        <div class="text-sm text-text-muted leading-relaxed line-clamp-3" v-if="(media as any).description">
-          {{ (media as any).description }}
+        <div class="text-sm text-text-muted leading-relaxed line-clamp-3" v-if="media.description">
+          {{ media.description }}
         </div>
 
         <!-- Action Buttons -->

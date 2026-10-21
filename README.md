@@ -83,8 +83,7 @@ npm run dev
 
 ## Documentation & Roadmap
 
-For more details on specific packages, please refer to their respective READMEs:
-- [Express Backend README](./express/README.md)
-- [Vue Client README](./vue-app/README.md)
-
-Check out the `ROADMAP.md` in each package to see the development plan and what's coming next!
+- **[Technical Architecture & Specification (`SPEC.md`)](./SPEC.md)**: Authoritative architecture, data schemas, dual-deployment model, multi-engine DB abstraction, and Tulip MCP protocol.
+- **[Express Backend Roadmap](./express/ROADMAP.md)**: Backend milestone tracker.
+- **[Vue Client Roadmap](./vue-app/ROADMAP.md)**: Frontend milestone tracker.
+- Package guides: [Express Backend README](./express/README.md) | [Vue Client README](./vue-app/README.md)

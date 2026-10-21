@@ -8,7 +8,7 @@ describe('MediaCard.vue', () => {
       props: {
         title: 'Inception',
         year: 2010,
-        type: 'Movie'
+        type: 'movie'
       }
     })
     
@@ -21,7 +21,7 @@ describe('MediaCard.vue', () => {
     const wrapper = mount(MediaCard, {
       props: {
         title: 'Unknown Title',
-        type: 'Show'
+        type: 'tv'
       }
     })
     
@@ -32,7 +32,7 @@ describe('MediaCard.vue', () => {
     const wrapper = mount(MediaCard, {
       props: {
         title: 'Avatar',
-        type: 'Movie',
+        type: 'movie',
         posterUrl: 'http://example.com/poster.jpg'
       }
     })
@@ -47,7 +47,7 @@ describe('MediaCard.vue', () => {
     const wrapper = mount(MediaCard, {
       props: {
         title: 'Avatar',
-        type: 'Movie'
+        type: 'movie'
       }
     })
     
@@ -59,7 +59,7 @@ describe('MediaCard.vue', () => {
     const wrapper = mount(MediaCard, {
       props: {
         title: 'Inception',
-        type: 'Movie'
+        type: 'movie'
       }
     })
     
@@ -73,7 +73,7 @@ describe('MediaCard.vue', () => {
     const wrapper = mount(MediaCard, {
       props: {
         title: 'Inception',
-        type: 'Movie',
+        type: 'movie',
         fluid: true
       }
     })
@@ -85,7 +85,7 @@ describe('MediaCard.vue', () => {
     const wrapper = mount(MediaCard, {
       props: {
         title: 'Inception',
-        type: 'Movie'
+        type: 'movie'
       },
       slots: {
         badge: '<div class="test-badge">Badge Content</div>'

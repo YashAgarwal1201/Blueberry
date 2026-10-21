@@ -8,14 +8,14 @@
       :navigation="true"
       class="w-full pb-4"
     >
-      <swiper-slide v-for="item in items" :key="(item as any).uuid || (item as any).id || item" style="width: auto; height: auto;">
-        <slot :item="item"></slot>
+      <swiper-slide v-for="(item, index) in items" :key="getItemKey(item, index)" style="width: auto; height: auto;">
+        <slot :item="item" :index="index"></slot>
       </swiper-slide>
     </swiper>
   </div>
 </template>
 
-<script setup lang="ts" generic="T extends any">
+<script setup lang="ts" generic="T">
 import { Swiper, SwiperSlide } from 'swiper/vue'
 import { FreeMode, Navigation } from 'swiper/modules'
 import 'swiper/css'
@@ -27,6 +27,16 @@ defineProps<{
 }>()
 
 const modules = [FreeMode, Navigation]
+
+function getItemKey(item: T, index: number): string | number {
+  if (typeof item === 'object' && item !== null) {
+    const record = item as Record<string, unknown>
+    if (typeof record.uuid === 'string' || typeof record.uuid === 'number') return record.uuid
+    if (typeof record.id === 'string' || typeof record.id === 'number') return record.id
+  }
+  if (typeof item === 'string' || typeof item === 'number') return item
+  return index
+}
 </script>
 
 <style scoped>

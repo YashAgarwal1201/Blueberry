@@ -73,7 +73,7 @@ export const useGenresStore = defineStore('genresStore', () => {
     moviesLoadingMap.value.set(slug, true)
     try {
       const response = await apiClient.get(`/genres/${slug}/movies?sort=recent`)
-      const movies: MovieWithDetails[] = response.data.data.movies || []
+      const movies: MovieWithDetails[] = response?.data?.data?.movies || response?.data?.movies || []
       moviesByGenre.value.set(slug, movies)
       return movies
     } catch (err: unknown) {

@@ -4,6 +4,9 @@ import db from "../db";
 import { optionalAuth } from "../middleware/authMiddleware";
 import { getBlockConditions } from "../utils/preferences";
 import { resolveImage, tmdbYoutube } from "../utils/imageUtils";
+import { getMovieWatchlistSet } from "../utils/watchlistCache";
+import { clean } from "../utils/stringUtils";
+import { getErrorMessage } from "../utils/errors";
 import type {
   Movie,
   MovieCard,
@@ -24,13 +27,14 @@ import type {
 
 const router: Router = express.Router();
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+const MOVIE_CARD_COLUMNS = `
+  m.id, m.uuid, m.title, m.tagline, m.description, m.status,
+  m.release_year, m.runtime, m.age_rating, m.tmdb_id,
+  m.poster_url, m.backdrop_url, m.local_poster_url, m.local_backdrop_url,
+  m.tmdb_poster_path, m.tmdb_backdrop_path, m.rating_imdb
+`.replace(/\s+/g, " ").trim();
 
-function clean(str?: string | null): string | null {
-  if (str === undefined || str === null) return null;
-  const t = str.trim();
-  return t === "" ? null : t;
-}
+
 
 function parsePage(query: PaginationQuery): {
   page: number;
@@ -63,10 +67,7 @@ function makePagination(
 
 /** Build a Set of movie_ids currently in the watchlist — used to set in_watchlist */
 function getWatchlistSet(): Set<number> {
-  const rows = db.prepare(`SELECT movie_id FROM watchlist`).all() as {
-    movie_id: number;
-  }[];
-  return new Set(rows.map((r) => r.movie_id));
+  return getMovieWatchlistSet();
 }
 
 /**
@@ -139,6 +140,8 @@ function toMovieCards(movies: Movie[], watchlistSet: Set<number>): MovieCard[] {
     in_watchlist: watchlistSet.has(m.id),
     languages: langMap.get(m.id) ?? [],
     genres: genreMap.get(m.id) ?? [],
+    description: m.description,
+    tagline: m.tagline,
   }));
 }
 
@@ -207,11 +210,11 @@ function getMovieWithDetails(identifier: string | number): MovieWithDetails | un
     in_watchlist: inWatchlist,
     languages,
     genres,
-    cast: cast.map((c: any) => ({
+    cast: cast.map((c) => ({
       ...c,
       profile_url: resolveImage(c.tmdb_profile_path, c.local_profile_url, 'w185') || c.profile_url
     })),
-    companies: companies.map((c: any) => ({
+    companies: companies.map((c) => ({
       ...c,
       logo_url: resolveImage(c.tmdb_logo_path, null, 'w185') || c.logo_url
     })),
@@ -261,20 +264,21 @@ function upsertCompany(req: CompanyRequest): number {
 // ── GET /movies/recent ────────────────────────────────────────────────────────
 router.get("/recent", optionalAuth, (req: Request, res: Response) => {
   try {
-    const user = (req as any).user;
+    const user = req.user;
     const { clause, params } = getBlockConditions(user?.id);
     const movies = db
-      .prepare(`SELECT m.* FROM movies m ${clause} ORDER BY release_year DESC LIMIT 20`)
+      .prepare(`SELECT ${MOVIE_CARD_COLUMNS} FROM movies m ${clause} ORDER BY release_year DESC LIMIT 20`)
       .all(...params) as Movie[];
     const cards = toMovieCards(movies, getWatchlistSet());
+    res.set("Cache-Control", user ? "private, max-age=60" : "public, max-age=300");
     res.json({ success: true, data: cards });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res
       .status(500)
       .json({
         success: false,
         error: "Failed to fetch recent movies",
-        message: err.message,
+        message: getErrorMessage(err),
       });
   }
 });
@@ -282,22 +286,23 @@ router.get("/recent", optionalAuth, (req: Request, res: Response) => {
 // ── GET /movies/top-rated ─────────────────────────────────────────────────────
 router.get("/top-rated", optionalAuth, (req: Request, res: Response) => {
   try {
-    const user = (req as any).user;
+    const user = req.user;
     const { andClause, params } = getBlockConditions(user?.id);
     const movies = db
       .prepare(
-        `SELECT m.* FROM movies m WHERE m.rating_imdb IS NOT NULL ${andClause} ORDER BY rating_imdb DESC LIMIT 20`,
+        `SELECT ${MOVIE_CARD_COLUMNS} FROM movies m WHERE m.rating_imdb IS NOT NULL ${andClause} ORDER BY rating_imdb DESC LIMIT 20`,
       )
       .all(...params) as Movie[];
     const cards = toMovieCards(movies, getWatchlistSet());
+    res.set("Cache-Control", user ? "private, max-age=60" : "public, max-age=300");
     res.json({ success: true, data: cards });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res
       .status(500)
       .json({
         success: false,
         error: "Failed to fetch top-rated movies",
-        message: err.message,
+        message: getErrorMessage(err),
       });
   }
 });
@@ -306,11 +311,11 @@ router.get("/top-rated", optionalAuth, (req: Request, res: Response) => {
 // "Hot" = movies most recently added/updated in the watchlist
 router.get("/hot", optionalAuth, (req: Request, res: Response) => {
   try {
-    const user = (req as any).user;
+    const user = req.user;
     const { clause, params } = getBlockConditions(user?.id);
     const movies = db
       .prepare(
-        `SELECT m.* FROM movies m
+        `SELECT ${MOVIE_CARD_COLUMNS} FROM movies m
          JOIN watchlist w ON m.id = w.movie_id
          ${clause}
          ORDER BY w.updated_at DESC
@@ -318,14 +323,15 @@ router.get("/hot", optionalAuth, (req: Request, res: Response) => {
       )
       .all(...params) as Movie[];
     const cards = toMovieCards(movies, getWatchlistSet());
+    res.set("Cache-Control", user ? "private, max-age=60" : "public, max-age=300");
     res.json({ success: true, data: cards });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res
       .status(500)
       .json({
         success: false,
         error: "Failed to fetch hot movies",
-        message: err.message,
+        message: getErrorMessage(err),
       });
   }
 });
@@ -333,7 +339,7 @@ router.get("/hot", optionalAuth, (req: Request, res: Response) => {
 // ── GET /movies/search ────────────────────────────────────────────────────────
 router.get("/search", optionalAuth, (req: Request, res: Response) => {
   try {
-    const user = (req as any).user;
+    const user = req.user;
     const { andClause, params } = getBlockConditions(user?.id);
     const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
     if (!q)
@@ -355,7 +361,7 @@ router.get("/search", optionalAuth, (req: Request, res: Response) => {
 
     const movies = db
       .prepare(
-        `SELECT m.* FROM movies m
+        `SELECT ${MOVIE_CARD_COLUMNS} FROM movies m
          WHERE (m.title LIKE ? OR m.description LIKE ? OR m.director LIKE ? OR m.tagline LIKE ?) ${andClause}
          ORDER BY
            CASE WHEN m.title LIKE ? THEN 0 ELSE 1 END,
@@ -379,17 +385,17 @@ router.get("/search", optionalAuth, (req: Request, res: Response) => {
       data: cards,
       pagination: makePagination(page, limit, total),
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res
       .status(500)
-      .json({ success: false, error: "Search failed", message: err.message });
+      .json({ success: false, error: "Search failed", message: getErrorMessage(err) });
   }
 });
 
 // ── GET /movies ───────────────────────────────────────────────────────────────
 router.get("/", optionalAuth, (req: Request<{}, {}, {}, MovieListQuery>, res: Response) => {
   try {
-    const user = (req as any).user;
+    const user = req.user;
     const blockConditions = getBlockConditions(user?.id);
     const { sort = "recent", language, genre, year, status } = req.query;
     const { page, limit, offset } = parsePage(req.query);
@@ -453,7 +459,7 @@ router.get("/", optionalAuth, (req: Request<{}, {}, {}, MovieListQuery>, res: Re
 
     const movies = db
       .prepare(
-        `SELECT m.* FROM movies m ${where} ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+        `SELECT ${MOVIE_CARD_COLUMNS} FROM movies m ${where} ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
       )
       .all(...params, limit, offset) as Movie[];
 
@@ -463,13 +469,13 @@ router.get("/", optionalAuth, (req: Request<{}, {}, {}, MovieListQuery>, res: Re
       data: cards,
       pagination: makePagination(page, limit, total),
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res
       .status(500)
       .json({
         success: false,
         error: "Failed to fetch movies",
-        message: err.message,
+        message: getErrorMessage(err),
       });
   }
 });
@@ -488,14 +494,43 @@ router.get("/:uuid", (req: Request<UuidParam>, res: Response) => {
       return res.status(404).json({ success: false, error: "Movie not found" });
 
     res.json({ success: true, data: movie });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res
       .status(500)
       .json({
         success: false,
         error: "Failed to fetch movie",
-        message: err.message,
+        message: getErrorMessage(err),
       });
+  }
+});
+
+// ── GET /movies/:uuid/similar ───────────────────────────────────────────────────
+router.get("/:uuid/similar", optionalAuth, (req: Request, res: Response) => {
+  try {
+    const uuid = req.params.uuid;
+    const user = req.user;
+    const { andClause, params } = getBlockConditions(user?.id);
+    
+    const movie = db.prepare(`SELECT id FROM movies WHERE uuid = ?`).get(uuid) as { id: number } | undefined;
+    if (!movie) return res.status(404).json({ success: false, error: "Movie not found" });
+
+    const similar = db.prepare(`
+      SELECT ${MOVIE_CARD_COLUMNS}, COUNT(mg.genre_id) as shared_genres
+      FROM movies m
+      JOIN movie_genres mg ON m.id = mg.movie_id
+      WHERE mg.genre_id IN (SELECT genre_id FROM movie_genres WHERE movie_id = ?)
+        AND m.id != ?
+        ${andClause}
+      GROUP BY m.id
+      ORDER BY shared_genres DESC, m.release_year DESC
+      LIMIT 15
+    `).all(movie.id, movie.id, ...params) as Movie[];
+    
+    const cards = toMovieCards(similar, getWatchlistSet());
+    res.json({ success: true, data: cards });
+  } catch(err: unknown) {
+    res.status(500).json({ success: false, error: "Failed to fetch similar movies", message: getErrorMessage(err) });
   }
 });
 
@@ -594,13 +629,13 @@ router.post("/", (req: Request, res: Response) => {
         message: "Movie created successfully",
         data: result,
       });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res
       .status(500)
       .json({
         success: false,
         error: "Failed to create movie",
-        message: err.message,
+        message: getErrorMessage(err),
       });
   }
 });
@@ -615,7 +650,7 @@ router.put("/:uuid", (req: Request<UuidParam>, res: Response) => {
         .json({ success: false, error: "Invalid movie UUID" });
 
     const existing = db.prepare(`SELECT * FROM movies WHERE uuid = ?`).get(uuid) as
-      | Movie
+      | (Movie & { spoken_languages?: string; production_countries?: string; keywords?: string })
       | undefined;
     if (!existing)
       return res.status(404).json({ success: false, error: "Movie not found" });
@@ -648,8 +683,8 @@ router.put("/:uuid", (req: Request<UuidParam>, res: Response) => {
         clean(body.imdb_id ?? existing.imdb_id),
         body.tmdb_id ?? existing.tmdb_id ?? null,
         clean(body.letterboxd_id ?? existing.letterboxd_id),
-        clean(body.wikidata_id ?? (existing as any).wikidata_id),
-        clean(body.rottentomatoes_id ?? (existing as any).rottentomatoes_id),
+        clean(body.wikidata_id ?? existing.wikidata_id),
+        clean(body.rottentomatoes_id ?? existing.rottentomatoes_id),
         clean(body.poster_url ?? existing.poster_url),
         clean(body.backdrop_url ?? existing.backdrop_url),
         clean(body.trailer_url ?? existing.trailer_url),
@@ -658,10 +693,10 @@ router.put("/:uuid", (req: Request<UuidParam>, res: Response) => {
         body.rating_imdb ?? existing.rating_imdb ?? null,
         body.rating_rt ?? existing.rating_rt ?? null,
         body.rating_metacritic ?? existing.rating_metacritic ?? null,
-        body.spoken_languages ? JSON.stringify(body.spoken_languages) : (existing as any).spoken_languages ?? null,
-        body.production_countries ? JSON.stringify(body.production_countries) : (existing as any).production_countries ?? null,
-        body.keywords ? JSON.stringify(body.keywords) : (existing as any).keywords ?? null,
-        clean(body.content_advisory ?? (existing as any).content_advisory),
+        body.spoken_languages ? JSON.stringify(body.spoken_languages) : existing.spoken_languages ?? null,
+        body.production_countries ? JSON.stringify(body.production_countries) : existing.production_countries ?? null,
+        body.keywords ? JSON.stringify(body.keywords) : existing.keywords ?? null,
+        clean(body.content_advisory ?? existing.content_advisory),
         id,
       );
 
@@ -718,13 +753,13 @@ router.put("/:uuid", (req: Request<UuidParam>, res: Response) => {
       message: "Movie updated successfully",
       data: result,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res
       .status(500)
       .json({
         success: false,
         error: "Failed to update movie",
-        message: err.message,
+        message: getErrorMessage(err),
       });
   }
 });
@@ -750,13 +785,13 @@ router.delete("/:uuid", (req: Request<UuidParam>, res: Response) => {
       message: "Movie deleted successfully",
       data: { deletedId: movie.id, title: movie.title },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     res
       .status(500)
       .json({
         success: false,
         error: "Failed to delete movie",
-        message: err.message,
+        message: getErrorMessage(err),
       });
   }
 });

@@ -5,6 +5,7 @@ Development is organized by feature categories.
 ---
 
 ## Foundation & Architecture
+
 - [x] Scaffold Vue 3 + TS + Vite project
 - [x] Install core libraries (Tailwind, PrimeVue, Pinia, Vue Router, Better-Auth, Axios, Dexie)
 - [x] Set up folder structure (`src/components`, `src/views`, `src/stores`, `src/services`, etc.)
@@ -16,10 +17,19 @@ Development is organized by feature categories.
 - [x] Progressive Web App (PWA) support (offline support and installability)
 - [ ] SEO Optimization (Server-Side Rendering / Static Site Generation)
 - [x] Comprehensive Unit Testing suites (Vitest for frontend, Jest for backend)
-- [ ] End-to-End (E2E) Testing (Playwright/Cypress)
-- [ ] Performance Optimization (Lazy loading components, CDN image delivery)
+- [ ] Performance Optimization
+  - [x] Route-level and component lazy loading (dynamic chunking, isolated drawer loading)
+  - [x] Database query optimization (indexes, column projection, watchlist TTL cache)
+  - [x] Native image lazy loading, async decoding & skeleton shimmer (`AppImage`)
+  - [x] HTTP Cache-Control headers on static list endpoints
+  - [ ] Responsive image sizing presets & edge optimization proxy (WebP/AVIF)
+  - [ ] Large list DOM virtualization (Search, Watchlists, Collections)
+  - [ ] Client-side API response deduplication / SWR caching
+- [ ] Multi-Engine Database Abstraction (Support for SQLite, LibSQL/Turso, PostgreSQL via Neon/Supabase)
+- [ ] Model Context Protocol (MCP) Server Integration (Standard tool server for AI orchestrators, Tulip, Claude Desktop, and agent clients)
 
 ## Authentication & User Accounts
+
 - [x] User Registration and Login via Better-Auth
 - [x] Password Recovery and Reset flows
 - [x] User Profile management and Settings
@@ -29,6 +39,7 @@ Development is organized by feature categories.
 - [ ] Role-Based Access Control (Admin dashboards for moderating custom content/users)
 
 ## Media Discovery & Browsing
+
 - [x] Browsing libraries for Movies, TV Shows, and People
 - [x] Filtering content by Genres and Languages
 - [x] Detailed pages for Movies and TV Shows (synopsis, cast, metadata)
@@ -39,6 +50,7 @@ Development is organized by feature categories.
 - [ ] Embedded video players for trailers and teasers
 
 ## User Interactions & Custom Content
+
 - [x] Watchlists (Add/remove media to personal watchlist)
 - [x] Custom Movies & People (Forms to add user-generated content)
 - [x] Cast Editor (Dedicated UI to manage cast and crew for custom movies)
@@ -47,10 +59,11 @@ Development is organized by feature categories.
 - [ ] Comments & Discussions (Community features for specific media or episodes)
 
 ## UI, UX & Design
+
 - [x] Clean, modern aesthetic using Tailwind CSS
 - [x] Rich component library integration (PrimeVue)
 - [x] Responsive layouts with interactive components (Media Drawers, Hero Carousels)
-- [ ] Theme Toggle (Full Dark Mode / Light Mode support with user preference saving)
+- [x] Theme Toggle (Full Dark Mode / Light Mode support with user preference saving)
 - [ ] Internationalization (i18n) support
 - [ ] Infinite Scrolling (Seamlessly load more content on list pages)
 - [x] Micro-animations (Enhanced transition effects for page navigations and interactions)

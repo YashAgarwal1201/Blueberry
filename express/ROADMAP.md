@@ -11,10 +11,10 @@ Development is organized by feature categories.
 - [x] Implement routing architecture (`src/routes/`)
 - [x] Integrate shared types workspace (`../shared`)
 - [x] Add rate-limiting capabilities for API security
-- [ ] Centralized Error Handling middleware
+- [x] Centralized Error Handling middleware
 - [ ] API Input Validation (e.g., using Zod for robust request payload checking)
-- [ ] Testing setup (Jest/Mocha for unit testing routes and logic)
-- [ ] API Documentation
+- [x] Testing setup (Jest configured with 10 test suites and 53 passing tests)
+- [x] API Documentation & Technical Specification (`SPEC.md`)
 
 ## Authentication & Security
 - [x] Set up Better-Auth integration (`src/auth.ts`)
@@ -28,8 +28,8 @@ Development is organized by feature categories.
 ## Media & Data APIs
 - [x] Route setup for Movies, TV Shows, and People
 - [x] Filtering and pagination for media endpoints
-- [x] External API Integration (if proxying external metadata services like TMDB)
-- [ ] Caching layer for external API responses (Redis or in-memory cache)
+- [x] External API Integration (TMDB metadata and image ingestion)
+- [x] In-memory TTL caching for hot watchlist queries & list Cache-Control headers
 - [ ] Advanced Search API endpoints (handling complex queries)
 - [ ] Personalized Recommendations Engine (Algorithm to suggest media based on user's watchlist)
 
@@ -38,10 +38,16 @@ Development is organized by feature categories.
 - [x] Custom Movies API (Endpoints to add and manage user-generated movies)
 - [x] Custom Cast/People API (Endpoints to manage custom cast profiles)
 - [ ] Ratings & Reviews API (Store user reviews and calculate average ratings)
-- [ ] Custom Collections API (Create and follow curated lists of media)
+- [x] Custom Collections API (Create, manage, and follow curated lists of media)
 
-## Deployment & Optimization
-- [ ] Dockerize the Express application
-- [ ] Migrate SQLite to a scalable database (e.g., PostgreSQL via Prisma or Drizzle) for production
+## AI Brain & Model Context Protocol (MCP)
+- [ ] Model Context Protocol (MCP) Server (Generic tool endpoints over HTTP/SSE for AI orchestrators, Tulip, Claude Desktop, and agent clients)
+- [ ] Header-based API Authentication (`X-User-Id` / `Authorization: Bearer <token>` / `X-API-Key`)
+
+## Architectural Evolution: Express → Hono → Drizzle
+- [ ] Phase 1: Migrate Backend Framework from Express to Hono (preserve SQLite & existing business logic)
+- [ ] Phase 2: Ruthless Testing & Parity Verification (All 10 Jest test suites / 53 tests passing against Hono with SQLite)
+- [ ] Phase 3: Multi-Engine Database Abstraction via Drizzle ORM (Validate on SQLite first, then enable Cloudflare D1, Turso, Neon/Supabase)
+- [ ] Phase 4: Production Cloudflare Edge Deployment ($0/month on Pages & Workers)
+- [ ] Docker Compose configuration for portable local/homelab self-hosting
 - [ ] CI/CD pipeline setup (GitHub Actions for linting, testing, deploying)
-- [ ] Performance monitoring and logging (e.g., Sentry, Winston with log rotation)

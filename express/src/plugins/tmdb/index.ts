@@ -9,6 +9,7 @@ import { tmdbClient } from "./client";
 import { mapTMDBMovie, mapTMDBTV } from "./mapper";
 import { ingestMovie, ingestTVShow } from "../ingester";
 import type { IngestResult } from "shared-types";
+import { getErrorMessage } from "../../utils/errors";
 
 export { tmdbClient };
 
@@ -79,8 +80,8 @@ export async function ingestPopularMovies(
         const r = await ingestMovieByTMDBId(m.id, options);
         results.push(r);
         console.log(`  [tmdb] ${r.action.padEnd(7)} movie: ${r.title}`);
-      } catch (err: any) {
-        console.error(`  [tmdb] FAILED movie ${m.id} (${m.title}): ${err.message}`);
+      } catch (err: unknown) {
+        console.error(`  [tmdb] FAILED movie ${m.id} (${m.title}): ${getErrorMessage(err)}`);
       }
     }
   }
@@ -102,8 +103,8 @@ export async function ingestPopularTV(
         const r = await ingestTVByTMDBId(s.id, options);
         results.push(r);
         console.log(`  [tmdb] ${r.action.padEnd(7)} show:  ${r.title}`);
-      } catch (err: any) {
-        console.error(`  [tmdb] FAILED show ${s.id} (${s.name}): ${err.message}`);
+      } catch (err: unknown) {
+        console.error(`  [tmdb] FAILED show ${s.id} (${s.name}): ${getErrorMessage(err)}`);
       }
     }
   }

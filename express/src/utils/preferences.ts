@@ -3,7 +3,7 @@ import db from "../db";
 export function getBlockConditions(userId?: string): { clause: string, andClause: string, params: string[] } {
   if (!userId) return { clause: "", andClause: "", params: [] };
   
-  const row = db.prepare(`SELECT preferences FROM "user" WHERE id = ?`).get(userId) as any;
+  const row = db.prepare(`SELECT preferences FROM "user" WHERE id = ?`).get(userId) as { preferences?: string | null } | undefined;
   if (!row || !row.preferences) return { clause: "", andClause: "", params: [] };
   
   try {
@@ -58,7 +58,7 @@ export function getBlockConditions(userId?: string): { clause: string, andClause
 export function getTvBlockConditions(userId?: string): { clause: string, andClause: string, params: string[] } {
   if (!userId) return { clause: "", andClause: "", params: [] };
   
-  const row = db.prepare(`SELECT preferences FROM "user" WHERE id = ?`).get(userId) as any;
+  const row = db.prepare(`SELECT preferences FROM "user" WHERE id = ?`).get(userId) as { preferences?: string | null } | undefined;
   if (!row || !row.preferences) return { clause: "", andClause: "", params: [] };
   
   try {
