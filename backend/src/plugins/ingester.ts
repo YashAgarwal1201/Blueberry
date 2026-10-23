@@ -405,6 +405,8 @@ export function ingestTVShow(payload: PluginTVPayload, options?: { overwrite?: b
           wikidata_id: payload.wikidata_id ?? undefined,
           tmdb_poster_path: payload.tmdb_poster_path ?? undefined,
           tmdb_backdrop_path: payload.tmdb_backdrop_path ?? undefined,
+          trailer_url: payload.trailer_url ?? undefined,
+          tmdb_trailer_key: payload.tmdb_trailer_key ?? undefined,
           keywords: payload.keywords ? JSON.stringify(payload.keywords) : undefined,
           image_source: "tmdb",
           updated_at: sql`datetime('now')`,
@@ -443,6 +445,8 @@ export function ingestTVShow(payload: PluginTVPayload, options?: { overwrite?: b
           wikidata_id: payload.wikidata_id ?? null,
           tmdb_poster_path: payload.tmdb_poster_path ?? null,
           tmdb_backdrop_path: payload.tmdb_backdrop_path ?? null,
+          trailer_url: payload.trailer_url ?? null,
+          tmdb_trailer_key: payload.tmdb_trailer_key ?? null,
           keywords: payload.keywords ? JSON.stringify(payload.keywords) : null,
           image_source: "tmdb",
         })

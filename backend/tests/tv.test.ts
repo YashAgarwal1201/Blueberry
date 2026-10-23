@@ -33,6 +33,33 @@ describe('TV API', () => {
     expect(res.body.data.length).toBeGreaterThan(0);
   });
 
+  it('should return trending tv shows via BMCE ranking', async () => {
+    const res = await request(app).get('/tv/trending');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('success', true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThan(0);
+    expect(res.body.data[0]).toHaveProperty('title', 'Test Show');
+  });
+
+  it('should return popular tv shows via BMCE ranking', async () => {
+    const res = await request(app).get('/tv/popular');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('success', true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThan(0);
+    expect(res.body.data[0]).toHaveProperty('title', 'Test Show');
+  });
+
+  it('should return legacy hot tv shows alias pointing to trending', async () => {
+    const res = await request(app).get('/tv/hot');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('success', true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThan(0);
+    expect(res.body.data[0]).toHaveProperty('title', 'Test Show');
+  });
+
   it('should return a specific tv show by uuid', async () => {
     const res = await request(app).get('/tv/test-tv-uuid-1234');
     

@@ -8,11 +8,15 @@ export const useTvStore = defineStore('tvStore', () => {
   const recentShows = ref<TVShowCard[]>([])
   const topRatedShows = ref<TVShowCard[]>([])
   const hotShows = ref<TVShowCard[]>([])
+  const trendingShows = ref<TVShowCard[]>([])
+  const popularShows = ref<TVShowCard[]>([])
   const completedShows = ref<TVShowCard[]>([])
   const loading = ref(false)
   const loadingRecent = ref(false)
   const loadingTopRated = ref(false)
   const loadingHot = ref(false)
+  const loadingTrending = ref(false)
+  const loadingPopular = ref(false)
   const loadingCompleted = ref(false)
   const loadingShowById = ref(false)
   const loadingEpisodes = ref(false)
@@ -23,6 +27,8 @@ export const useTvStore = defineStore('tvStore', () => {
       loadingRecent.value ||
       loadingTopRated.value ||
       loadingHot.value ||
+      loadingTrending.value ||
+      loadingPopular.value ||
       loadingCompleted.value ||
       loadingShowById.value ||
       loadingEpisodes.value
@@ -78,6 +84,44 @@ export const useTvStore = defineStore('tvStore', () => {
       throw err
     } finally {
       loadingHot.value = false
+      syncLoading()
+    }
+  }
+
+  const fetchTrendingShows = async (limit = 20) => {
+    loadingTrending.value = true
+    syncLoading()
+    error.value = null
+    try {
+      const response = await apiClient.get(`tv/trending?limit=${limit}`)
+      trendingShows.value = response.data.data as TVShowCard[]
+      return trendingShows.value
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error fetching trending tv shows')
+      console.error('Error fetching trending tv shows:', err)
+      error.value = message
+      throw err
+    } finally {
+      loadingTrending.value = false
+      syncLoading()
+    }
+  }
+
+  const fetchPopularShows = async (limit = 20) => {
+    loadingPopular.value = true
+    syncLoading()
+    error.value = null
+    try {
+      const response = await apiClient.get(`tv/popular?limit=${limit}`)
+      popularShows.value = response.data.data as TVShowCard[]
+      return popularShows.value
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error fetching popular tv shows')
+      console.error('Error fetching popular tv shows:', err)
+      error.value = message
+      throw err
+    } finally {
+      loadingPopular.value = false
       syncLoading()
     }
   }
@@ -147,17 +191,24 @@ export const useTvStore = defineStore('tvStore', () => {
   const removeShowLocally = (uuid: string) => {
     recentShows.value = recentShows.value.filter(s => s.uuid !== uuid)
     topRatedShows.value = topRatedShows.value.filter(s => s.uuid !== uuid)
+    hotShows.value = hotShows.value.filter(s => s.uuid !== uuid)
+    trendingShows.value = trendingShows.value.filter(s => s.uuid !== uuid)
+    popularShows.value = popularShows.value.filter(s => s.uuid !== uuid)
   }
 
   return {
     recentShows,
     topRatedShows,
     hotShows,
+    trendingShows,
+    popularShows,
     completedShows,
     loading,
     loadingRecent,
     loadingTopRated,
     loadingHot,
+    loadingTrending,
+    loadingPopular,
     loadingCompleted,
     loadingShowById,
     loadingEpisodes,
@@ -165,6 +216,8 @@ export const useTvStore = defineStore('tvStore', () => {
     fetchRecentShows,
     fetchTopRatedShows,
     fetchHotShows,
+    fetchTrendingShows,
+    fetchPopularShows,
     fetchCompletedShows,
     fetchShowById,
     fetchSimilarShows,

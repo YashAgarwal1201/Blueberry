@@ -120,4 +120,31 @@ describe('ShowDetailsPage.vue', () => {
     expect(wrapper.text()).toContain('2008')
     expect(wrapper.text()).toContain('AMC')
   })
+
+  it('renders Watch Trailer button when trailer key is present', async () => {
+    const tvStore = useTvStore()
+    tvStore.fetchShowById = vi.fn().mockResolvedValue({
+      id: 2,
+      uuid: '456-def',
+      title: 'Breaking Bad',
+      description: 'Meth drama',
+      status: 'ended',
+      tmdb_trailer_key: 'HhesaQXLuRY',
+      cast: [],
+      seasons: [],
+      genres: []
+    })
+
+    const wrapper = mount(ShowDetailsPage, {
+      global: {
+        stubs: {
+          ArrowLeft: true,
+          TrailerModal: true,
+        }
+      }
+    })
+
+    await flushPromises()
+    expect(wrapper.text()).toContain('Watch Trailer')
+  })
 })

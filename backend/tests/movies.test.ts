@@ -28,6 +28,33 @@ describe('Movies API', () => {
     expect(res.body.data[0]).toHaveProperty('title', 'Test Movie');
   });
 
+  it('should return trending movies via BMCE ranking', async () => {
+    const res = await request(app).get('/movies/trending');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('success', true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThan(0);
+    expect(res.body.data[0]).toHaveProperty('title', 'Test Movie');
+  });
+
+  it('should return popular movies via BMCE ranking', async () => {
+    const res = await request(app).get('/movies/popular');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('success', true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThan(0);
+    expect(res.body.data[0]).toHaveProperty('title', 'Test Movie');
+  });
+
+  it('should return legacy hot movies alias pointing to trending', async () => {
+    const res = await request(app).get('/movies/hot');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('success', true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThan(0);
+    expect(res.body.data[0]).toHaveProperty('title', 'Test Movie');
+  });
+
   it('should return 404 for a non-existent movie id', async () => {
     const res = await request(app).get('/movies/99999');
     

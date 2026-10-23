@@ -1,11 +1,15 @@
 <template>
-  <div class="w-full h-full flex flex-col gap-y-8 md:gap-y-10 overflow-y-auto hide-scrollbar pb-10">
+  <div class="w-full h-full flex flex-col overflow-y-auto hide-scrollbar pb-16">
     <!-- Hero Carousel -->
-    <div v-if="moviesStore.loadingHot" class="w-full h-64 sm:h-96 bg-surface-2 animate-pulse rounded-xl"></div>
-    <HeroCarousel v-else-if="moviesStore.hotMovies && moviesStore.hotMovies.length > 0"
-      :items="moviesStore.hotMovies.slice(0, 5)" :auto-play-interval="4000" @clickItem="openDrawer" />
+    <div v-if="moviesStore.loadingTrending && !heroMovies.length"
+      class="-mx-2 -mt-2 sm:-mx-3 sm:-mt-3 w-[calc(100%+1rem)] sm:w-[calc(100%+1.5rem)] h-[62vh] sm:h-[72vh] md:h-[80vh] min-h-[440px] max-h-[820px] bg-surface-2 animate-pulse"></div>
+    <HeroCarousel v-else-if="heroMovies.length > 0"
+      :items="heroMovies.slice(0, 5)" :auto-play-interval="5000" @clickItem="openDrawer" @watchlist="handleWatchlistAction" />
 
-    <!-- Continue Watching -->
+    <!-- Shelves Container (Bleeding onto hero bottom) -->
+    <div class="relative z-20 flex flex-col gap-y-8 md:gap-y-10"
+      :class="(heroMovies.length > 0 || (moviesStore.loadingTrending && !heroMovies.length)) ? '-mt-12 sm:-mt-20 md:-mt-24' : 'pt-4'">
+      <!-- Continue Watching -->
     <div v-if="watchlistStore.watchingMovies.length > 0" class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Continue Watching</h2>
@@ -19,15 +23,44 @@
     </div>
 
     <!-- Trending Movies -->
-    <div v-if="moviesStore.loadingHot || moviesStore.hotMovies?.length" class="flex flex-col gap-y-4">
+    <div v-if="moviesStore.loadingTrending || moviesStore.loadingHot || moviesStore.trendingMovies?.length || moviesStore.hotMovies?.length" class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Trending Movies</h2>
       </div>
-      <div v-if="moviesStore.loadingHot" class="px-2 text-text-muted">Loading trending movies...</div>
-      <MediaCarousel v-else :items="moviesStore.hotMovies || []">
+      <div v-if="moviesStore.loadingTrending || moviesStore.loadingHot" class="px-2 text-text-muted">Loading trending movies...</div>
+      <MediaCarousel v-else :items="moviesStore.trendingMovies?.length ? moviesStore.trendingMovies : moviesStore.hotMovies || []">
         <template #default="{ item: movie }">
           <MediaCard :title="movie.title" :poster-url="movie.poster_url"
             :year="movie.release_year" :type="movie.type" @click="openDrawer(movie)" />
+        </template>
+      </MediaCarousel>
+    </div>
+
+    <!-- Top 10 Movies Today -->
+    <div v-if="moviesStore.loadingTrending || top10Movies?.length"
+      class="flex flex-col gap-y-4">
+      <div class="flex items-center justify-between gap-3 px-2">
+        <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Top 10 Today</h2>
+      </div>
+      <div v-if="moviesStore.loadingTrending" class="px-2 text-text-muted">Loading top 10 movies...</div>
+      <MediaCarousel v-else :items="top10Movies">
+        <template #default="{ item: movie, index }">
+          <Top10Card :item="movie" :rank="index + 1" @click="openDrawer(movie)" />
+        </template>
+      </MediaCarousel>
+    </div>
+
+    <!-- Most Popular Movies -->
+    <div v-if="moviesStore.loadingPopular || moviesStore.popularMovies?.length"
+      class="flex flex-col gap-y-4">
+      <div class="flex items-center justify-between gap-3 px-2">
+        <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Most Popular Movies</h2>
+      </div>
+      <div v-if="moviesStore.loadingPopular" class="px-2 text-text-muted">Loading popular movies...</div>
+      <MediaCarousel v-else :items="moviesStore.popularMovies || []">
+        <template #default="{ item: movie }">
+          <MediaCard :title="movie.title" :poster-url="movie.poster_url" :year="movie.release_year" :type="movie.type"
+            @click="openDrawer(movie)" />
         </template>
       </MediaCarousel>
     </div>
@@ -117,6 +150,7 @@
         </template>
       </MediaCarousel>
     </div>
+    </div>
 
     <!-- Slide-up Details Drawer -->
     <MediaDrawer v-model:visible="isDrawerOpen" :media="selectedMedia" @watchlistAction="handleWatchlistAction" @removeWatchlistAction="handleRemoveWatchlistAction" />
@@ -135,6 +169,7 @@ import { useWatchlistActions } from '@/composables/useWatchlistActions'
 import HeroCarousel from '@/components/HeroCarousel.vue'
 import MediaCarousel from '@/components/MediaCarousel.vue'
 import MediaCard from '@/components/MediaCard.vue'
+import Top10Card from '@/components/Top10Card.vue'
 import MediaDrawer from '@/components/MediaDrawer.vue'
 import type { MediaCard as MediaCardType } from 'shared-types'
 
@@ -144,6 +179,8 @@ const watchlistStore = useWatchlistStore()
 const authStore = useAuthStore()
 const { handleWatchlistAction, handleRemoveWatchlistAction } = useWatchlistActions()
 
+const heroMovies = computed(() => (moviesStore.trendingMovies?.length ? moviesStore.trendingMovies : moviesStore.hotMovies || []))
+const top10Movies = computed(() => heroMovies.value.slice(0, 10))
 const recentMovies = computed(() => moviesStore.movies?.slice(0, 10))
 const actionMovies = computed(() => genresStore.moviesByGenre.get('action') || [])
 const sciFiMovies = computed(() => genresStore.moviesByGenre.get('sci-fi') || [])
@@ -160,16 +197,18 @@ function openDrawer(media: MediaCardType) {
 
 onMounted(() => {
   // Graceful unblocked loading to keep UI snappy
+  moviesStore.fetchTrendingMovies?.().catch(console.error)
+  moviesStore.fetchPopularMovies?.().catch(console.error)
   if (!moviesStore.movies?.length) moviesStore.fetchMovies({ sort: 'recent' }).catch(console.error)
-  if (!moviesStore.hotMovies?.length) moviesStore.fetchHotMovies().catch(console.error)
-  if (!moviesStore.topRatedMovies?.length) moviesStore.fetchTopRatedMovies().catch(console.error)
+  if (!moviesStore.hotMovies?.length) moviesStore.fetchHotMovies?.().catch(console.error)
+  if (!moviesStore.topRatedMovies?.length) moviesStore.fetchTopRatedMovies?.().catch(console.error)
   
   if (!genresStore.moviesByGenre.has('action')) genresStore.fetchMoviesByGenre('action').catch(console.error)
   if (!genresStore.moviesByGenre.has('sci-fi')) genresStore.fetchMoviesByGenre('sci-fi').catch(console.error)
   if (!genresStore.moviesByGenre.has('comedy')) genresStore.fetchMoviesByGenre('comedy').catch(console.error)
 
   if (authStore.isAuthenticated && !watchlistStore.items?.length) {
-    watchlistStore.fetchWatchlist().catch(console.error)
+    watchlistStore.fetchWatchlist?.().catch(console.error)
   }
 })
 </script>

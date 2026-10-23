@@ -360,6 +360,7 @@
   import { useSearch } from '@/composables/useSearch';
   import { useWatchlistStore } from '@/stores/watchListStore';
   import { useAuthStore } from '@/stores/authStore';
+  import { useTelemetry } from '@/composables/useTelemetry';
   import apiClient from '@/services/apiInterceptors';
   import toastHandler from '@/composables/toastHandler';
   import { getErrorMessage, getErrorStatus } from '@/services/errorUtils';
@@ -385,6 +386,7 @@
 
   const watchlistStore = useWatchlistStore();
   const authStore = useAuthStore();
+  const telemetry = useTelemetry();
 
   const { showToast } = toastHandler();
   const confirm = useConfirm();
@@ -487,6 +489,9 @@
   const selectedMedia = ref<MediaCardType | null>(null);
 
   function openMovieDrawer(movie: MovieWithDetails) {
+    if (movie.id) {
+      telemetry.trackSearchClick('movie', movie.id);
+    }
     // Convert MovieWithDetails to MediaCard shape
     selectedMedia.value = {
       id: movie.id,
@@ -507,6 +512,9 @@
   }
 
   function openShowDrawer(show: TVShowCard) {
+    if (show.id) {
+      telemetry.trackSearchClick('tv', show.id);
+    }
     // Use as MediaCard shape
     selectedMedia.value = {
       id: show.id,

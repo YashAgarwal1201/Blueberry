@@ -5,6 +5,8 @@ import db, {
   genres as genresTable,
   movieLanguages as movieLanguagesTable,
   languages as languagesTable,
+  tvShows as tvShowsTable,
+  tvGenres as tvGenresTable,
 } from "../db";
 import { eq, inArray, notInArray, and, type SQL } from "drizzle-orm";
 
@@ -52,6 +54,45 @@ export function getMovieBlockCondition(userId?: string): SQL | undefined {
     }
   } catch (e) {
     console.error("Failed to parse preferences for movie block condition", e);
+  }
+
+  return undefined;
+}
+
+export function getTvBlockCondition(userId?: string): SQL | undefined {
+  if (!userId) return undefined;
+
+  const row = db
+    .select({ preferences: userTable.preferences })
+    .from(userTable)
+    .where(eq(userTable.id, userId))
+    .get();
+  if (!row || !row.preferences) return undefined;
+
+  try {
+    const prefs = JSON.parse(row.preferences);
+    const conditions: SQL[] = [];
+
+    const blockedGenres = prefs.blockedGenres || [];
+    if (Array.isArray(blockedGenres) && blockedGenres.length > 0) {
+      const blockedGenreSub = db
+        .select({ show_id: tvGenresTable.show_id })
+        .from(tvGenresTable)
+        .innerJoin(genresTable, eq(genresTable.id, tvGenresTable.genre_id))
+        .where(inArray(genresTable.slug, blockedGenres));
+      conditions.push(notInArray(tvShowsTable.id, blockedGenreSub));
+    }
+
+    const blockedShows = prefs.blockedShows || [];
+    if (Array.isArray(blockedShows) && blockedShows.length > 0) {
+      conditions.push(notInArray(tvShowsTable.uuid, blockedShows));
+    }
+
+    if (conditions.length > 0) {
+      return and(...conditions);
+    }
+  } catch (e) {
+    console.error("Failed to parse preferences for tv block condition", e);
   }
 
   return undefined;

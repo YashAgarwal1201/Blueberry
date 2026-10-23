@@ -287,9 +287,24 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_collection_items_movie      ON collection_items(movie_id);
   CREATE INDEX IF NOT EXISTS idx_collection_items_show       ON collection_items(show_id);
 
+  CREATE TABLE IF NOT EXISTS media_events (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    media_type TEXT NOT NULL,
+    media_id   INTEGER NOT NULL,
+    user_id    TEXT REFERENCES user(id) ON DELETE CASCADE,
+    device_id  TEXT,
+    event_type TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_media_events_lookup ON media_events(media_type, media_id, created_at);
+  CREATE INDEX IF NOT EXISTS idx_media_events_created ON media_events(created_at);
+  CREATE INDEX IF NOT EXISTS idx_media_events_device ON media_events(device_id);
+
   CREATE INDEX IF NOT EXISTS "session_userId_idx" on "session" ("userId");
   CREATE INDEX IF NOT EXISTS "account_userId_idx" on "account" ("userId");
   CREATE INDEX IF NOT EXISTS "verification_identifier_idx" on "verification" ("identifier");
+
 
 
   -- ── Default seed data ─────────────────────────────────────────────────────
@@ -413,6 +428,8 @@ addColumnIfMissing("companies", "tmdb_logo_path", "TEXT");
 
 addColumnIfMissing("tv_shows", "tmdb_poster_path", "TEXT");
 addColumnIfMissing("tv_shows", "tmdb_backdrop_path", "TEXT");
+addColumnIfMissing("tv_shows", "trailer_url", "TEXT");
+addColumnIfMissing("tv_shows", "tmdb_trailer_key", "TEXT");
 addColumnIfMissing("tv_shows", "image_source", "TEXT DEFAULT 'local' CHECK(image_source IN ('tmdb', 'local', 'custom'))");
 
 addColumnIfMissing("tv_seasons", "tmdb_poster_path", "TEXT");
@@ -595,8 +612,28 @@ const hybridDb = Object.assign(db, {
   query: orm.query,
 }) as HybridDatabase;
 
+export function pruneStaleMediaEvents(days = 30): number {
+  try {
+    const result = db.prepare(`DELETE FROM media_events WHERE created_at < datetime('now', '-' || ? || ' days')`).run(days);
+    return result.changes;
+  } catch {
+    return 0;
+  }
+}
+
+// Automatic maintenance: prune media events older than 30 days on startup
+try {
+  const pruned = pruneStaleMediaEvents(30);
+  if (pruned > 0) {
+    console.log(`[db] Pruned ${pruned} stale media_events (> 30 days old)`);
+  }
+} catch {
+  // Ignore in environments where table was just created
+}
+
 console.log("✅ Database ready (SQLite + Drizzle ORM)");
 
 export { orm as drizzleDb, db as sqliteDb };
 export * from "./db/schema";
 export default hybridDb;
+

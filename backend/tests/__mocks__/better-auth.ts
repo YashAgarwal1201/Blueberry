@@ -18,6 +18,9 @@ export const betterAuth = () => ({
           customUserId = opts.headers["x-test-user-id"];
         }
       }
+      if (customUserId === "none" || customUserId === "anonymous") {
+        return null;
+      }
       const userId = customUserId || "test-user-id";
       return {
         session: { id: `session-${userId}` },

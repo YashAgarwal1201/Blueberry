@@ -108,4 +108,30 @@ describe('moviesStore', () => {
     expect(result).toHaveLength(1)
     expect(result[0]!.title).toBe('Batman')
   })
+
+  it('fetches trending movies successfully', async () => {
+    const store = useMoviesStore()
+    const mockTrending = [{ id: 10, uuid: 'm-10', title: 'Trending Film' }]
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: mockTrending } })
+
+    const result = await store.fetchTrendingMovies(15)
+
+    expect(apiClient.get).toHaveBeenCalledWith('movies/trending?limit=15')
+    expect(store.trendingMovies).toEqual(mockTrending)
+    expect(result).toEqual(mockTrending)
+    expect(store.loadingTrending).toBe(false)
+  })
+
+  it('fetches popular movies successfully', async () => {
+    const store = useMoviesStore()
+    const mockPopular = [{ id: 20, uuid: 'm-20', title: 'Popular Film' }]
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: mockPopular } })
+
+    const result = await store.fetchPopularMovies()
+
+    expect(apiClient.get).toHaveBeenCalledWith('movies/popular?limit=20')
+    expect(store.popularMovies).toEqual(mockPopular)
+    expect(result).toEqual(mockPopular)
+    expect(store.loadingPopular).toBe(false)
+  })
 })

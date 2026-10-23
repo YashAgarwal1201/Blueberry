@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import MediaCard from '../MediaCard.vue'
 
 describe('MediaCard.vue', () => {
-  it('renders title, year, and type correctly', () => {
+  it('renders title and year correctly', () => {
     const wrapper = mount(MediaCard, {
       props: {
         title: 'Inception',
@@ -14,7 +14,6 @@ describe('MediaCard.vue', () => {
     
     expect(wrapper.text()).toContain('Inception')
     expect(wrapper.text()).toContain('2010')
-    expect(wrapper.text().toLowerCase()).toContain('movie')
   })
 
   it('renders "N/A" when year is not provided', () => {

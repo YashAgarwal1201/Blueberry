@@ -32,11 +32,15 @@ describe('MoviesPage.vue', () => {
     const moviesStore = useMoviesStore()
     moviesStore.fetchMovies = vi.fn().mockResolvedValue({})
     moviesStore.fetchHotMovies = vi.fn().mockResolvedValue({})
+    moviesStore.fetchTrendingMovies = vi.fn().mockResolvedValue({})
+    moviesStore.fetchPopularMovies = vi.fn().mockResolvedValue({})
     moviesStore.fetchTopRatedMovies = vi.fn().mockResolvedValue({})
     
     // Set loading to true so sections render
     moviesStore.loading = true
     moviesStore.loadingHot = true
+    moviesStore.loadingTrending = true
+    moviesStore.loadingPopular = true
     moviesStore.loadingTopRated = true
 
     const wrapper = mount(MoviesPage, {
@@ -45,6 +49,7 @@ describe('MoviesPage.vue', () => {
           HeroCarousel: true,
           MediaCarousel: true,
           MediaCard: true,
+          Top10Card: true,
           MediaDrawer: true,
           RouterLink: true
         }
@@ -53,12 +58,14 @@ describe('MoviesPage.vue', () => {
 
     // It should render sections
     expect(wrapper.text()).toContain('Trending Movies')
+    expect(wrapper.text()).toContain('Most Popular Movies')
     expect(wrapper.text()).toContain('Recent Movies')
     expect(wrapper.text()).toContain('Top Rated Movies')
 
     // It should have called the fetch methods on mount
     expect(moviesStore.fetchMovies).toHaveBeenCalled()
-    expect(moviesStore.fetchHotMovies).toHaveBeenCalled()
+    expect(moviesStore.fetchTrendingMovies).toHaveBeenCalled()
+    expect(moviesStore.fetchPopularMovies).toHaveBeenCalled()
     expect(moviesStore.fetchTopRatedMovies).toHaveBeenCalled()
   })
 })

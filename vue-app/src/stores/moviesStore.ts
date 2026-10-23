@@ -1,18 +1,22 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import apiClient from '@/services/apiInterceptors'
-import type { MovieWithDetails, CreateMovieRequest, UpdateMovieRequest } from "shared-types"
+import type { MovieWithDetails, MovieCard, CreateMovieRequest, UpdateMovieRequest } from "shared-types"
 import { getErrorMessage } from '@/services/errorUtils'
 
 export const useMoviesStore = defineStore('moviesStore', () => {
   const movies = ref<MovieWithDetails[]>([])
   const topRatedMovies = ref<MovieWithDetails[]>([])
   const hotMovies = ref<MovieWithDetails[]>([])
+  const trendingMovies = ref<MovieCard[]>([])
+  const popularMovies = ref<MovieCard[]>([])
   
   const loading = ref(false)
   const loadingMovies = loading
   const loadingTopRated = ref(false)
   const loadingHot = ref(false)
+  const loadingTrending = ref(false)
+  const loadingPopular = ref(false)
   const loadingMovieById = ref(false)
   const loadingMutate = ref(false)
   const error = ref<string | null>(null)
@@ -88,6 +92,34 @@ export const useMoviesStore = defineStore('moviesStore', () => {
       throw err
     } finally {
       loadingHot.value = false
+    }
+  }
+
+  const fetchTrendingMovies = async (limit = 20) => {
+    loadingTrending.value = true
+    try {
+      const response = await apiClient.get(`movies/trending?limit=${limit}`)
+      trendingMovies.value = response.data.data as MovieCard[]
+      return trendingMovies.value
+    } catch (err: unknown) {
+      console.error('Error fetching trending movies:', err)
+      throw err
+    } finally {
+      loadingTrending.value = false
+    }
+  }
+
+  const fetchPopularMovies = async (limit = 20) => {
+    loadingPopular.value = true
+    try {
+      const response = await apiClient.get(`movies/popular?limit=${limit}`)
+      popularMovies.value = response.data.data as MovieCard[]
+      return popularMovies.value
+    } catch (err: unknown) {
+      console.error('Error fetching popular movies:', err)
+      throw err
+    } finally {
+      loadingPopular.value = false
     }
   }
 
@@ -175,6 +207,8 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     movies.value = movies.value.filter(m => m.uuid !== uuid)
     topRatedMovies.value = topRatedMovies.value.filter(m => m.uuid !== uuid)
     hotMovies.value = hotMovies.value.filter(m => m.uuid !== uuid)
+    trendingMovies.value = trendingMovies.value.filter(m => m.uuid !== uuid)
+    popularMovies.value = popularMovies.value.filter(m => m.uuid !== uuid)
   }
 
   const searchLocal = (query: string) => {
@@ -194,10 +228,14 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     movies,
     topRatedMovies,
     hotMovies,
+    trendingMovies,
+    popularMovies,
     loading,
     loadingMovies,
     loadingTopRated,
     loadingHot,
+    loadingTrending,
+    loadingPopular,
     loadingMovieById,
     loadingMutate,
     error,
@@ -207,6 +245,8 @@ export const useMoviesStore = defineStore('moviesStore', () => {
     fetchMovies,
     fetchTopRatedMovies,
     fetchHotMovies,
+    fetchTrendingMovies,
+    fetchPopularMovies,
     fetchMovieById,
     fetchSimilarMovies,
     addMovie,

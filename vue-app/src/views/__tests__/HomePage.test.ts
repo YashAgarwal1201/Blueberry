@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import HomePage from '../HomePage.vue'
 import { useMoviesStore } from '@/stores/moviesStore'
+import { useTvStore } from '@/stores/tvStore'
 import { usePreferencesStore } from '@/stores/preferencesStore'
 import { useGenresStore } from '@/stores/genresStore'
 import { useLanguagesStore } from '@/stores/languagesStore'
@@ -74,6 +75,7 @@ describe('HomePage.vue', () => {
           HeroCarousel: true,
           MediaCarousel: true,
           MediaCard: true,
+          Top10Card: true,
           MediaDrawer: true,
           RouterLink: true,
           ChevronRight: true
@@ -99,6 +101,7 @@ describe('HomePage.vue', () => {
           HeroCarousel: true,
           MediaCarousel: true,
           MediaCard: true,
+          Top10Card: true,
           MediaDrawer: true,
           RouterLink: true,
           ChevronRight: true
@@ -109,5 +112,39 @@ describe('HomePage.vue', () => {
     expect(wrapper.text()).not.toContain('Trending Movies')
     expect(wrapper.text()).not.toContain('Recent Movies')
     expect(wrapper.text()).not.toContain('Top Rated Movies')
+  })
+
+  it('renders Top 10 Today with All, Movies, and TV Series category tabs', async () => {
+    const preferencesStore = usePreferencesStore()
+    preferencesStore.showMovies = true
+    preferencesStore.showShows = true
+
+    const moviesStore = useMoviesStore()
+    moviesStore.trendingMovies = [
+      { id: 1, uuid: 'm1', type: 'movie', title: 'Top Movie', status: 'released', in_watchlist: false, languages: [], genres: [] }
+    ]
+    const tvStore = useTvStore()
+    tvStore.trendingShows = [
+      { id: 2, uuid: 's2', type: 'tv', title: 'Top Show', status: 'returning_series', in_watchlist: false, genres: [] }
+    ]
+
+    const wrapper = mount(HomePage, {
+      global: {
+        stubs: {
+          HeroCarousel: true,
+          MediaCarousel: true,
+          MediaCard: true,
+          Top10Card: true,
+          MediaDrawer: true,
+          RouterLink: true,
+          ChevronRight: true
+        }
+      }
+    })
+
+    expect(wrapper.text()).toContain('Top 10 Today')
+    expect(wrapper.text()).toContain('All')
+    expect(wrapper.text()).toContain('Movies')
+    expect(wrapper.text()).toContain('TV Series')
   })
 })

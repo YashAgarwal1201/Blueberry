@@ -29,6 +29,7 @@ import { optionalAuth, requireAuth, requireModerator } from "../middleware/authM
 import { getMovieBlockCondition } from "../utils/preferences";
 import { resolveImage, tmdbYoutube } from "../utils/imageUtils";
 import { getMovieWatchlistSet } from "../utils/watchlistCache";
+import { getTrendingMovies, getPopularMovies } from "../services/feedRanking";
 import { clean } from "../utils/stringUtils";
 import { getErrorMessage } from "../utils/errors";
 import type {
@@ -380,29 +381,53 @@ router.get("/top-rated", optionalAuth, (c) => {
   }
 });
 
-// ── GET /movies/hot ───────────────────────────────────────────────────────────
-// "Hot" = movies most recently added/updated in the watchlist
-router.get("/hot", optionalAuth, (c) => {
+// ── GET /movies/trending ──────────────────────────────────────────────────────
+router.get("/trending", optionalAuth, async (c) => {
   try {
     const user = c.get("user");
     const blockCond = getMovieBlockCondition(user?.id);
+    const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") as string) || 20));
 
-    let query = db
-      .select(movieCardSelection)
-      .from(moviesTable)
-      .innerJoin(watchlistTable, eq(moviesTable.id, watchlistTable.movie_id))
-      .$dynamic();
+    const cards = await getTrendingMovies(limit, blockCond, user?.id);
+    c.header("Cache-Control", user ? "private, max-age=60" : "public, max-age=300");
+    return c.json({ success: true, data: cards });
+  } catch (err: unknown) {
+    return c.json({
+      success: false,
+      error: "Failed to fetch trending movies",
+      message: getErrorMessage(err),
+    }, 500);
+  }
+});
 
-    if (blockCond) {
-      query = query.where(blockCond);
-    }
+// ── GET /movies/popular ───────────────────────────────────────────────────────
+router.get("/popular", optionalAuth, async (c) => {
+  try {
+    const user = c.get("user");
+    const blockCond = getMovieBlockCondition(user?.id);
+    const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") as string) || 20));
 
-    const movies = query
-      .orderBy(desc(watchlistTable.updated_at))
-      .limit(20)
-      .all() as unknown as Movie[];
+    const cards = await getPopularMovies(limit, blockCond, user?.id);
+    c.header("Cache-Control", user ? "private, max-age=60" : "public, max-age=300");
+    return c.json({ success: true, data: cards });
+  } catch (err: unknown) {
+    return c.json({
+      success: false,
+      error: "Failed to fetch popular movies",
+      message: getErrorMessage(err),
+    }, 500);
+  }
+});
 
-    const cards = toMovieCards(movies, getWatchlistSet(user?.id));
+// ── GET /movies/hot ───────────────────────────────────────────────────────────
+// Legacy alias for /movies/trending
+router.get("/hot", optionalAuth, async (c) => {
+  try {
+    const user = c.get("user");
+    const blockCond = getMovieBlockCondition(user?.id);
+    const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") as string) || 20));
+
+    const cards = await getTrendingMovies(limit, blockCond, user?.id);
     c.header("Cache-Control", user ? "private, max-age=60" : "public, max-age=300");
     return c.json({ success: true, data: cards });
   } catch (err: unknown) {

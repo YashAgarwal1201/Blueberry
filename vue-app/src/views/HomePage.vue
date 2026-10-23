@@ -1,22 +1,25 @@
 <template>
-  <div class="w-full h-full flex flex-col gap-y-8 md:gap-y-10 overflow-y-auto hide-scrollbar">
+  <div class="w-full h-full flex flex-col overflow-y-auto hide-scrollbar pb-16">
     <!-- Hero Carousel -->
     <div v-if="preferencesStore.showMovies && moviesStore.loading"
-      class="w-full h-64 sm:h-96 bg-surface-2 animate-pulse rounded-xl"></div>
+      class="-mx-2 -mt-2 sm:-mx-3 sm:-mt-3 w-[calc(100%+1rem)] sm:w-[calc(100%+1.5rem)] h-[62vh] sm:h-[72vh] md:h-[80vh] min-h-[440px] max-h-[820px] bg-surface-2 animate-pulse"></div>
     <HeroCarousel v-else-if="preferencesStore.showMovies && moviesStore.movies && moviesStore.movies.length > 0"
-      :items="moviesStore.movies.slice(0, 5)" :auto-play-interval="4000" @clickItem="openDrawer" />
+      :items="moviesStore.movies.slice(0, 5)" :auto-play-interval="5000" @clickItem="openDrawer" @watchlist="handleWatchlistAction" />
 
-    <!-- Continue Watching -->
-    <ContinueWatchingCarousel v-if="authStore.isAuthenticated" @clickItem="openDrawer" />
+    <!-- Shelves Container (Bleeding onto hero bottom) -->
+    <div class="relative z-20 flex flex-col gap-y-8 md:gap-y-10"
+      :class="(preferencesStore.showMovies && (moviesStore.loading || (moviesStore.movies && moviesStore.movies.length > 0))) ? '-mt-12 sm:-mt-20 md:-mt-24' : 'pt-4'">
+      <!-- Continue Watching -->
+      <ContinueWatchingCarousel v-if="authStore.isAuthenticated" @clickItem="openDrawer" />
 
     <!-- Trending Movies -->
-    <div v-if="preferencesStore.showMovies && (moviesStore.loadingHot || moviesStore.hotMovies?.length)"
+    <div v-if="preferencesStore.showMovies && (moviesStore.loadingTrending || moviesStore.trendingMovies?.length)"
       class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Trending Movies</h2>
       </div>
-      <div v-if="moviesStore.loadingHot" class="px-2 text-text-muted">Loading trending movies...</div>
-      <MediaCarousel v-else :items="moviesStore.hotMovies || []">
+      <div v-if="moviesStore.loadingTrending" class="px-2 text-text-muted">Loading trending movies...</div>
+      <MediaCarousel v-else :items="moviesStore.trendingMovies || []">
         <template #default="{ item: movie }">
           <MediaCard :title="movie.title" :poster-url="movie.poster_url" :year="movie.release_year" :type="movie.type"
             @click="openDrawer(movie)" />
@@ -25,28 +28,60 @@
     </div>
 
     <!-- Top 10 Today -->
-    <div v-if="preferencesStore.showMovies && (moviesStore.loadingHot || top10Movies?.length)"
+    <div v-if="(preferencesStore.showMovies || preferencesStore.showShows) && (top10Loading || top10Filtered?.length)"
+      class="flex flex-col gap-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-2">
+        <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Top 10 Today</h2>
+
+        <!-- Filter Switcher (All / Movies / TV Series) -->
+        <div v-if="preferencesStore.showMovies && preferencesStore.showShows"
+          class="flex items-center bg-surface-2 p-1 rounded-xl border border-border shrink-0 self-start sm:self-auto">
+          <button
+            type="button"
+            class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer"
+            :class="top10Filter === 'all' ? 'bg-primary text-on-primary shadow-sm' : 'text-text-muted hover:text-text'"
+            @click="top10Filter = 'all'"
+          >
+            All
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer"
+            :class="top10Filter === 'movie' ? 'bg-primary text-on-primary shadow-sm' : 'text-text-muted hover:text-text'"
+            @click="top10Filter = 'movie'"
+          >
+            Movies
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer"
+            :class="top10Filter === 'tv' ? 'bg-primary text-on-primary shadow-sm' : 'text-text-muted hover:text-text'"
+            @click="top10Filter = 'tv'"
+          >
+            TV Series
+          </button>
+        </div>
+      </div>
+
+      <div v-if="top10Loading" class="px-2 text-text-muted">Loading top 10...</div>
+      <MediaCarousel v-else :items="top10Filtered">
+        <template #default="{ item, index }">
+          <Top10Card :item="item" :rank="index + 1" @click="openDrawer(item)" />
+        </template>
+      </MediaCarousel>
+    </div>
+
+    <!-- Most Popular Movies -->
+    <div v-if="preferencesStore.showMovies && (moviesStore.loadingPopular || moviesStore.popularMovies?.length)"
       class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
-        <h2 class="text-xl sm:text-2xl font-heading font-bold text-text flex items-center gap-2.5">
-          <span>Top 10 Today</span>
-          <span
-            class="text-[11px] px-2 py-0.5 rounded-full bg-primary/20 text-primary font-bold border border-primary/30 uppercase tracking-wide">Must
-            Watch</span>
-        </h2>
+        <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Most Popular Movies</h2>
       </div>
-      <div v-if="moviesStore.loadingHot" class="px-2 text-text-muted">Loading top 10 movies...</div>
-      <MediaCarousel v-else :items="top10Movies">
-        <template #default="{ item: movie, index }">
+      <div v-if="moviesStore.loadingPopular" class="px-2 text-text-muted">Loading popular movies...</div>
+      <MediaCarousel v-else :items="moviesStore.popularMovies || []">
+        <template #default="{ item: movie }">
           <MediaCard :title="movie.title" :poster-url="movie.poster_url" :year="movie.release_year" :type="movie.type"
-            @click="openDrawer(movie)">
-            <template #badge>
-              <div
-                class="absolute top-2 left-2 w-7 h-7 rounded-lg bg-surface-0/85 backdrop-blur-md border border-white/20 flex items-center justify-center font-heading font-black text-xs text-primary shadow-lg">
-                #{{ index + 1 }}
-              </div>
-            </template>
-          </MediaCard>
+            @click="openDrawer(movie)" />
         </template>
       </MediaCarousel>
     </div>
@@ -90,12 +125,11 @@
     </div>
 
     <!-- Trending TV Shows -->
-    <div v-if="preferencesStore.showShows && (tvStore.loadingHot || tvStore.hotShows?.length)"
+    <div v-if="preferencesStore.showShows && (tvStore.loadingTrending || tvStore.trendingShows?.length || tvStore.hotShows?.length)"
       class="flex flex-col gap-y-4">
       <div class="flex items-center justify-between gap-3 px-2">
         <RouterLink :to="'/shows'">
-          <h2 class="text-xl sm:text-2xl font-heading font-bold text-text hover:text-primary transition-colors">Trending
-            Series</h2>
+          <h2 class="text-xl sm:text-2xl font-heading font-bold text-text hover:text-primary transition-colors">Trending Series</h2>
         </RouterLink>
         <RouterLink :to="'/shows'" class="flex items-center gap-x-1 text-primary text-sm font-medium hover:underline">
           <span>See all</span>
@@ -103,8 +137,24 @@
         </RouterLink>
       </div>
 
-      <div v-if="tvStore.loadingHot" class="px-2 text-text-muted">Loading trending tv shows...</div>
-      <MediaCarousel v-else :items="tvStore.hotShows || []">
+      <div v-if="tvStore.loadingTrending" class="px-2 text-text-muted">Loading trending tv shows...</div>
+      <MediaCarousel v-else :items="tvStore.trendingShows?.length ? tvStore.trendingShows : tvStore.hotShows || []">
+        <template #default="{ item: show }">
+          <MediaCard :title="show.title" :poster-url="show.poster_url" :year="show.release_year" :type="show.type"
+            @click="openDrawer(show)" />
+        </template>
+      </MediaCarousel>
+    </div>
+
+
+    <!-- Most Popular Series -->
+    <div v-if="preferencesStore.showShows && (tvStore.loadingPopular || tvStore.popularShows?.length)"
+      class="flex flex-col gap-y-4">
+      <div class="flex items-center justify-between gap-3 px-2">
+        <h2 class="text-xl sm:text-2xl font-heading font-bold text-text">Most Popular Series</h2>
+      </div>
+      <div v-if="tvStore.loadingPopular" class="px-2 text-text-muted">Loading popular series...</div>
+      <MediaCarousel v-else :items="tvStore.popularShows || []">
         <template #default="{ item: show }">
           <MediaCard :title="show.title" :poster-url="show.poster_url" :year="show.release_year" :type="show.type"
             @click="openDrawer(show)" />
@@ -256,6 +306,7 @@
         </RouterLink>
       </div>
     </div>
+    </div>
 
     <!-- Slide-up Details Drawer -->
     <MediaDrawer v-model:visible="isDrawerOpen" :media="selectedMedia" @watchlistAction="handleWatchlistAction"
@@ -281,6 +332,7 @@ import ContinueWatchingCarousel from '@/components/ContinueWatchingCarousel.vue'
 import AppImage from '@/components/AppImage.vue'
 import MediaCarousel from '@/components/MediaCarousel.vue'
 import MediaCard from '@/components/MediaCard.vue'
+import Top10Card from '@/components/Top10Card.vue'
 import MediaDrawer from '@/components/MediaDrawer.vue'
 import type { MediaCard as MediaCardType, WatchlistPopulatedItem } from 'shared-types'
 
@@ -294,9 +346,42 @@ const preferencesStore = usePreferencesStore()
 const collectionsStore = useCollectionsStore()
 const { handleWatchlistAction, handleRemoveWatchlistAction } = useWatchlistActions()
 
+const top10Filter = ref<'all' | 'movie' | 'tv'>('all')
+
 const recentMovies = computed(() => moviesStore.movies?.slice(0, 10))
 const watchlistPreview = computed(() => watchlistStore.items?.slice(0, 10))
-const top10Movies = computed(() => (moviesStore.hotMovies || []).slice(0, 10))
+const top10Movies = computed(() => (moviesStore.trendingMovies?.length ? moviesStore.trendingMovies : moviesStore.hotMovies || []).slice(0, 10))
+const top10Shows = computed(() => (tvStore.trendingShows?.length ? tvStore.trendingShows : tvStore.hotShows || []).slice(0, 10))
+
+const top10Combined = computed(() => {
+  const m = top10Movies.value
+  const s = top10Shows.value
+  if (!preferencesStore.showShows) return m
+  if (!preferencesStore.showMovies) return s
+
+  const combined: MediaCardType[] = []
+  const maxLen = Math.max(m.length, s.length)
+  for (let i = 0; i < maxLen && combined.length < 10; i++) {
+    const movie = m[i]
+    if (movie && combined.length < 10) combined.push(movie)
+    const show = s[i]
+    if (show && combined.length < 10) combined.push(show)
+  }
+  return combined.slice(0, 10)
+})
+
+const top10Filtered = computed(() => {
+  if (!preferencesStore.showShows || top10Filter.value === 'movie') return top10Movies.value
+  if (!preferencesStore.showMovies || top10Filter.value === 'tv') return top10Shows.value
+  return top10Combined.value
+})
+
+const top10Loading = computed(() => {
+  if (top10Filter.value === 'movie') return moviesStore.loadingTrending || moviesStore.loadingHot
+  if (top10Filter.value === 'tv') return tvStore.loadingTrending || tvStore.loadingHot
+  return (moviesStore.loadingTrending && !moviesStore.trendingMovies?.length) ||
+         (tvStore.loadingTrending && !tvStore.trendingShows?.length)
+})
 
 const getMedia = (item: WatchlistPopulatedItem): MediaCardType => {
   return 'movie' in item ? item.movie : item.show;
@@ -332,20 +417,24 @@ onMounted(() => {
   // Graceful unblocked loading to keep UI snappy
 
   if (!moviesStore.movies?.length) moviesStore.fetchMovies({ sort: 'recent' }).catch(console.error)
-  if (!moviesStore.hotMovies?.length) moviesStore.fetchHotMovies().catch(console.error)
-  if (!moviesStore.topRatedMovies?.length) moviesStore.fetchTopRatedMovies().catch(console.error)
+  moviesStore.fetchTrendingMovies?.().catch(console.error)
+  moviesStore.fetchPopularMovies?.().catch(console.error)
+  if (!moviesStore.hotMovies?.length) moviesStore.fetchHotMovies?.().catch(console.error)
+  if (!moviesStore.topRatedMovies?.length) moviesStore.fetchTopRatedMovies?.().catch(console.error)
 
-  if (!tvStore.hotShows?.length) tvStore.fetchHotShows().catch(console.error)
-  if (!tvStore.topRatedShows?.length) tvStore.fetchTopRatedShows().catch(console.error)
-  if (!tvStore.recentShows?.length) tvStore.fetchRecentShows().catch(console.error)
+  tvStore.fetchTrendingShows?.().catch(console.error)
+  tvStore.fetchPopularShows?.().catch(console.error)
+  if (!tvStore.hotShows?.length) tvStore.fetchHotShows?.().catch(console.error)
+  if (!tvStore.topRatedShows?.length) tvStore.fetchTopRatedShows?.().catch(console.error)
+  if (!tvStore.recentShows?.length) tvStore.fetchRecentShows?.().catch(console.error)
 
-  if (!genresStore.genres?.length) genresStore.fetchGenres().catch(console.error)
-  if (!languagesStore.languages?.length) languagesStore.fetchLanguages().catch(console.error)
+  if (!genresStore.genres?.length) genresStore.fetchGenres?.().catch(console.error)
+  if (!languagesStore.languages?.length) languagesStore.fetchLanguages?.().catch(console.error)
 
-  if (!collectionsStore.communityCollections?.length) collectionsStore.fetchCommunityCollections().catch(console.error)
+  if (!collectionsStore.communityCollections?.length) collectionsStore.fetchCommunityCollections?.().catch(console.error)
 
   if (authStore.isAuthenticated && !watchlistStore.items?.length) {
-    watchlistStore.fetchWatchlist().catch(console.error)
+    watchlistStore.fetchWatchlist?.().catch(console.error)
   }
 })
 </script>

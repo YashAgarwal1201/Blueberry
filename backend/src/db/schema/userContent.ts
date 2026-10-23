@@ -66,3 +66,18 @@ export const collectionItems = sqliteTable("collection_items", {
   index("idx_collection_items_movie").on(table.movie_id),
   index("idx_collection_items_show").on(table.show_id),
 ]);
+
+export const mediaEvents = sqliteTable("media_events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  media_type: text("media_type").notNull(), // 'movie' | 'tv'
+  media_id: integer("media_id").notNull(),
+  user_id: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+  device_id: text("device_id"),
+  event_type: text("event_type").notNull(), // 'page_view' | 'trailer_play' | 'search_click'
+  created_at: text("created_at").default(sql`(datetime('now'))`),
+}, (table) => [
+  index("idx_media_events_lookup").on(table.media_type, table.media_id, table.created_at),
+  index("idx_media_events_created").on(table.created_at),
+  index("idx_media_events_device").on(table.device_id),
+]);
+

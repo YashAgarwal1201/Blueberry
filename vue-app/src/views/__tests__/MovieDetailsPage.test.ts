@@ -118,4 +118,32 @@ describe('MovieDetailsPage.vue', () => {
     expect(wrapper.text()).toContain('148 min')
     expect(wrapper.text()).toContain('released')
   })
+
+  it('renders Watch Trailer button when trailer key is present', async () => {
+    const moviesStore = useMoviesStore()
+    moviesStore.fetchMovieById = vi.fn().mockResolvedValue({
+      id: 1,
+      uuid: '123-abc',
+      title: 'Inception',
+      description: 'A dream within a dream',
+      release_year: 2010,
+      status: 'released',
+      tmdb_trailer_key: 'YoHD9XEInc0',
+      cast: [],
+      genres: [],
+      companies: []
+    })
+
+    const wrapper = mount(MovieDetailsPage, {
+      global: {
+        stubs: {
+          ArrowLeft: true,
+          TrailerModal: true,
+        }
+      }
+    })
+
+    await flushPromises()
+    expect(wrapper.text()).toContain('Watch Trailer')
+  })
 })
