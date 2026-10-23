@@ -17,6 +17,7 @@ This monorepo consists of three main packages:
 - **Custom Content Forms** — Client-side forms to add user-generated movies and cast members, including a dedicated cast editor UI.
 - **Watchlist Management** — UI to keep track of content you want to see by managing a personal watchlist.
 - **Responsive UX** — Shared UI patterns across desktop and mobile devices featuring media drawers, hero carousels, and side menus.
+- **Native Discovery & Ranking Engine (BMCE)** — Custom, zero-dependency recommendation engine calculating Trending (exponential half-life velocity) and Popularity (Bayesian weighted consensus) entirely from first-party signals without external AI or tracking services (see [SPEC.md](SPEC.md#10-native-discovery--ranking-engine-bmce)).
 - **Multi-Engine Database & ORM** — Portably typed via Drizzle ORM supporting SQLite (`better-sqlite3`, Cloudflare D1, Turso) and Postgres with clean relational schema definitions.
 
 ## Getting Started

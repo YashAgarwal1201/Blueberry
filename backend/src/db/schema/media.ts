@@ -76,6 +76,8 @@ export const tvShows = sqliteTable("tv_shows", {
   box_office: integer("box_office"),
   tmdb_poster_path: text("tmdb_poster_path"),
   tmdb_backdrop_path: text("tmdb_backdrop_path"),
+  trailer_url: text("trailer_url"),
+  tmdb_trailer_key: text("tmdb_trailer_key"),
   image_source: text("image_source").default("local"),
   created_at: text("created_at").default(sql`(datetime('now'))`),
   updated_at: text("updated_at").default(sql`(datetime('now'))`),

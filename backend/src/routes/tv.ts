@@ -31,6 +31,8 @@ import type {
 } from "shared-types";
 import { resolveImage } from "../utils/imageUtils";
 import { getShowWatchlistSet } from "../utils/watchlistCache";
+import { getTrendingTV, getPopularTV } from "../services/feedRanking";
+import { getTvBlockCondition } from "../utils/preferences";
 import { clean } from "../utils/stringUtils";
 import { getErrorMessage } from "../utils/errors";
 import { requireAuth, requireModerator, optionalAuth } from "../middleware/authMiddleware";
@@ -287,21 +289,61 @@ router.get("/top-rated", optionalAuth, (c) => {
   }
 });
 
-// ── GET /tv/hot ─────────────────────────────────────────────────────────────
-router.get("/hot", optionalAuth, (c) => {
+// ── GET /tv/trending ──────────────────────────────────────────────────────────
+router.get("/trending", optionalAuth, async (c) => {
   try {
     const user = c.get("user");
-    const shows = db
-      .select(tvCardSelection)
-      .from(tvShowsTable)
-      .orderBy(sql`${tvShowsTable.rating_imdb} desc nulls last`, desc(tvShowsTable.episode_count))
-      .limit(20)
-      .all() as unknown as TVShow[];
-    const cards = toTVShowCards(shows, getWatchlistSet(user?.id));
-    c.header("Cache-Control", "public, max-age=300");
+    const blockCond = getTvBlockCondition(user?.id);
+    const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") as string) || 20));
+
+    const cards = await getTrendingTV(limit, blockCond, user?.id);
+    c.header("Cache-Control", user ? "private, max-age=60" : "public, max-age=300");
     return c.json({ success: true, data: cards });
   } catch (err: unknown) {
-    return c.json({ success: false, error: "Failed to fetch hot TV shows", message: getErrorMessage(err) }, 500);
+    return c.json({
+      success: false,
+      error: "Failed to fetch trending TV shows",
+      message: getErrorMessage(err),
+    }, 500);
+  }
+});
+
+// ── GET /tv/popular ───────────────────────────────────────────────────────────
+router.get("/popular", optionalAuth, async (c) => {
+  try {
+    const user = c.get("user");
+    const blockCond = getTvBlockCondition(user?.id);
+    const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") as string) || 20));
+
+    const cards = await getPopularTV(limit, blockCond, user?.id);
+    c.header("Cache-Control", user ? "private, max-age=60" : "public, max-age=300");
+    return c.json({ success: true, data: cards });
+  } catch (err: unknown) {
+    return c.json({
+      success: false,
+      error: "Failed to fetch popular TV shows",
+      message: getErrorMessage(err),
+    }, 500);
+  }
+});
+
+// ── GET /tv/hot ───────────────────────────────────────────────────────────────
+// Legacy alias for /tv/trending
+router.get("/hot", optionalAuth, async (c) => {
+  try {
+    const user = c.get("user");
+    const blockCond = getTvBlockCondition(user?.id);
+    const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") as string) || 20));
+
+    const cards = await getTrendingTV(limit, blockCond, user?.id);
+    c.header("Cache-Control", user ? "private, max-age=60" : "public, max-age=300");
+    return c.json({ success: true, data: cards });
+  } catch (err: unknown) {
+    return c.json({
+      success: false,
+      error: "Failed to fetch hot TV shows",
+      message: getErrorMessage(err),
+    }, 500);
   }
 });
 

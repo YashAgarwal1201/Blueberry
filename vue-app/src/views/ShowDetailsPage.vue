@@ -15,7 +15,7 @@
       <div class="flex items-center gap-4">
         <button
           @click="router.back()"
-          class="p-2 rounded-full hover:bg-white/10 transition-colors"
+          class="p-2 rounded-full hover:bg-surface-2 transition-colors text-text"
         >
           <ArrowLeft :size="20" />
         </button>
@@ -23,9 +23,9 @@
           v-if="show?.poster_url"
           :src="show.poster_url"
           type="tv"
-          class="w-8 h-12 rounded shadow-sm object-cover border border-white/10"
+          class="w-8 h-12 rounded shadow-sm object-cover border border-border"
         />
-        <span class="font-heading font-bold text-lg text-white line-clamp-1">
+        <span class="font-heading font-bold text-lg text-text line-clamp-1">
           {{ show?.title }}
         </span>
       </div>
@@ -33,7 +33,7 @@
         <button
           v-if="authStore.isAuthenticated && !isInWatchlist"
           @click="addToWatchlist"
-          class="px-4 py-2 bg-primary text-white text-sm font-bold rounded-full hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+          class="px-4 py-2 bg-primary text-on-primary text-sm font-bold rounded-full hover:bg-primary/90 transition-colors flex items-center gap-1.5"
         >
           <Plus :size="16" />
           <span>Watchlist</span>
@@ -62,7 +62,7 @@
     <!-- Back Button (Hero) -->
     <button
       @click="router.back()"
-      class="absolute top-4 sm:top-6 left-4 sm:left-6 z-40 p-2 rounded-full bg-black/40 text-white backdrop-blur-md border border-white/10 hover:bg-black/60 hover:scale-105 active:scale-95 transition-all shadow-lg"
+      class="absolute top-4 sm:top-6 left-4 sm:left-6 z-40 p-2 rounded-full bg-surface-1/70 text-text backdrop-blur-md border border-border hover:bg-surface-2 hover:scale-105 active:scale-95 transition-all shadow-lg"
       title="Go Back"
       :class="{ 'opacity-0 pointer-events-none': showStickyHeader }"
     >
@@ -131,18 +131,18 @@
         >
           <!-- Title -->
           <h1
-            class="text-3xl sm:text-4xl lg:text-6xl font-heading font-black tracking-tight text-white drop-shadow-xl leading-tight"
+            class="text-3xl sm:text-4xl lg:text-6xl font-heading font-black tracking-tight text-text drop-shadow-sm leading-tight"
           >
             {{ show.title }}
           </h1>
 
           <!-- Metadata Row -->
           <div
-            class="flex flex-wrap items-center justify-center md:justify-start gap-2 sm:gap-3 text-xs sm:text-sm font-medium text-white/90"
+            class="flex flex-wrap items-center justify-center md:justify-start gap-2 sm:gap-3 text-xs sm:text-sm font-medium text-text-muted"
           >
             <span
               v-if="show.first_air_date"
-              class="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 shadow-sm"
+              class="px-3 py-1 rounded-full bg-surface-2/80 text-text backdrop-blur-md border border-border shadow-xs"
             >
               {{ new Date(show.first_air_date).getFullYear() }}
               <template v-if="show.status === 'ended' && show.last_air_date">
@@ -152,7 +152,7 @@
             </span>
             <span
               v-if="show.network"
-              class="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 shadow-sm flex items-center gap-1.5"
+              class="px-3 py-1 rounded-full bg-surface-2/80 text-text backdrop-blur-md border border-border shadow-xs flex items-center gap-1.5"
             >
               <Tv
                 :size="14"
@@ -161,14 +161,14 @@
               {{ show.network }}
             </span>
             <span
-              class="px-3 py-1 rounded-full bg-primary/20 text-primary border border-primary/20 uppercase tracking-wider text-[10px] sm:text-xs shadow-sm font-bold"
+              class="px-3 py-1 rounded-full bg-primary/20 text-primary border border-primary/20 uppercase tracking-wider text-[10px] sm:text-xs shadow-xs font-bold"
             >
               {{ prettyStatus(show.status) }}
             </span>
 
             <div
               v-if="show?.genres?.length"
-              class="w-px h-4 bg-white/20 mx-1 hidden sm:block"
+              class="w-px h-4 bg-border mx-1 hidden sm:block"
             ></div>
 
             <!-- Genres -->
@@ -176,7 +176,7 @@
               v-for="genre in show?.genres"
               :key="genre.id"
               :to="`/genres/${genre.slug}`"
-              class="hover:text-primary transition-colors hover:underline"
+              class="hover:text-primary text-text-muted transition-colors hover:underline"
             >
               {{ genre.name }}
             </RouterLink>
@@ -188,8 +188,8 @@
             class="flex flex-col gap-2 w-full max-w-md mt-2"
           >
             <div class="flex items-center justify-between text-sm font-medium">
-              <span class="text-white">Watched</span>
-              <span class="text-white/60">
+              <span class="text-text">Watched</span>
+              <span class="text-text-muted">
                 {{ watchedEpisodesSet.size }} / {{ show.episode_count }} Episodes
               </span>
             </div>
@@ -205,6 +205,17 @@
           <div
             class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4 mt-4 w-full max-w-md md:max-w-none"
           >
+            <!-- Watch Trailer Button -->
+            <button
+              v-if="hasTrailer"
+              type="button"
+              @click="openTrailerModal()"
+              class="flex items-center justify-center gap-2 px-6 py-3.5 bg-primary text-black rounded-full font-bold hover:bg-primary-hover active:scale-95 transition-all shadow-lg shadow-primary/20 whitespace-nowrap cursor-pointer"
+            >
+              <Play :size="18" class="fill-current" />
+              Watch Trailer
+            </button>
+
             <!-- Watchlist and Options Wrapper -->
             <div class="flex items-center gap-3 w-full sm:w-auto">
               <!-- Watchlist -->
@@ -212,7 +223,7 @@
                 <button
                   v-if="!authStore.isAuthenticated"
                   @click="router.push('/login')"
-                  class="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-surface-2/60 backdrop-blur-md text-white rounded-full font-bold hover:bg-surface-3 transition-colors border border-white/10 whitespace-nowrap"
+                  class="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-surface-2/80 backdrop-blur-md text-text rounded-full font-bold hover:bg-surface-3 transition-colors border border-border whitespace-nowrap"
                 >
                   Sign in
                 </button>
@@ -220,7 +231,7 @@
                   <button
                     v-if="!isInWatchlist"
                     @click="addToWatchlist"
-                    class="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-surface-2/60 backdrop-blur-md text-white rounded-full font-bold hover:bg-surface-3 hover:border-white/30 active:scale-95 transition-all border border-white/10 whitespace-nowrap"
+                    class="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-surface-2/80 backdrop-blur-md text-text rounded-full font-bold hover:bg-surface-3 hover:border-primary/50 active:scale-95 transition-all border border-border whitespace-nowrap"
                   >
                     <Plus :size="20" />
                     Add to Watchlist
@@ -309,13 +320,13 @@
               >
                 <button
                   @click="moreOptionsOpen = !moreOptionsOpen"
-                  class="w-12 h-12 sm:w-13 sm:h-13 flex items-center justify-center rounded-full bg-surface-2/60 backdrop-blur-md border border-white/10 hover:bg-surface-3 transition-colors text-white/70 hover:text-white"
+                  class="w-12 h-12 sm:w-13 sm:h-13 flex items-center justify-center rounded-full bg-surface-2/80 backdrop-blur-md border border-border hover:bg-surface-3 transition-colors text-text-muted hover:text-text"
                 >
                   <MoreHorizontal :size="20" />
                 </button>
                 <div
                   v-if="moreOptionsOpen"
-                  class="absolute top-full right-0 mt-2 w-40 bg-surface-2/95 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl z-50 flex flex-col gap-1"
+                  class="absolute top-full right-0 mt-2 w-40 bg-surface-2/95 backdrop-blur-xl border border-border rounded-2xl p-2 shadow-2xl z-50 flex flex-col gap-1"
                 >
                   <button
                     @click="blockShow"
@@ -331,7 +342,7 @@
 
           <!-- Synopsis -->
           <div class="mt-2">
-            <p class="text-lg text-white/70 leading-relaxed font-sans max-w-4xl">
+            <p class="text-lg text-text/80 leading-relaxed font-sans max-w-4xl">
               {{ show.description || 'No overview available.' }}
             </p>
           </div>
@@ -340,7 +351,7 @@
 
       <!-- TABS NAVIGATION -->
       <div
-        class="mt-12 sticky top-17 z-30 bg-surface-0/90 backdrop-blur-md border-b border-white/10 px-6 md:px-12 transition-all"
+        class="mt-12 sticky top-17 z-30 bg-surface-0/90 backdrop-blur-md border-b border-border px-6 md:px-12 transition-all"
         :class="showStickyHeader ? 'top-17' : 'top-0'"
       >
         <div class="max-w-7xl mx-auto flex gap-8">
@@ -348,7 +359,7 @@
             @click="activeTab = 'overview'"
             :class="[
               'pb-4 text-base font-bold transition-colors relative',
-              activeTab === 'overview' ? 'text-white' : 'text-white/50 hover:text-white/80'
+              activeTab === 'overview' ? 'text-primary' : 'text-text-muted hover:text-text'
             ]"
           >
             Overview
@@ -361,7 +372,7 @@
             @click="switchToEpisodes"
             :class="[
               'pb-4 text-base font-bold transition-colors relative',
-              activeTab === 'episodes' ? 'text-white' : 'text-white/50 hover:text-white/80'
+              activeTab === 'episodes' ? 'text-primary' : 'text-text-muted hover:text-text'
             ]"
           >
             Episodes
@@ -375,7 +386,7 @@
             @click="switchToSpecials"
             :class="[
               'pb-4 text-base font-bold transition-colors relative flex items-center gap-1.5',
-              activeTab === 'specials' ? 'text-white' : 'text-white/50 hover:text-white/80'
+              activeTab === 'specials' ? 'text-primary' : 'text-text-muted hover:text-text'
             ]"
           >
             <Sparkles :size="15" class="text-amber-400" />
@@ -389,7 +400,7 @@
             @click="activeTab = 'cast'"
             :class="[
               'pb-4 text-base font-bold transition-colors relative',
-              activeTab === 'cast' ? 'text-white' : 'text-white/50 hover:text-white/80'
+              activeTab === 'cast' ? 'text-primary' : 'text-text-muted hover:text-text'
             ]"
           >
             Cast & Crew
@@ -403,7 +414,7 @@
             @click="activeTab = 'related'"
             :class="[
               'pb-4 text-base font-bold transition-colors relative',
-              activeTab === 'related' ? 'text-white' : 'text-white/50 hover:text-white/80'
+              activeTab === 'related' ? 'text-primary' : 'text-text-muted hover:text-text'
             ]"
           >
             More Like This
@@ -427,14 +438,14 @@
             v-if="displayTrailers.length"
             class="flex flex-col gap-5"
           >
-            <h2 class="text-2xl font-heading font-bold text-white flex items-baseline gap-3">
+            <h2 class="text-2xl font-heading font-bold text-text flex items-baseline gap-3">
               Trailers & Clips
             </h2>
             <div class="flex overflow-x-auto gap-4 md:gap-6 pb-6 pt-2 snap-x hide-scrollbar">
               <div
                 v-for="video in displayTrailers"
                 :key="video.id"
-                @click="playVideo(video.url)"
+                @click="playVideo(video.url, video.trailer_key)"
                 class="flex flex-col gap-3 w-64 md:w-80 shrink-0 snap-start group cursor-pointer"
               >
                 <div
@@ -461,7 +472,7 @@
                   </div>
                 </div>
                 <div class="flex flex-col w-full px-1">
-                  <div class="text-sm md:text-base font-bold text-white leading-tight line-clamp-1">
+                  <div class="text-sm md:text-base font-bold text-text leading-tight line-clamp-1">
                     {{ video.title }}
                   </div>
                   <div class="text-xs text-text-muted mt-1">{{ video.type }}</div>
@@ -472,7 +483,7 @@
 
           <!-- Specific Details Grid -->
           <div
-            class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 p-5 md:p-8 rounded-3xl bg-surface-1 border border-white/5"
+            class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 p-5 md:p-8 rounded-3xl bg-surface-1 border border-border"
           >
             <div
               v-if="show.first_air_date"
@@ -483,7 +494,7 @@
               >
                 First Aired
               </span>
-              <span class="text-sm md:text-base font-medium text-white">
+              <span class="text-sm md:text-base font-medium text-text">
                 {{
                   new Date(show.first_air_date).toLocaleDateString(undefined, {
                     year: 'numeric',
@@ -502,7 +513,7 @@
               >
                 Network
               </span>
-              <span class="text-sm md:text-base font-medium text-white">{{ show.network }}</span>
+              <span class="text-sm md:text-base font-medium text-text">{{ show.network }}</span>
             </div>
             <div class="flex flex-col gap-1">
               <span
@@ -510,7 +521,7 @@
               >
                 Status
               </span>
-              <span class="text-sm md:text-base font-medium text-white capitalize">
+              <span class="text-sm md:text-base font-medium text-text capitalize">
                 {{ prettyStatus(show.status) }}
               </span>
             </div>
@@ -524,34 +535,34 @@
         >
           <!-- Header / Controls -->
           <div class="flex flex-wrap items-center justify-between gap-4">
-            <h2 class="text-2xl font-heading font-bold text-white hidden md:block">
+            <h2 class="text-2xl font-heading font-bold text-text hidden md:block">
               {{ activeTab === 'specials' ? 'Special Episodes' : 'Episodes' }}
             </h2>
             <div
               class="flex items-center gap-3 relative ml-auto w-full md:w-auto overflow-x-auto hide-scrollbar"
             >
               <button
-                class="shrink-0 flex items-center gap-2 px-4 py-2 bg-surface-2 hover:bg-surface-3 transition-colors rounded-full text-white font-medium border border-white/10 text-sm"
+                class="shrink-0 flex items-center gap-2 px-4 py-2 bg-surface-2 hover:bg-surface-3 transition-colors rounded-full text-text font-medium border border-border text-sm"
               >
                 <Star
                   :size="16"
-                  class="text-white/50"
+                  class="text-text-muted"
                 />
                 Ratings
               </button>
               <button
-                class="shrink-0 flex items-center gap-2 px-4 py-2 bg-surface-2 hover:bg-surface-3 transition-colors rounded-full text-white font-medium border border-white/10 text-sm"
+                class="shrink-0 flex items-center gap-2 px-4 py-2 bg-surface-2 hover:bg-surface-3 transition-colors rounded-full text-text font-medium border border-border text-sm"
               >
                 <ArrowDownUp
                   :size="16"
-                  class="text-white/50"
+                  class="text-text-muted"
                 />
                 Oldest
               </button>
               <button
                 @click="toggleCurrentSeasonWatched"
                 :disabled="bulkMarkingLoading || !activeSeasonEpisodes.length"
-                class="shrink-0 flex items-center gap-2 px-4 py-2 bg-surface-2 hover:bg-surface-3 transition-colors rounded-full text-white font-medium border border-white/10 text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                class="shrink-0 flex items-center gap-2 px-4 py-2 bg-surface-2 hover:bg-surface-3 transition-colors rounded-full text-text font-medium border border-border text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <Loader2
                   v-if="bulkMarkingLoading"
@@ -561,7 +572,7 @@
                 <CheckCircle2
                   v-else
                   :size="16"
-                  :class="isCurrentSeasonAllWatched ? 'text-primary fill-primary/20' : 'text-white/50'"
+                  :class="isCurrentSeasonAllWatched ? 'text-primary fill-primary/20' : 'text-text-muted'"
                 />
                 <span>{{ isCurrentSeasonAllWatched ? 'Season Watched' : 'Mark Season Watched' }}</span>
               </button>
@@ -572,14 +583,14 @@
               >
                 <button
                   @click="seasonMenuOpen = !seasonMenuOpen"
-                  class="flex items-center gap-2 px-4 py-2 bg-surface-2 hover:bg-surface-3 transition-colors rounded-full text-white font-medium border border-white/10 text-sm"
+                  class="flex items-center gap-2 px-4 py-2 bg-surface-2 hover:bg-surface-3 transition-colors rounded-full text-text font-medium border border-border text-sm"
                 >
                   {{ activeSeason?.title || (activeTab === 'specials' ? 'Specials' : 'Season 1') }}
                   <ChevronDown :size="16" />
                 </button>
                 <div
                   v-if="seasonMenuOpen"
-                  class="absolute top-full right-0 mt-2 w-52 bg-surface-2/95 backdrop-blur-xl border border-white/10 rounded-2xl p-2 shadow-2xl z-50 flex flex-col gap-1 max-h-64 overflow-y-auto hide-scrollbar"
+                  class="absolute top-full right-0 mt-2 w-52 bg-surface-2/95 backdrop-blur-xl border border-border rounded-2xl p-2 shadow-2xl z-50 flex flex-col gap-1 max-h-64 overflow-y-auto hide-scrollbar"
                 >
                   <button
                     v-for="season in regularSeasons"
@@ -720,10 +731,10 @@
                 </div>
                 <!-- Details -->
                 <div class="flex flex-col w-full px-1">
-                  <h3 class="text-sm md:text-base font-bold text-white leading-tight line-clamp-1">
+                  <h3 class="text-sm md:text-base font-bold text-text leading-tight line-clamp-1">
                     {{ episode.title }}
                   </h3>
-                  <p class="text-xs md:text-sm text-white/50 mt-1 line-clamp-2 leading-relaxed">
+                  <p class="text-xs md:text-sm text-text-muted mt-1 line-clamp-2 leading-relaxed">
                     {{ episode.overview || 'No overview available.' }}
                   </p>
                 </div>
@@ -768,7 +779,7 @@
                 </div>
               </div>
               <div class="text-center w-full">
-                <div class="text-base font-bold text-white line-clamp-2 leading-tight">
+                <div class="text-base font-bold text-text line-clamp-2 leading-tight">
                   {{ member.name }}
                 </div>
                 <div class="text-sm text-text-muted line-clamp-1 mt-1">
@@ -802,38 +813,13 @@
     </div>
 
     <!-- Trailer Modal -->
-    <div
-      v-if="showTrailer"
-      class="fixed inset-0 z-100 flex flex-col items-center justify-center bg-black/95 p-4 sm:p-10 backdrop-blur-md"
-    >
-      <div class="w-full max-w-6xl flex justify-end mb-4">
-        <button
-          @click="showTrailer = false"
-          class="flex items-center gap-2 text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full backdrop-blur-md"
-        >
-          Close
-          <X :size="20" />
-        </button>
-      </div>
-      <div
-        class="w-full max-w-6xl aspect-video bg-black relative rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10"
-      >
-        <iframe
-          v-if="embedUrl"
-          class="w-full h-full"
-          :src="embedUrl"
-          frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen
-        ></iframe>
-        <div
-          v-else
-          class="w-full h-full flex items-center justify-center text-white"
-        >
-          Invalid trailer URL.
-        </div>
-      </div>
-    </div>
+    <TrailerModal
+      v-model:visible="showTrailer"
+      :trailer-key="activeTrailerKey"
+      :video-url="activeVideoUrl"
+      :title="show?.title"
+      media-type="tv"
+    />
   </div>
 </template>
 
@@ -841,6 +827,7 @@
   import { computed, onMounted, ref, onBeforeUnmount, watch } from 'vue';
   import AppImage from '@/components/AppImage.vue';
   import MediaCard from '@/components/MediaCard.vue';
+  import TrailerModal from '@/components/TrailerModal.vue';
   import { RouterLink, useRoute, useRouter } from 'vue-router';
   import { useTvStore } from '@/stores/tvStore';
   import { useWatchlistStore } from '@/stores/watchListStore';
@@ -857,12 +844,12 @@
   import { getErrorMessage } from '@/services/errorUtils';
   import { useAuthStore } from '@/stores/authStore';
   import { usePreferencesStore } from '@/stores/preferencesStore';
+  import { useTelemetry } from '@/composables/useTelemetry';
   import {
     AlertCircle,
     Tv,
     ArrowLeft,
     Play,
-    X,
     Plus,
     Bookmark,
     PlayCircle,
@@ -886,6 +873,7 @@
   const authStore = useAuthStore();
   const preferencesStore = usePreferencesStore();
   const showToast = toastHandler().showToast;
+  const telemetry = useTelemetry();
 
   const show = ref<TVShowWithDetails | null>(null);
   const loading = ref(true);
@@ -902,6 +890,7 @@
   // UI State
   const showTrailer = ref(false);
   const activeVideoUrl = ref<string>('');
+  const activeTrailerKey = ref<string>('');
   const watchlistMenuOpen = ref(false);
   const moreOptionsOpen = ref(false);
   const seasonMenuOpen = ref(false);
@@ -909,6 +898,11 @@
   const moreOptionsRef = ref<HTMLElement | null>(null);
   const seasonDropdownRef = ref<HTMLElement | null>(null);
   const episodesContainerRef = ref<HTMLElement | null>(null);
+
+  const hasTrailer = computed(() => {
+    if (!show.value) return false;
+    return !!(show.value.tmdb_trailer_key || show.value.trailer_url);
+  });
 
   const VALID_TABS = ['overview', 'episodes', 'specials', 'cast', 'related'] as const;
   type TabType = (typeof VALID_TABS)[number];
@@ -1200,7 +1194,16 @@
   const displayTrailers = computed(() => {
     if (!show.value) return [];
     const trailers = [];
-    if (show.value.trailer_url) {
+    if (show.value.tmdb_trailer_key) {
+      trailers.push({
+        id: 1,
+        title: `${show.value.title} Official Trailer`,
+        type: 'Trailer',
+        trailer_key: show.value.tmdb_trailer_key,
+        url: `https://www.youtube.com/watch?v=${show.value.tmdb_trailer_key}`,
+        thumbnail_url: `https://img.youtube.com/vi/${show.value.tmdb_trailer_key}/hqdefault.jpg`,
+      });
+    } else if (show.value.trailer_url) {
       trailers.push({
         id: 1,
         title: `${show.value.title} Official Trailer`,
@@ -1209,7 +1212,7 @@
         thumbnail_url:
           show.value.backdrop_url ||
           show.value.poster_url ||
-          ''
+          '',
       });
     }
     return trailers;
@@ -1221,22 +1224,23 @@
   });
   // ----------------------------
 
-  function playVideo(url: string) {
-    activeVideoUrl.value = url;
+  function playVideo(url: string, key?: string) {
+    activeVideoUrl.value = url || '';
+    activeTrailerKey.value = key || '';
     showTrailer.value = true;
+    if (show.value?.id) {
+      telemetry.trackTrailerPlay('tv', show.value.id);
+    }
   }
 
-  const embedUrl = computed(() => {
-    if (!activeVideoUrl.value) return '';
-    const url = activeVideoUrl.value;
-    let videoId = '';
-    if (url.includes('youtube.com/watch?v=')) {
-      videoId = url.split('v=')[1]?.split('&')[0] ?? '';
-    } else if (url.includes('youtu.be/')) {
-      videoId = url.split('youtu.be/')[1]?.split('?')[0] ?? '';
+  function openTrailerModal(key?: string, url?: string) {
+    activeTrailerKey.value = key || show.value?.tmdb_trailer_key || '';
+    activeVideoUrl.value = url || show.value?.trailer_url || '';
+    showTrailer.value = true;
+    if (show.value?.id) {
+      telemetry.trackTrailerPlay('tv', show.value.id);
     }
-    return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : url;
-  });
+  }
 
   function prettyStatus(status: string) {
     return status.replace(/_/g, ' ');
@@ -1249,6 +1253,9 @@
       const uuid = route.params.uuid as string;
       if (!uuid) throw new Error('Invalid show ID');
       show.value = await tvStore.fetchShowById(uuid);
+      if (show.value?.id) {
+        telemetry.trackPageView('tv', show.value.id);
+      }
 
       // Fetch similar shows
       tvStore

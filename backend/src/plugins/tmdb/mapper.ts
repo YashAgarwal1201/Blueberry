@@ -218,6 +218,7 @@ export function mapTMDBTV(raw: TMDBTVDetails): PluginTVPayload {
 
     tmdb_poster_path: raw.poster_path ?? undefined,
     tmdb_backdrop_path: raw.backdrop_path ?? undefined,
+    tmdb_trailer_key: pickTrailerKey(raw.videos),
 
     genre_slugs: raw.genres?.map((g) => tmdbGenreToSlug(g.name)) ?? [],
     language_codes: raw.spoken_languages?.map((l) => l.iso_639_1) ?? [],

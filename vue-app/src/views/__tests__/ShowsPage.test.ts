@@ -30,11 +30,15 @@ describe('ShowsPage.vue', () => {
 
   it('renders correctly and fetches initial data', async () => {
     const tvStore = useTvStore()
+    tvStore.fetchTrendingShows = vi.fn().mockResolvedValue({})
+    tvStore.fetchPopularShows = vi.fn().mockResolvedValue({})
     tvStore.fetchRecentShows = vi.fn().mockResolvedValue({})
     tvStore.fetchTopRatedShows = vi.fn().mockResolvedValue({})
     
     // Set loading to true so sections render
     tvStore.loading = true
+    tvStore.loadingTrending = true
+    tvStore.loadingPopular = true
     tvStore.loadingTopRated = true
     tvStore.loadingRecent = true
 
@@ -44,16 +48,22 @@ describe('ShowsPage.vue', () => {
           HeroCarousel: true,
           MediaCarousel: true,
           MediaCard: true,
-          MediaDrawer: true
+          Top10Card: true,
+          MediaDrawer: true,
+          RouterLink: true
         }
       }
     })
 
     // It should render sections
+    expect(wrapper.text()).toContain('Trending Series')
+    expect(wrapper.text()).toContain('Most Popular Series')
     expect(wrapper.text()).toContain('Top Rated TV Shows')
     expect(wrapper.text()).toContain('Recent TV Shows')
 
     // It should have called the fetch methods on mount
+    expect(tvStore.fetchTrendingShows).toHaveBeenCalled()
+    expect(tvStore.fetchPopularShows).toHaveBeenCalled()
     expect(tvStore.fetchTopRatedShows).toHaveBeenCalled()
     expect(tvStore.fetchRecentShows).toHaveBeenCalled()
   })

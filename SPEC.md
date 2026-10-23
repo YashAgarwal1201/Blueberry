@@ -374,3 +374,266 @@ For all future development and AI-assisted pair programming, the following rules
 | **Image Resolution** | **No hardcoded CDN domains in database.** Use `resolveImageUrl` at runtime. All `<img>` tags must include `loading="lazy"` and `decoding="async"`. |
 | **Vue Template Formatting** | **No multiline ternaries in template interpolations.** Always extract multiline conditions or complex strings into `<script setup>` `computed()` properties to prevent prettier/linter string-wrap syntax errors. |
 | **Build Stability** | `npm run build` must cleanly exit 0 with zero TypeScript errors across all monorepo packages at all times. |
+
+---
+
+## 10. Native Discovery & Ranking Engine (BMCE)
+
+Blueberry employs an in-house, zero-dependency discovery engine: the **Blueberry Momentum & Consensus Engine (BMCE)**. It operates entirely on first-party relational data and client interaction beacons, intentionally rejecting external 3rd-party ranking APIs (e.g. TMDB trending) and cloud AI services to guarantee maximum privacy, zero network latency, and deterministic reproducibility.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│               BLUEBERRY MOMENTUM & CONSENSUS ENGINE (BMCE)             │
+├────────────────────────────────────────────────────────────────────────┤
+│ 1. First-Party Relational Vectors (Watchlist, Ratings, Episodes)       │
+│ 2. Ephemeral Telemetry Ledger (`media_events`, 2h debounce, 30d TTL)   │
+│ 3. Trending Feed: Exponential Half-Life Velocity with Gravity Decay    │
+│ 4. Popular Feed: Bayesian Weighted Ratings + Log-Dampened Engagement   │
+│ 5. Cold-Start Fallback: Smooth Catalog Freshness & Consensus Blending  │
+│ 6. Anti-Brigading: Per-User Satiety Capping & Sliding Debouncing       │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 10.1 Signal Vectors & Signed Sentiment Matrix
+
+User actions map to an **Intent Hierarchy** with calibrated signed weights ($W$). High-friction commitments (ratings, favorites, full completions) carry substantial weight, while passive exploration (views, search clicks) carries lighter weight. Critically, **negative intent actively penalizes discovery scores**:
+
+| Signal Vector | Event Key | Weight ($W$) | Source | Intent Classification |
+| :--- | :--- | :---: | :--- | :--- |
+| **Liked / Favorited** | `liked` | `+4.0` | `watchlist.liked` | Explicit High Commitment |
+| **Status: Completed** | `status_completed` | `+4.0` | `watchlist.status` | Full Consumption & Satisfaction |
+| **Status: Watching** | `status_watching` | `+3.0` | `watchlist.status` | Active In-Progress Consumption |
+| **Status: Plan to Watch** | `status_plan` | `+2.0` | `watchlist.status` | High Anticipation |
+| **Status: On Hold** | `status_hold` | `+0.5` | `watchlist.status` | Paused Interest |
+| **Status: Dropped** | `status_dropped` | `-3.0` | `watchlist.status` | **Negative Sentiment / Churn** |
+| **User Rating** | `rating` | `(r - 5.0) × 1.5` | `watchlist.user_rating` | Linear Sentiment Scaled (-6.0 to +7.5) |
+| **Trailer Played** | `trailer_play` | `+2.5` | Telemetry Beacon | Active Pre-Watch Evaluation |
+| **Episode Watched** | `episode_watch` | `+1.5` | `user_watched_episodes` | Sustained Episodic Engagement |
+| **Search Click-Through**| `search_click` | `+1.2` | Telemetry Beacon | Specific Discovery Intent |
+| **Page Visited** | `page_view` | `+0.5` | Telemetry Beacon | Low-Friction Impression |
+
+---
+
+### 10.2 Trending Algorithm: Exponential Half-Life Velocity
+
+The **Trending Feed** measures *real-time momentum, velocity, and community excitement*. Instead of naive, cliff-like sliding windows ("only past 7 days"), BMCE uses a continuous **Exponential Half-Life Velocity Decay** with anti-brigading limits:
+
+$$\text{Score}_{\text{trending}}(M) = S_{\text{recent}}(M) + S_{\text{freshness}}(M)$$
+
+#### Component 1: Time-Decayed User Engagement ($S_{\text{recent}}$)
+All events within a 30-day cutoff ($0 \le \Delta t \le 30.0\text{ days}$) are decayed continuously based on their age:
+
+$$\Delta t = \frac{\text{now}() - t_e}{86,400\text{ seconds}}$$
+
+$$\text{Decay}(\Delta t) = 2^{-\frac{\Delta t}{T_{\text{half}}}} \quad \text{where } T_{\text{half}} = 4.0\text{ days}$$
+
+* **Decay Curve**:
+  * $\Delta t = 0\text{ days (Today)}$: $\text{Decay} = 1.000$ (100% full strength)
+  * $\Delta t = 4\text{ days}$: $\text{Decay} = 0.500$ (50% strength)
+  * $\Delta t = 8\text{ days}$: $\text{Decay} = 0.250$ (25% strength)
+  * $\Delta t = 16\text{ days}$: $\text{Decay} = 0.0625$ (6.25% strength)
+  * $\Delta t \ge 30\text{ days}$: Pruned from calculation ($\approx 0.5\%$).
+
+#### Anti-Brigading User Saturation Cap:
+To prevent a single user or bot from single-handedly forcing a movie to trend by repeatedly clicking or toggling states:
+$$\text{UserContribution}(u, M) = \sum_{e \in E(u, M)} W(e) \cdot \text{Decay}(\Delta t_e)$$
+$$\text{CappedContribution}(u, M) = \operatorname{sgn}(\text{UserContribution}) \cdot \min\left(|\text{UserContribution}|, 15.0\right)$$
+$$S_{\text{recent}}(M) = \sum_{u} \text{CappedContribution}(u, M)$$
+*(No individual user account or session can contribute more than $\pm 15.0$ net points to any single title's 30-day trending score).*
+
+#### Component 2: Cold-Start Catalog Freshness ($S_{\text{freshness}}$)
+Guarantees that when a library is newly initialized (or during low-traffic periods), the Trending feed displays fresh, high-quality releases rather than an empty carousel:
+
+$$S_{\text{freshness}}(M) = 10.0 \times \text{RecencyFactor}(M) \times \left(\frac{\text{rating\_imdb}}{10.0}\right)$$
+
+Where $\text{AgeYears} = \max(0, Y_{\text{current}} - Y_{\text{release}})$:
+* $\text{AgeYears} = 0\text{ (Current Year)}$: $\text{RecencyFactor} = 1.0$ (Max $10.0$ pts)
+* $\text{AgeYears} = 1\text{ (Previous Year)}$: $\text{RecencyFactor} = 0.5$ (Max $5.0$ pts)
+* $\text{AgeYears} \ge 2$: $\text{RecencyFactor} = \max\left(0.0, 0.2 \cdot 2^{-(\text{AgeYears} - 2)}\right)$
+* If $\text{rating\_imdb}$ is null, it defaults to the catalog median of $6.5$.
+
+---
+
+### 10.3 Popular Algorithm: Bayesian Consensus & Log-Dampened Engagement
+
+The **Popular Feed** measures *all-time depth of appreciation and widespread community consensus*. It combines Bayesian weighted quality with logarithmic traffic dampening:
+
+$$\text{Score}_{\text{popular}}(M) = S_{\text{rating}}(M) + S_{\text{commitment}}(M) + S_{\text{traffic}}(M)$$
+
+#### Component 1: Bayesian Rating Consensus ($S_{\text{rating}}$)
+Eliminates the "One 10/10 vote" distortion using an informative prior based on the item's external IMDb rating:
+
+$$S_{\text{rating}}(M) = 5.0 \times WR(M)$$
+
+$$WR(M) = \frac{v_{\text{local}} \cdot \bar{R}_{\text{local}} + m \cdot C}{v_{\text{local}} + m}$$
+
+* $v_{\text{local}}$: Number of internal user ratings submitted in `watchlist.user_rating`.
+* $\bar{R}_{\text{local}}$: Mean average of internal user ratings (1 to 10 scale).
+* $m = 5$: Prior confidence weight (requires 5 local ratings to reach 50% local influence).
+* $C = \text{rating\_imdb}$ (or $6.5$ if null): The title's informative external baseline prior.
+* *Properties*:
+  * When $v_{\text{local}} = 0$: $WR(M) = \text{rating\_imdb}$ (a classic with 8.8 IMDb starts at 8.8, scaled to 44.0 pts).
+  * A single user rating a title 10/10 only shifts an 8.0 title to $\frac{10 + 40}{6} = 8.33$ pts.
+  * 20 agreeing local users shift the score to $\frac{200 + 40}{25} = 9.60$ pts.
+
+#### Component 2: Cumulative User Commitment ($S_{\text{commitment}}$)
+Rewards broad unique user additions and penalizes abandonment:
+$$S_{\text{commitment}}(M) = \max\left(0, 6.0 \cdot N_{\text{likes}} + 5.0 \cdot N_{\text{completed}} + 3.0 \cdot N_{\text{watching}} + 2.0 \cdot N_{\text{plan}} - 4.0 \cdot N_{\text{dropped}}\right)$$
+*(Where $N_x$ is the count of unique users holding status $x$).*
+
+#### Component 3: Log-Dampened Unique Traffic ($S_{\text{traffic}}$)
+Ensures views contribute to popularity with diminishing marginal returns (Reddit rule):
+$$S_{\text{traffic}}(M) = 4.0 \times \ln(1 + N_{\text{unique\_views}})$$
+* $1\text{ view} = +2.77\text{ pts}$
+* $10\text{ views} = +9.59\text{ pts}$
+* $50\text{ views} = +15.72\text{ pts}$
+* $500\text{ views} = +24.86\text{ pts}$
+
+---
+
+### 10.4 Concrete Numerical Calculation Examples
+
+To demonstrate deterministic scoring, consider three distinct movie profiles in a 2026 instance:
+
+#### Movie A: *Inception* (2010 Classic)
+* Catalog: $Y_{\text{release}} = 2010$ ($\text{Age} = 16$), $\text{IMDb} = 8.8$.
+* Historical DB: 25 distinct watchlists (15 completed, 6 plan, 4 liked, 0 dropped). 10 local user ratings averaging $9.2$. 150 unique views.
+* Past 30 Days Activity: 0 new views, 0 new watchlist adds.
+* **Calculations**:
+  * $S_{\text{freshness}} = 10.0 \times 0.0001 \times 0.88 = 0.001$
+  * $S_{\text{recent}} = 0.0$
+  * $\mathbf{Score_{\text{trending}} = 0.001}$ $\rightarrow$ **Does NOT trend.**
+  * $WR = \frac{10 \times 9.2 + 5 \times 8.8}{15} = 9.066 \implies S_{\text{rating}} = 45.33$
+  * $S_{\text{commitment}} = 6(4) + 5(15) + 2(6) = 24 + 75 + 12 = 111.0$
+  * $S_{\text{traffic}} = 4.0 \times \ln(151) = 20.07$
+  * $\mathbf{Score_{\text{popular}} = 45.33 + 111.0 + 20.07 = 176.40}$ $\rightarrow$ **Ranks near #1 in Popular!**
+
+#### Movie B: *Challengers: Edge of Tomorrow* (2026 New Release)
+* Catalog: $Y_{\text{release}} = 2026$ ($\text{Age} = 0$), $\text{IMDb} = 7.6$.
+* Historical DB: 8 watchlists (2 completed, 6 plan, 2 liked). 1 local rating of $8.0$. 35 unique views.
+* Past 30 Days Activity:
+  * 3 days ago: User 1 liked ($+4 \times 0.59 = 2.36$), completed ($+4 \times 0.59 = 2.36$), rated 8 ($+4.5 \times 0.59 = 2.66$).
+  * 1 day ago: 4 trailer plays ($+2.5 \times 0.84 = 2.10$ each $\implies 8.40$).
+  * Today: 10 page views ($+0.5 \times 1.0 = 5.00$), 4 plan-to-watch adds ($+2.0 \times 1.0 = 8.00$).
+* **Calculations**:
+  * $S_{\text{freshness}} = 10.0 \times 1.0 \times 0.76 = 7.60$
+  * $S_{\text{recent}} = (2.36 + 2.36 + 2.66) + 8.40 + 5.00 + 8.00 = 28.78$ (all users well below $\pm 15$ cap).
+  * $\mathbf{Score_{\text{trending}} = 28.78 + 7.60 = 36.38}$ $\rightarrow$ **Ranks #1 in Trending!**
+  * $WR = \frac{1(8.0) + 5(7.6)}{6} = 7.66 \implies S_{\text{rating}} = 38.33$
+  * $S_{\text{commitment}} = 6(2) + 5(2) + 2(6) = 34.0$
+  * $S_{\text{traffic}} = 4.0 \times \ln(36) = 14.33$
+  * $\mathbf{Score_{\text{popular}} = 38.33 + 34.0 + 14.33 = 86.66}$ $\rightarrow$ **Moderate Popularity.**
+
+#### Movie C: *Heavily Hyped Flop* (2025 Release)
+* Catalog: $Y_{\text{release}} = 2025$ ($\text{Age} = 1$), $\text{IMDb} = 4.2$.
+* Historical DB: 15 watchlists (12 marked `dropped`, 0 liked, 8 ratings averaging $3.0$).
+* Past 30 Days Activity: 5 users marked `dropped` 2 days ago ($5 \times -3.0 \times 0.707 = -10.60$).
+* **Calculations**:
+  * $S_{\text{freshness}} = 10.0 \times 0.5 \times 0.42 = 2.10$
+  * $S_{\text{recent}} = -10.60$
+  * $\mathbf{Score_{\text{trending}} = \max(0, -10.60 + 2.10) = 0.0}$ $\rightarrow$ **Completely suppressed.**
+  * $S_{\text{commitment}} = \max(0, -4.0 \times 12) = 0.0$
+  * $\mathbf{Score_{\text{popular}} = 15.0 + 0 + 6.0 = 21.0}$ $\rightarrow$ **Bottom of catalog.**
+
+---
+
+### 10.5 SQL Query Implementation & Efficiency
+
+To maintain lightning-fast response times on SQLite without running slow table scans, queries execute in **two disciplined stages**:
+
+#### Stage 1: Fast SQL Grouped Aggregations (SQLite Indexed)
+```sql
+-- 1. Recent In-Memory Event Aggregation (Last 30 Days)
+SELECT 
+  media_id,
+  event_type,
+  -- Calculate day delta bucket: 0-3d (bucket 0), 4-7d (bucket 1), 8-15d (bucket 2), 16-30d (bucket 3)
+  CAST((julianday('now') - julianday(created_at)) / 4.0 AS INTEGER) AS half_life_intervals,
+  COUNT(*) as event_count
+FROM media_events
+WHERE media_type = 'movie' 
+  AND created_at >= datetime('now', '-30 days')
+GROUP BY media_id, event_type, half_life_intervals;
+
+-- 2. Watchlist Aggregation for Popularity
+SELECT 
+  movie_id,
+  COUNT(CASE WHEN liked = 1 THEN 1 END) as like_count,
+  COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_count,
+  COUNT(CASE WHEN status = 'watching' THEN 1 END) as watching_count,
+  COUNT(CASE WHEN status = 'plan_to_watch' THEN 1 END) as plan_count,
+  COUNT(CASE WHEN status = 'dropped' THEN 1 END) as dropped_count,
+  AVG(user_rating) as avg_rating,
+  COUNT(user_rating) as rating_count
+FROM watchlist
+WHERE movie_id IS NOT NULL
+GROUP BY movie_id;
+```
+
+#### Stage 2: In-Memory Projection with Column Pruning & 60-Second Memoization
+1. **60-Second Server Memoization Cache**: To eliminate redundant SQLite compute when multiple users or tabs load the application concurrently, the server memoizes the evaluated Top 20 results for `/movies/trending`, `/movies/popular`, `/tv/trending`, and `/tv/popular` in an in-memory cache with a **60-second TTL**.
+   * *Lookback Horizon (30 Days)*: How far back historical events are weighted by the half-life algorithm.
+   * *Cache TTL (60 Seconds)*: How frequently the server re-runs the calculation to capture new clicks.
+   * *Performance*: Repeat requests execute in < 1ms from RAM.
+2. The backend service (`backend/src/services/feedRanking.ts`) combines the aggregated weights in a single pass into a lightweight `Map<number, number>`, selects the top 20 IDs, and queries `movies` using explicit column projections (`movieCardSelection`) to guarantee zero `SELECT *` list query overhead.
+
+---
+
+### 10.6 Dynamic Multi-Tier Identity Cascade & Telemetry Contract
+
+Real-world production environments introduce edge cases where naive IP hashing fails—such as multiple family members sharing the same home Wi-Fi NAT (single public IP) or mobile devices rotating IPs across cell towers. BMCE solves this with a **Dynamic Multi-Tier Identity Cascade**:
+
+```
+                              Incoming Telemetry Beacon
+                                        │
+                    ┌───────────────────┴───────────────────┐
+                    ▼                                       ▼
+          Is User Logged In?                      Is User Anonymous?
+                    │                                       │
+        [YES] ──────┴────── [NO]                            ▼
+          │                   │                Extract Client Device UUID
+          ▼                   ▼                   (from localStorage)
+Use Authenticated       Check Client                        │
+     User ID             Device UUID                        ▼
+          │                   │                 Combine with Network Salt:
+          │                   │             HMAC-SHA256(ClientUUID + Salt, Subnet)
+          │                   │                             │
+          └───────────────────┼─────────────────────────────┘
+                              │
+                              ▼
+                   Final Composite Identity:
+        1. Differentiates 2 devices on the same home Wi-Fi.
+        2. Blocks automated bots cycling fake UUIDs from one IP.
+        3. Preserves total privacy (raw IP is never stored).
+```
+
+* **Tier 1 (Authenticated)**: If `c.get("user")` is present, identity = `user.id`.
+* **Tier 2 (Client Device UUID)**: For anonymous users, the frontend generates a stable UUID stored in `localStorage` (`blueberry_device_id`). This guarantees two household members on the same Wi-Fi are counted independently.
+* **Tier 3 (Network Entropy & Bot Defense)**: Backend computes `HMAC-SHA256(deviceId + serverDailySecret, clientSubnet)`. A bot script cycling fake UUIDs from a single IP is throttled by subnet bounds.
+
+#### Telemetry Ingestion Contract:
+* **Endpoint**: `POST /api/telemetry/event`
+* **Request Payload**:
+  ```json
+  {
+    "media_type": "movie",
+    "media_id": 142,
+    "event_type": "page_view",
+    "device_id": "c1f7a228-09db-4e2a-9ad9-6d8b3756b102"
+  }
+  ```
+* **Sliding Cooldown Protection**:
+  * Backend maintains an in-memory `Map<string, number>` keyed by `${compositeIdentity}:${media_type}:${media_id}:${event_type}`.
+  * If `Date.now() - lastRecorded < 7,200,000ms` (2 hours), the endpoint returns `200 { success: true, recorded: false }` without writing to the database.
+  * The debounce map is pruned every 15 minutes of entries older than 2 hours.
+* **Storage Pruning**:
+  * At server startup and every 24 hours, an automated cleanup task executes:
+    ```sql
+    DELETE FROM media_events WHERE created_at < datetime('now', '-30 days');
+    ```
+  * Ensures `media_events` remains lightweight (< 5MB) on embedded SQLite instances indefinitely.
+
+
+

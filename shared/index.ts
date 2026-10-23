@@ -225,6 +225,7 @@ export interface TVShow {
   box_office?: number;
   tmdb_poster_path?: string;
   tmdb_backdrop_path?: string;
+  tmdb_trailer_key?: string | null;
   image_source?: 'tmdb' | 'local' | 'custom';
   created_at: string;
   updated_at: string;
@@ -675,6 +676,8 @@ export interface PluginTVPayload {
   // Assets (TMDB paths)
   tmdb_poster_path?: string
   tmdb_backdrop_path?: string
+  tmdb_trailer_key?: string
+  trailer_url?: string
 
   // Relationships
   genre_slugs?: string[]
@@ -763,6 +766,22 @@ export interface RemoteSearchResult {
 export interface ImportMediaRequest {
   tmdbId: number;
   mediaType: 'movie' | 'tv';
+}
+
+// ── Telemetry & Behavioral Events ──────────────────────────────────────────
+export type TelemetryEventType = 'page_view' | 'trailer_play' | 'search_click';
+
+export interface TelemetryEventRequest {
+  media_type: 'movie' | 'tv';
+  media_id: number;
+  event_type: TelemetryEventType;
+  device_id?: string;
+}
+
+export interface TelemetryEventResponse {
+  success: boolean;
+  recorded: boolean;
+  message?: string;
 }
 
 
